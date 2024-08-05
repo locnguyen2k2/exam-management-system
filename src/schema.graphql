@@ -1,0 +1,842 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""User Model"""
+type UserModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  firstName: String!
+  lastName: String!
+  email: String!
+  password: String!
+
+  """Trạng thái xác thực"""
+  status: Boolean!
+  photo: String
+  address: String
+  gender: GenderEnum
+  phone: String
+  roleIds: [String!]!
+}
+
+enum GenderEnum {
+  MALE
+  FEMALE
+  OTHER
+}
+
+type pagination {
+  keyword: String!
+  sort: String!
+  page: Int!
+  take: Int!
+  numberRecords: Int!
+  pages: Int!
+  hasPrev: Boolean!
+  hasNext: Boolean!
+}
+
+type UserPagination {
+  data: [UserModel!]!
+  meta: pagination!
+}
+
+type UserProfile {
+  email: String!
+  name: String!
+  photo: String!
+  address: String!
+  phone: String!
+  gender: GenderEnum!
+  status: Boolean!
+  enable: Boolean!
+}
+
+"""Role model"""
+type RoleModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  name: String!
+  value: String!
+  remark: String!
+  perIds: [String!]!
+}
+
+type RolePagination {
+  data: [RoleModel!]!
+  meta: pagination!
+}
+
+type PermissionModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  name: String!
+  value: String!
+  remark: String
+  status: Boolean!
+}
+
+type PermissionPagination {
+  data: [PermissionModel!]!
+  meta: pagination!
+}
+
+type Credential {
+  access_token: String!
+  refresh_token: String!
+}
+
+type AnswerDto {
+  label: String!
+  answerId: String!
+}
+
+type QuestionDto {
+  questionId: String!
+  label: String!
+  answerIds: [AnswerDto!]!
+}
+
+type ScaleDto {
+  percent: Float
+  chapterId: String
+  level: LevelEnum!
+}
+
+enum LevelEnum {
+  REMEMBERING
+  UNDERSTANDING
+  APPLYING
+  ANALYZING
+  EVALUATING
+  CREATING
+}
+
+type ExamEntity {
+  id: String!
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  sku: String!
+
+  """10 được đặt mặc định"""
+  maxScore: Float
+  scales: [ScaleDto!]!
+  questions: [QuestionDto!]!
+  status: StatusShareEnum
+}
+
+enum StatusShareEnum {
+  PUBLIC
+  PRIVATE
+}
+
+type QuestionEntity {
+  id: String!
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  content: String!
+  remark: String
+  chapterId: String!
+  level: LevelEnum!
+  status: StatusShareEnum
+  category: CategoryEnum!
+  correctAnswerId: String!
+  answerIds: [String!]!
+}
+
+enum CategoryEnum {
+  EASSAY
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  FILL_IN
+  MATCHING
+  ORDERING
+  IMAGE_BASED
+}
+
+type AnswerModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  value: String!
+  remark: String
+}
+
+type answers {
+  data: [AnswerModel!]!
+  meta: pagination!
+}
+
+"""Chapter Model"""
+type ChapterModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String
+  lessonId: String!
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+  questionIds: [String!]!
+}
+
+type ChapterPagination {
+  data: [ChapterModel!]!
+  meta: pagination!
+}
+
+"""Lesson Model"""
+type LessonModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String!
+  status: StatusShareEnum!
+  chapterIds: [String!]!
+  examIds: [String!]!
+}
+
+type lessons {
+  data: [LessonModel!]!
+  meta: pagination!
+}
+
+type QuestionModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  content: String!
+  remark: String
+  chapterId: String!
+  level: LevelEnum!
+  status: StatusShareEnum
+  category: CategoryEnum!
+  correctAnswer: AnswerModel!
+  answers: [AnswerModel!]!
+  sku: String
+}
+
+type QuestionPagination {
+  data: [QuestionModel!]!
+  meta: pagination!
+}
+
+type ExamModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  sku: String!
+
+  """10.0 được đặt mặc định"""
+  maxScore: Float
+  scales: [ScaleDto!]!
+  questions: [QuestionModel!]!
+  status: StatusShareEnum
+}
+
+type ExamPagination {
+  data: [ExamEntity!]!
+  meta: pagination!
+}
+
+type Query {
+  users(userPageOptions: UserPageOptions): UserPagination!
+  userDetail(id: String!): UserProfile!
+
+  """Lấy danh sách quyền"""
+  roles(rolePageOptions: RolePageOptions): RolePagination!
+
+  """Lấy danh sách phân quyên"""
+  permissions(
+    """Permission page options"""
+    perPageOptions: PermissionPageOptions
+  ): PermissionPagination!
+  myProfile: UserProfile!
+  logout: Boolean!
+
+  """Lấy danh sách chương"""
+  chapters(chapterPageOptions: ChapterPageOptions): ChapterPagination!
+
+  """Lấy danh sách chương theo học phần"""
+  chaptersByLesson(lessonId: String!, chapterPageOptions: ChapterPageOptions): ChapterPagination!
+
+  """Lấy danh sách chương user"""
+  myChapters(chapterPageOptions: ChapterPageOptions): ChapterPagination!
+
+  """Lấy danh sách đề thi"""
+  exams(examPageOptions: ExamPageOptions): ExamPagination!
+  examDetail(id: String!): ExamModel!
+
+  """Lấy danh sách câu hỏi"""
+  questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
+
+  """Lấy danh sách đáp án"""
+  answers(answerPageOptions: AnswerPageOptions): answers!
+}
+
+input UserPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+
+  """Trạng thái người dùng"""
+  userStatus: Boolean
+  gender: [GenderEnum!]
+  email: [EmailEnum!] = []
+}
+
+enum EmailEnum {
+  STUDENT
+  TEACHER
+}
+
+input RolePageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  value: [RoleEnum!]
+}
+
+enum RoleEnum {
+  ADMIN
+  MANAGER
+  USER
+}
+
+input PermissionPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  value: [PermissionEnum!]
+  permissionStatus: Boolean
+}
+
+enum PermissionEnum {
+  LIST_ROLE
+  DETAIL_ROLE
+  ADD_ROLE
+  UPDATE_ROLE
+  DELETE_ROLE
+  LIST_PERMISSION
+  DETAIL_PERMISSION
+  ADD_PERMISSION
+  UPDATE_PERMISSION
+  DELETE_PERMISSION
+  DETAIL_ACCOUNT
+  UPDATE_ACCOUNT
+  DELETE_ACCOUNT
+  DISABLE_ACCOUNT
+  LIST_USER
+  DETAIL_USER
+  ADD_USER
+  UPDATE_USER
+  DELETE_USER
+  LIST_ANSWER
+  DETAIL_ANSWER
+  ADD_ANSWER
+  UPDATE_ANSWER
+  DELETE_ANSWER
+  LIST_CHAPTER
+  DETAIL_CHAPTER
+  MY_CHAPTER
+  ADD_CHAPTER
+  UPDATE_CHAPTER
+  DELETE_CHAPTER
+  LIST_QUESTION
+  DETAIL_QUESTION
+  ADD_QUESTION
+  UPDATE_QUESTION
+  DELETE_QUESTION
+  LIST_EXAM
+  DETAIL_EXAM
+  ADD_EXAM
+  UPDATE_EXAM
+  DELETE_EXAM
+  LIST_LESSON
+  DETAIL_LESSON
+  ADD_LESSON
+  UPDATE_LESSON
+  DELETE_LESSON
+}
+
+input ChapterPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  chapterStatus: [StatusShareEnum!]
+}
+
+input ExamPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  examStatus: [StatusShareEnum!]
+}
+
+input QuestionPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  questionStatus: [StatusShareEnum!]
+  questionLevel: [LevelEnum!]
+  questionCategory: [CategoryEnum!]
+}
+
+input AnswerPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+}
+
+type Mutation {
+  createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
+  deleteRoles(roleIds: [String!]!): String!
+  createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
+
+  """Cập nhật quền"""
+  updateRole(id: String!, updateRoleArgs: UpdateRoleArgs!): RoleModel!
+  deletePermissions(permissionIds: [String!]!): String!
+  createPermission(createPermissionArgs: createPermissionArgs!): PermissionModel!
+  updatePermission(id: String!, updatePermissionArgs: updatePermissionArgs!): PermissionModel!
+  verify(confirmTokenArgs: ConfirmEmailArgs!): String!
+  refreshConfirmToken(email: String!): String!
+  forgotPassword(email: String!): String!
+  resetPassword(resetPasswordArgs: ResetPasswordArgs!): String!
+  login(loginArgs: LoginArgs!): Credential!
+  loginWithGG(idTokenArgs: String!): Credential!
+  registerUser(registerUserArgs: RegisterArgs!): String!
+  refreshToken(token: String!): String!
+  updateInfo(updateAccountArgs: UpdateAccountArgs!): UserProfile!
+  createChapter(createChapterArgs: CreateChapterArgs!): ChapterModel!
+  updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterModel!
+
+  """Kích hoạt chương"""
+  enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
+  deleteChapters(chapterIds: [String!]!): [String!]!
+  lessons(lessonPageOptions: LessonPageOptions!): lessons!
+  createLessons(createLessonArgs: CreateLessonArgs!): [LessonModel!]!
+  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonModel!
+  createExamination(createExamArgs: CreateExamDto!): [ExamEntity!]!
+  generateExams(generateExamArgs: GenerateExamArgs!): [ExamEntity!]!
+  deleteExam(examinationId: String!): String!
+  deleteQuestions(questionIds: [String!]!): String!
+  createQuestions(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
+  updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionEntity!
+  updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
+
+  """Cập nhật trạng thái công khai"""
+  updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
+  deleteAnswers(answerIds: [String!]!): String!
+  createAnswers(createAnswersArgs: CreateAnswersArgs!): [String!]!
+  updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
+}
+
+input CreateAdminArgs {
+  firstName: String!
+  lastName: String!
+  email: String!
+  password: String!
+  roleIds: [String!]!
+  status: Boolean = false
+}
+
+input CreateRoleArgs {
+  name: String!
+  value: String!
+  remark: String
+  enable: Boolean
+  permissionIds: [String!]!
+}
+
+input UpdateRoleArgs {
+  name: String
+  value: String
+  remark: String
+  enable: Boolean
+  permissionIds: [String!]
+}
+
+input createPermissionArgs {
+  name: String!
+  value: PermissionEnum!
+  remark: String
+  enable: Boolean
+  status: Boolean
+}
+
+input updatePermissionArgs {
+  name: String
+  value: PermissionEnum
+  remark: String
+  enable: Boolean
+  status: Boolean
+}
+
+input ConfirmEmailArgs {
+  confirmToken: String!
+  email: String!
+}
+
+input ResetPasswordArgs {
+  confirmToken: String!
+  newPassword: String!
+  email: String!
+}
+
+input LoginArgs {
+  email: String!
+  password: String!
+}
+
+input RegisterArgs {
+  firstName: String!
+  lastName: String!
+  email: String!
+  photo: String = null
+  phone: String = null
+  address: String = null
+  gender: GenderEnum = null
+  password: String!
+}
+
+input UpdateAccountArgs {
+  lastName: String
+  firstName: String
+  photo: String
+  phone: String
+  address: String
+}
+
+input CreateChapterArgs {
+  label: String!
+  name: String!
+  lessonId: String!
+  description: String = ""
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum = PRIVATE
+}
+
+input UpdateChapterArgs {
+  label: String
+  name: String
+  lessonId: String
+  description: String = ""
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum = PRIVATE
+}
+
+input EnableChaptersArgs {
+  chaptersEnable: [EnableChapterDto!]!
+}
+
+input EnableChapterDto {
+  chapterId: String!
+  enable: Boolean!
+}
+
+input LessonPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  lessonStatus: [StatusShareEnum!]
+}
+
+input CreateLessonArgs {
+  items: [LessonBaseDto!]!
+}
+
+input LessonBaseDto {
+  label: String!
+  name: String!
+  description: String
+  enable: Boolean!
+  status: StatusShareEnum!
+}
+
+input UpdateLessonArgs {
+  label: String
+  name: String
+  description: String
+  enable: Boolean
+  status: StatusShareEnum
+}
+
+input CreateExamDto {
+  label: String!
+  questionLabel: QuestionLabelEnum!
+  answerLabel: AnswerLabelEnum!
+  lessonId: String!
+  sku: String = ""
+
+  """10 được đặt mặc định"""
+  maxScore: Float = 10
+  enable: Boolean = false
+  status: StatusShareEnum = PRIVATE
+
+  """Số lượng đề muốn random từ đề gốc đã nhập"""
+  numberExams: Float = 1
+  questionInfo: [QuestionInfoDto!]!
+}
+
+enum QuestionLabelEnum {
+  END_DOT
+  END_COLON
+  END_BRACKET
+}
+
+enum AnswerLabelEnum {
+  LOW_DOT
+  LOW_COLON
+  LOW_BRACKET
+  UP_DOT
+  UP_COLON
+  UP_BRACKET
+}
+
+input QuestionInfoDto {
+  chapterId: String!
+  questionIds: [String!]!
+}
+
+input GenerateExamArgs {
+  label: String!
+  questionLabel: QuestionLabelEnum!
+  answerLabel: AnswerLabelEnum!
+  lessonId: String!
+  sku: String = ""
+
+  """10 được đặt mặc định"""
+  maxScore: Float = 10
+  enable: Boolean = false
+  status: StatusShareEnum = PRIVATE
+
+  """Số lượng đề muốn random từ đề gốc đã nhập"""
+  numberExams: Float = 1
+  scales: [Scale!]!
+  totalQuestions: Float!
+}
+
+input Scale {
+  chapterId: String!
+  percent: Float!
+  level: LevelEnum!
+}
+
+input CreateQuestionsArgs {
+  questions: [QuestionBaseDto!]!
+}
+
+input QuestionBaseDto {
+  sku: String
+  content: String!
+  remark: String
+  chapterId: String!
+  level: LevelEnum!
+  enable: Boolean
+  status: StatusShareEnum
+  category: CategoryEnum!
+  correctAnswerId: String!
+  answerIds: [String!]!
+}
+
+input UpdateQuestionArgs {
+  sku: String
+  content: String
+  remark: String
+  chapterId: String
+  level: LevelEnum
+  enable: Boolean
+  status: StatusShareEnum
+  category: CategoryEnum
+  correctAnswerId: String
+  answerIds: [String!]
+}
+
+input UpdateQuestionStatusArgs {
+  questionsStatus: [QuestionStatusDto!]!
+}
+
+input QuestionStatusDto {
+  questionId: String!
+  status: StatusShareEnum!
+}
+
+input UpdateChaptersStatusArgs {
+  chaptersStatus: [ChapterStatusDto!]!
+}
+
+input ChapterStatusDto {
+  chapterId: String!
+  status: StatusShareEnum!
+}
+
+input CreateAnswersArgs {
+  items: [AnswerBaseDto!]!
+}
+
+input AnswerBaseDto {
+  value: String!
+  remark: String
+}
+
+input UpdateAnswerArgs {
+  value: String
+  remark: String
+}

@@ -1,0 +1,299 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
+import { MongoRepository } from 'typeorm';
+import {
+  IDetailChapter,
+  QuestionService,
+} from '~/modules/system/question/question.service';
+import { AnswerService } from '~/modules/system/answer/answer.service';
+import {
+  CreateExamDto,
+  ExamPageOptions,
+  GenerateExamDto,
+} from '~/modules/system/exam/dtos/exam-req.dto.';
+import { BusinessException } from '~/common/exceptions/biz.exception';
+import { ErrorEnum } from '~/common/enums/error.enum';
+import { ChapterService } from '~/modules/system/chapter/chapter.service';
+import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
+import { randomChars, randomNumbs } from '~/utils/random';
+import * as _ from 'lodash';
+import { searchAtlas } from '~/utils/search';
+import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
+import { ExamPaginationDto } from '~/modules/system/exam/dtos/exam-res.dto';
+import {
+  AnswerLabelEnum,
+  QuestionLabelEnum,
+} from '~/modules/system/exam/enums/label.enum';
+import { handleLabel } from '~/utils/label';
+import { alphabet } from '~/modules/system/exam/exam.constant';
+import { LessonService } from '~/modules/system/lession/lesson.service';
+
+@Injectable()
+export class ExamService {
+  constructor(
+    @InjectRepository(ExamEntity)
+    private readonly examRepo: MongoRepository<ExamEntity>,
+    private readonly questionService: QuestionService,
+    private readonly answerService: AnswerService,
+    private readonly chapterService: ChapterService,
+    private readonly lessonService: LessonService,
+  ) {}
+
+  async findAll(
+    pageOptions: ExamPageOptions = new ExamPageOptions(),
+  ): Promise<ExamPaginationDto> {
+    const filterOptions = {
+      ...(!_.isNil(pageOptions.enable) && {
+        enable: pageOptions.enable,
+      }),
+      ...(!_.isEmpty(pageOptions.examStatus) && {
+        status: { $in: pageOptions.examStatus },
+      }),
+    };
+    const pipeLine = [
+      searchAtlas('searchExams', pageOptions.keyword),
+      {
+        $facet: {
+          data: [
+            { $match: filterOptions },
+            { $skip: pageOptions.skip },
+            { $limit: pageOptions.take },
+            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
+          ],
+          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
+        },
+      },
+    ];
+
+    const [{ data, pageInfo }]: any[] = await this.examRepo
+      .aggregate([...pipeLine])
+      .toArray();
+
+    const entities = data;
+    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
+    const pageMetaDto = new PageMetaDto({
+      pageOptions,
+      numberRecords,
+    });
+
+    return new ExamPaginationDto(entities, pageMetaDto);
+  }
+
+  async getExamDetail(id: string) {
+    const questions = [];
+    const exam = await this.examRepo.findOneBy({ id });
+    const questionIds = exam.questions.flat();
+    const answerIds = questionIds.flatMap((question) => question.answerIds);
+    const answers = await Promise.all(
+      answerIds.map(async (answer) => {
+        const isAnswer = await this.answerService.findOne(answer.answerId);
+        isAnswer['label'] = answer.label;
+        return isAnswer;
+      }),
+    );
+
+    for (let i = 0; i < questionIds.length; i++) {
+      const question = questionIds[i];
+      const isQuestion = {
+        ...(await this.questionService.findOne(question.questionId)),
+        answers: [],
+        correctAnswer: {},
+      };
+
+      isQuestion.correctAnswer = answers.find(
+        ({ id }) => id === isQuestion.correctAnswerId,
+      );
+      isQuestion['label'] = question.label;
+      isQuestion.answers = answers.filter((answer) =>
+        isQuestion.answerIds.includes(answer.id),
+      );
+
+      delete isQuestion.answerIds;
+      delete isQuestion.correctAnswerId;
+
+      questions.push(isQuestion);
+    }
+
+    exam.questions = questions;
+
+    return exam;
+  }
+
+  async findOne(id: string): Promise<ExamEntity> {
+    const isExisted = await this.examRepo.findOne({ where: { id } });
+    if (isExisted) return isExisted;
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+  }
+
+  async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
+    return await this.examRepo.find({
+      where: {
+        questionIds: {
+          $all: [questionId],
+        },
+      },
+    });
+  }
+
+  async handleQuestionLabel(
+    questions: QuestionEntity[],
+    questionLabel: QuestionLabelEnum,
+    answerLabel: AnswerLabelEnum,
+  ) {
+    return await Promise.all(
+      questions.map((question, index) => {
+        const answerIds = question.answerIds.map((answerId, index) => {
+          const chars = alphabet.split('');
+          const label = handleLabel(answerLabel, `${chars[index]}`);
+
+          return { answerId, label };
+        });
+
+        return {
+          ...question,
+          answerIds,
+          label: handleLabel(questionLabel, `${index + 1}`),
+        };
+      }),
+    );
+  }
+
+  async create(data: CreateExamDto): Promise<ExamEntity[]> {
+    const exams: ExamEntity[] = [];
+    const sku = randomChars(3).toUpperCase();
+    const questionInfo: IDetailChapter[] = await Promise.all(
+      data.questionInfo.map(
+        async (info) =>
+          await this.questionService.validateQuestions(data.lessonId, info),
+      ),
+    );
+    const questions = questionInfo.map((info) => info.questions).flat();
+    const scales = await this.questionService.questionPercentages(questions);
+
+    for (let i = 0; i < data.numberExams; i++) {
+      const randomQuestion =
+        await this.questionService.randomQuestions(questions);
+      const questionLabel = await this.handleQuestionLabel(
+        randomQuestion,
+        data.questionLabel,
+        data.answerLabel,
+      );
+      const newExam = new ExamEntity({
+        label: data.label,
+        sku: sku + randomNumbs(3),
+        status: data.status,
+        enable: data.enable,
+        maxScore: data.maxScore,
+        scales,
+        questions: questionLabel.map((question) => {
+          return {
+            questionId: question.id,
+            label: question.label,
+            answerIds: [...question.answerIds],
+          };
+        }),
+        create_by: data.createBy,
+        update_by: data.createBy,
+      });
+
+      exams.push(newExam);
+    }
+    const newExams = this.examRepo.create(exams);
+    const lesson = await this.lessonService.findOne(data.lessonId);
+    await this.lessonService.update(data.lessonId, {
+      ...lesson,
+      examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
+      updateBy: data.createBy,
+    });
+    return await this.examRepo.save(newExams);
+  }
+
+  async generate(uid: string, data: GenerateExamDto): Promise<ExamEntity[]> {
+    const listExams: ExamEntity[] = [];
+    const sku = randomChars(3).toUpperCase();
+    const { scales, totalQuestions, numberExams } = data;
+
+    delete data.numberExams;
+
+    const handledChapters = await Promise.all(
+      scales.map(async (scale) => {
+        const { chapterId, percent, level } = scale;
+        const questionQty = (percent * totalQuestions) / 100;
+        // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
+        const { questions, chapter } =
+          await this.questionService.randQuestsByChap(
+            chapterId,
+            level,
+            questionQty,
+          );
+
+        if (questions.length - questionQty < 0)
+          throw new BusinessException('400:Tỉ lệ câu hỏi không hợp lệ');
+
+        return {
+          id: chapter.id,
+          name: chapter.name,
+          questions,
+        };
+      }),
+    );
+
+    const questions = handledChapters.map((item) => item.questions).flat();
+
+    for (let i = 0; i < numberExams; i++) {
+      // Trộn câu hỏi và đáp án của từng câu
+      const randomQuestion =
+        await this.questionService.randomQuestions(questions);
+
+      const questionLabel = await this.handleQuestionLabel(
+        randomQuestion,
+        data.questionLabel,
+        data.answerLabel,
+      );
+
+      delete data.id;
+
+      listExams.push(
+        new ExamEntity({
+          ...data,
+          questions: questionLabel.map((question) => {
+            return {
+              questionId: question.id,
+              label: question.label,
+              answerIds: [...question.answerIds],
+            };
+          }),
+          create_by: uid,
+          update_by: uid,
+          sku: sku + randomNumbs(3),
+        }),
+      );
+    }
+
+    const newExams = this.examRepo.create(listExams);
+
+    return await this.examRepo.save(newExams);
+  }
+
+  async delete(id: string): Promise<string> {
+    await this.findOne(id);
+    await this.examRepo.deleteOne({ id });
+    return 'Xóa thành công';
+  }
+
+  async deleteQuestions(ids: string[]): Promise<string> {
+    const listQuestion: string[] = [];
+    await Promise.all(
+      ids.map(async (id) => {
+        const isExisted = await this.findByQuestionId(id);
+        const questInChapters =
+          await this.chapterService.isQuestionInChapters(id);
+        if (isExisted.length === 0 && !questInChapters) listQuestion.push(id);
+      }),
+    );
+    if (listQuestion.length > 0)
+      return await this.questionService.deleteMany(listQuestion);
+    throw new BusinessException(ErrorEnum.RECORD_IN_USED);
+  }
+}
