@@ -5,6 +5,7 @@ import {
   CreateExamDto,
   ExamPageOptions,
   GenerateExamDto,
+  UpdateExamDto,
 } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
@@ -14,6 +15,7 @@ import {
   ExamDetailDto,
   ExamPaginationDto,
 } from '~/modules/system/exam/dtos/exam-res.dto';
+import { plainToClass } from 'class-transformer';
 
 @Resolver('Exams')
 export class ExamResolver {
@@ -56,6 +58,18 @@ export class ExamResolver {
   ): Promise<ExamEntity[]> {
     const data = GenerateExamDto.plainToClass(dto);
     return await this.examService.generate(user.id, data);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_EXAM)
+  @Mutation(() => ExamEntity, { name: 'updateExam' })
+  async update(
+    @CurrentUser() user: IAuthPayload,
+    @Args('examId') id: string,
+    @Args('updateExamArgs') dto: UpdateExamDto,
+  ): Promise<ExamEntity> {
+    const data = plainToClass(UpdateExamDto, dto);
+    data.updateBy = user.id;
+    return await this.examService.update(id, data);
   }
 
   @Permissions(PermissionEnum.DELETE_EXAM)

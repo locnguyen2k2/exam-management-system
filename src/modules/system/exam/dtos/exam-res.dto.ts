@@ -3,6 +3,7 @@ import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import {
   ExamEntity,
+  LessonDto,
   ScaleDto,
 } from '~/modules/system/exam/entities/exam.entity';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
@@ -14,6 +15,12 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 export class ExamDetailDto extends ExtendedEntity {
   @Field(() => String)
   label: string;
+
+  @Field(() => LessonDto)
+  lesson: LessonDto;
+
+  @Field(() => String)
+  time: string;
 
   @Field(() => String)
   sku: string;

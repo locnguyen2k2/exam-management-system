@@ -6,6 +6,7 @@ enum RoleEnum {
   ADMIN = 'admin',
   MANAGER = 'manager',
   USER = 'user',
+  TEACHER = 'teacher',
 }
 
 export { countPerIds, RoleEnum };

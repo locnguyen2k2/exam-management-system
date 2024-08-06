@@ -281,7 +281,9 @@ export class QuestionService {
         scales.push({
           chapterId,
           level,
-          percent: (questions.length * 100) / totalQuestions,
+          percent: Number(
+            ((questions.length * 100) / totalQuestions).toFixed(2),
+          ),
         });
       });
     });

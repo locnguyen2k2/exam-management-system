@@ -9,7 +9,6 @@ import {
   PermissionPageOptions,
   UpdatePermissionDto,
 } from '~/modules/system/permission/dtos/permission-req.dto';
-import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 
@@ -19,7 +18,6 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-import { replace } from 'lodash';
 
 @Injectable()
 export class PermissionService {

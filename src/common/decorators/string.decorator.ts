@@ -18,6 +18,6 @@ export class IsValidString implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'Please ensure the text does not contain leading, trailing, or multiple consecutive spaces.';
+    return 'Văn bản không bắt đầu, kết thúc với khoảng trắng, hoặc 2 khoảng trắng liên tiếp.';
   }
 }

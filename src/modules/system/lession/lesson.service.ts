@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
 import { MongoRepository } from 'typeorm';
 import {
   CreateLessonDto,
   LessonPageOptions,
-  UpdateLessonDto,
 } from '~/modules/system/lession/dtos/lesson-req.dto';
 import { LessonPaginationDto } from '~/modules/system/lession/dtos/lesson-res.dto';
 import * as _ from 'lodash';
@@ -17,10 +16,13 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
+import { ExamService } from '~/modules/system/exam/exam.service';
 
 @Injectable()
 export class LessonService {
   constructor(
+    @Inject(forwardRef(() => ExamService))
+    private readonly examService: ExamService,
     @InjectRepository(LessonEntity)
     private readonly lessonRepo: MongoRepository<LessonEntity>,
   ) {}
@@ -111,6 +113,20 @@ export class LessonService {
 
   async update(id: string, data: any): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
+    if (!_.isNil(data.name)) {
+      const isReplaced = await this.findByName(data.name);
+
+      if (
+        isReplaced &&
+        isReplaced.create_by === data.createBy &&
+        isReplaced.id !== id
+      ) {
+        throw new BusinessException('400:Tên học phần đã tồn tại!');
+      }
+      if (!isReplaced || (isReplaced && isReplaced.id !== id)) {
+        await this.examService.updateExamsLessonName(id, data.name);
+      }
+    }
     const { affected } = await this.lessonRepo.update(
       { id },
       {

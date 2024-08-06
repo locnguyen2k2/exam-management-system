@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ExamService } from '~/modules/system/exam/exam.service';
@@ -10,6 +10,7 @@ import { LessonModule } from '~/modules/system/lession/lesson.module';
 
 @Module({
   imports: [
+    forwardRef(() => LessonModule),
     TypeOrmModule.forFeature([ExamEntity]),
     QuestionModule,
     AnswerModule,

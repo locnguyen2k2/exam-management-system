@@ -1,10 +1,10 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { Field, HideField, InputType } from '@nestjs/graphql';
+import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
-import { Max, Min, Validate } from 'class-validator';
+import { Max, MaxLength, Min, MinLength, Validate } from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { IsValidString } from '~/common/decorators/string.decorator';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -12,6 +12,10 @@ import {
   AnswerLabelEnum,
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
+import { randomChars } from '~/utils/random';
+import * as _ from 'lodash';
+import { regWhiteSpace } from '~/common/constants/regex.constant';
+import { IsValidSku } from '~/common/decorators/sku.decorator';
 
 @InputType('ExamPageOptions')
 export class ExamPageOptions extends PageOptionDto {
@@ -50,6 +54,12 @@ class BaseExamDto extends BaseDto {
   @Validate(IsValidString)
   label: string;
 
+  @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
+  @Transform(({ value }) =>
+    typeof value === 'number' ? `${value} phút` : value,
+  )
+  time: string;
+
   @Field(() => QuestionLabelEnum)
   questionLabel: QuestionLabelEnum;
 
@@ -61,7 +71,8 @@ class BaseExamDto extends BaseDto {
   lessonId: string;
 
   @Field(() => String, { nullable: true })
-  sku: string = '';
+  @Validate(IsValidSku)
+  sku: string;
 
   @Field(() => Number, {
     description: '10 được đặt mặc định',
@@ -77,7 +88,6 @@ class BaseExamDto extends BaseDto {
 
   @Field(() => Number, {
     nullable: true,
-
     description: 'Số lượng đề muốn random từ đề gốc đã nhập',
   })
   numberExams: number = 1;
@@ -107,4 +117,14 @@ export class GenerateExamDto extends BaseExamDto {
 
   @HideField()
   createBy: string;
+}
+
+@InputType('UpdateExamArgs')
+export class UpdateExamDto extends PartialType(BaseExamDto) {
+  @HideField()
+  numberExams;
+  sku;
+
+  @HideField()
+  updateBy: string;
 }

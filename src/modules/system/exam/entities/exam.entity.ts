@@ -24,6 +24,17 @@ class QuestionDto {
 }
 
 @ObjectType()
+export class LessonDto {
+  @Field(() => String)
+  @Column({ type: 'string' })
+  lessonId: string;
+
+  @Field(() => String)
+  @Column({ type: 'string' })
+  name: string;
+}
+
+@ObjectType()
 export class ScaleDto {
   @Field(() => Number, { nullable: true })
   percent: number;
@@ -39,6 +50,14 @@ export class ExamEntity extends ExtendedEntity {
   @Field(() => String)
   @Column({ type: 'string' })
   label: string;
+
+  @Field(() => LessonDto)
+  @Column({ type: 'json' })
+  lesson: LessonDto;
+
+  @Field(() => String)
+  @Column({ type: 'string' })
+  time: string;
 
   @Field(() => String)
   @Column({ type: 'string' })

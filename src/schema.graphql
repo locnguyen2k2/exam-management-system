@@ -128,6 +128,11 @@ type QuestionDto {
   answerIds: [AnswerDto!]!
 }
 
+type LessonDto {
+  lessonId: String!
+  name: String!
+}
+
 type ScaleDto {
   percent: Float
   chapterId: String
@@ -155,6 +160,8 @@ type ExamEntity {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
+  lesson: LessonDto!
+  time: String!
   sku: String!
 
   """10 được đặt mặc định"""
@@ -324,6 +331,8 @@ type ExamModel {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
+  lesson: LessonDto!
+  time: String!
   sku: String!
 
   """10.0 được đặt mặc định"""
@@ -414,6 +423,7 @@ enum RoleEnum {
   ADMIN
   MANAGER
   USER
+  TEACHER
 }
 
 input PermissionPageOptions {
@@ -427,56 +437,8 @@ input PermissionPageOptions {
   enable: Boolean
   page: Int = 1
   take: Int = 10
-  value: [PermissionEnum!]
+  value: String
   permissionStatus: Boolean
-}
-
-enum PermissionEnum {
-  LIST_ROLE
-  DETAIL_ROLE
-  ADD_ROLE
-  UPDATE_ROLE
-  DELETE_ROLE
-  LIST_PERMISSION
-  DETAIL_PERMISSION
-  ADD_PERMISSION
-  UPDATE_PERMISSION
-  DELETE_PERMISSION
-  DETAIL_ACCOUNT
-  UPDATE_ACCOUNT
-  DELETE_ACCOUNT
-  DISABLE_ACCOUNT
-  LIST_USER
-  DETAIL_USER
-  ADD_USER
-  UPDATE_USER
-  DELETE_USER
-  LIST_ANSWER
-  DETAIL_ANSWER
-  ADD_ANSWER
-  UPDATE_ANSWER
-  DELETE_ANSWER
-  LIST_CHAPTER
-  DETAIL_CHAPTER
-  MY_CHAPTER
-  ADD_CHAPTER
-  UPDATE_CHAPTER
-  DELETE_CHAPTER
-  LIST_QUESTION
-  DETAIL_QUESTION
-  ADD_QUESTION
-  UPDATE_QUESTION
-  DELETE_QUESTION
-  LIST_EXAM
-  DETAIL_EXAM
-  ADD_EXAM
-  UPDATE_EXAM
-  DELETE_EXAM
-  LIST_LESSON
-  DETAIL_LESSON
-  ADD_LESSON
-  UPDATE_LESSON
-  DELETE_LESSON
 }
 
 input ChapterPageOptions {
@@ -566,6 +528,7 @@ type Mutation {
   updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonModel!
   createExamination(createExamArgs: CreateExamDto!): [ExamEntity!]!
   generateExams(generateExamArgs: GenerateExamArgs!): [ExamEntity!]!
+  updateExam(examId: String!, updateExamArgs: UpdateExamArgs!): ExamEntity!
   deleteExam(examinationId: String!): String!
   deleteQuestions(questionIds: [String!]!): String!
   createQuestions(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
@@ -610,6 +573,54 @@ input createPermissionArgs {
   remark: String
   enable: Boolean
   status: Boolean
+}
+
+enum PermissionEnum {
+  LIST_ROLE
+  DETAIL_ROLE
+  ADD_ROLE
+  UPDATE_ROLE
+  DELETE_ROLE
+  LIST_PERMISSION
+  DETAIL_PERMISSION
+  ADD_PERMISSION
+  UPDATE_PERMISSION
+  DELETE_PERMISSION
+  DETAIL_ACCOUNT
+  UPDATE_ACCOUNT
+  DELETE_ACCOUNT
+  DISABLE_ACCOUNT
+  LIST_USER
+  DETAIL_USER
+  ADD_USER
+  UPDATE_USER
+  DELETE_USER
+  LIST_ANSWER
+  DETAIL_ANSWER
+  ADD_ANSWER
+  UPDATE_ANSWER
+  DELETE_ANSWER
+  LIST_CHAPTER
+  DETAIL_CHAPTER
+  MY_CHAPTER
+  ADD_CHAPTER
+  UPDATE_CHAPTER
+  DELETE_CHAPTER
+  LIST_QUESTION
+  DETAIL_QUESTION
+  ADD_QUESTION
+  UPDATE_QUESTION
+  DELETE_QUESTION
+  LIST_EXAM
+  DETAIL_EXAM
+  ADD_EXAM
+  UPDATE_EXAM
+  DELETE_EXAM
+  LIST_LESSON
+  DETAIL_LESSON
+  ADD_LESSON
+  UPDATE_LESSON
+  DELETE_LESSON
 }
 
 input updatePermissionArgs {
@@ -720,10 +731,13 @@ input UpdateLessonArgs {
 
 input CreateExamDto {
   label: String!
+
+  """Thời gian làm bài (phút)"""
+  time: Float!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!
-  sku: String = ""
+  sku: String
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
@@ -757,10 +771,13 @@ input QuestionInfoDto {
 
 input GenerateExamArgs {
   label: String!
+
+  """Thời gian làm bài (phút)"""
+  time: Float!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!
-  sku: String = ""
+  sku: String
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
@@ -777,6 +794,25 @@ input Scale {
   chapterId: String!
   percent: Float!
   level: LevelEnum!
+}
+
+input UpdateExamArgs {
+  label: String
+
+  """Thời gian làm bài (phút)"""
+  time: Float
+  questionLabel: QuestionLabelEnum
+  answerLabel: AnswerLabelEnum
+  lessonId: String
+  sku: String
+
+  """10 được đặt mặc định"""
+  maxScore: Float = 10
+  enable: Boolean = false
+  status: StatusShareEnum = PRIVATE
+
+  """Số lượng đề muốn random từ đề gốc đã nhập"""
+  numberExams: Float = 1
 }
 
 input CreateQuestionsArgs {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { MongoRepository } from 'typeorm';
@@ -11,12 +11,13 @@ import {
   CreateExamDto,
   ExamPageOptions,
   GenerateExamDto,
+  UpdateExamDto,
 } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
-import { randomChars, randomNumbs } from '~/utils/random';
+import { randomNumbs } from '~/utils/random';
 import * as _ from 'lodash';
 import { searchAtlas } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
@@ -32,12 +33,13 @@ import { LessonService } from '~/modules/system/lession/lesson.service';
 @Injectable()
 export class ExamService {
   constructor(
+    @Inject(forwardRef(() => LessonService))
+    private readonly lessonService: LessonService,
     @InjectRepository(ExamEntity)
     private readonly examRepo: MongoRepository<ExamEntity>,
     private readonly questionService: QuestionService,
     private readonly answerService: AnswerService,
     private readonly chapterService: ChapterService,
-    private readonly lessonService: LessonService,
   ) {}
 
   async findAll(
@@ -161,7 +163,7 @@ export class ExamService {
 
   async create(data: CreateExamDto): Promise<ExamEntity[]> {
     const exams: ExamEntity[] = [];
-    const sku = randomChars(3).toUpperCase();
+    const lesson = await this.lessonService.findOne(data.lessonId);
     const questionInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
@@ -181,7 +183,9 @@ export class ExamService {
       );
       const newExam = new ExamEntity({
         label: data.label,
-        sku: sku + randomNumbs(3),
+        time: data.time,
+        lesson: { lessonId: lesson.id, name: lesson.name },
+        sku: data.sku + randomNumbs(3),
         status: data.status,
         enable: data.enable,
         maxScore: data.maxScore,
@@ -199,8 +203,8 @@ export class ExamService {
 
       exams.push(newExam);
     }
+
     const newExams = this.examRepo.create(exams);
-    const lesson = await this.lessonService.findOne(data.lessonId);
     await this.lessonService.update(data.lessonId, {
       ...lesson,
       examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
@@ -209,10 +213,17 @@ export class ExamService {
     return await this.examRepo.save(newExams);
   }
 
+  async countQuestionInExams(questionId: string): Promise<number> {
+    await this.questionService.findOne(questionId);
+    return await this.examRepo.countBy({
+      'questions.questionId': questionId,
+    });
+  }
+
   async generate(uid: string, data: GenerateExamDto): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
-    const sku = randomChars(3).toUpperCase();
     const { scales, totalQuestions, numberExams } = data;
+    const lesson = await this.lessonService.findOne(data.lessonId);
 
     delete data.numberExams;
 
@@ -256,7 +267,14 @@ export class ExamService {
 
       listExams.push(
         new ExamEntity({
-          ...data,
+          label: data.label,
+          time: data.time,
+          lesson: { lessonId: lesson.id, name: lesson.name },
+          sku: data.sku + randomNumbs(3),
+          status: data.status,
+          enable: data.enable,
+          maxScore: data.maxScore,
+          scales: data.scales,
           questions: questionLabel.map((question) => {
             return {
               questionId: question.id,
@@ -266,14 +284,83 @@ export class ExamService {
           }),
           create_by: uid,
           update_by: uid,
-          sku: sku + randomNumbs(3),
         }),
       );
     }
 
     const newExams = this.examRepo.create(listExams);
+    await this.lessonService.update(data.lessonId, {
+      ...lesson,
+      examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
+      updateBy: data.createBy,
+    });
 
     return await this.examRepo.save(newExams);
+  }
+
+  async updateExamsLessonName(lessonId: string, name: string) {
+    await this.examRepo.updateMany(
+      { 'lesson.lessonId': lessonId },
+      { $set: { 'lesson.name': name } },
+      { upsert: false },
+    );
+  }
+
+  async update(id: string, data: UpdateExamDto): Promise<ExamEntity> {
+    const isExisted = await this.findOne(id);
+    if (data.lessonId) {
+      const newLesson = await this.lessonService.findOne(data.lessonId);
+      if (isExisted.lesson.lessonId !== newLesson.id) {
+        const oldLesson = await this.lessonService.findOne(
+          isExisted.lesson.lessonId,
+        );
+
+        const oldNewExams = new Set(oldLesson.examIds);
+
+        oldNewExams.delete(id);
+
+        await this.lessonService.update(isExisted.lesson.lessonId, {
+          ...oldLesson,
+          examIds: [...oldNewExams],
+        });
+
+        await this.lessonService.update(newLesson.id, {
+          ...newLesson,
+          examIds: [...newLesson.examIds, id],
+        });
+
+        await this.examRepo.updateMany(
+          { id: id },
+          {
+            $set: {
+              'lesson.name': newLesson.name,
+              'lesson.lessonId': newLesson.id,
+            },
+          },
+          { upsert: false },
+        );
+      }
+    }
+
+    await this.examRepo.update(
+      { id },
+      {
+        ...(!_.isNil(data.label) && { label: data.label }),
+        ...(!_.isNil(data.time) && { time: data.time }),
+        ...(!_.isNil(data.questionLabel) && {
+          questionLabel: data.questionLabel,
+        }),
+        ...(!_.isNil(data.answerLabel) && { answerLabel: data.answerLabel }),
+        ...(!_.isNil(data.maxScore) && { maxScore: data.maxScore }),
+        ...(!_.isNil(data.status) && {
+          status: data.status,
+        }),
+        ...(!_.isNil(data.enable) && { enable: data.enable }),
+        update_by: data.updateBy,
+      },
+    );
+
+    return await this.findOne(id);
   }
 
   async delete(id: string): Promise<string> {
