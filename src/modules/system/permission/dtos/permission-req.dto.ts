@@ -2,14 +2,13 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
-import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 
 @InputType('PermissionPageOptions')
 export class PermissionPageOptions extends PageOptionDto {
-  @Field(() => [PermissionEnum], {
+  @Field(() => String, {
     nullable: true,
   })
-  readonly value?: PermissionEntity[];
+  readonly value?: string;
 
   @Field(() => Boolean, {
     nullable: true,

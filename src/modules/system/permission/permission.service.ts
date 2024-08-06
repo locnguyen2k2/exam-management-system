@@ -15,6 +15,11 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
+import {
+  regSpecialChars,
+  regWhiteSpace,
+} from '~/common/constants/regex.constant';
+import { replace } from 'lodash';
 
 @Injectable()
 export class PermissionService {
@@ -28,7 +33,12 @@ export class PermissionService {
   ): Promise<PermissionPaginationDto> {
     const filterOptions = {
       ...(!_.isEmpty(pageOptions.value) && {
-        value: { $in: pageOptions.value },
+        value: {
+          $regex: pageOptions.value
+            .replace(regSpecialChars, '\\$&')
+            .replace(regWhiteSpace, '\\s*'),
+          $options: 'i',
+        },
       }),
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
