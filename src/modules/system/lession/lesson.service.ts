@@ -6,7 +6,10 @@ import {
   CreateLessonDto,
   LessonPageOptions,
 } from '~/modules/system/lession/dtos/lesson-req.dto';
-import { LessonPaginationDto } from '~/modules/system/lession/dtos/lesson-res.dto';
+import {
+  LessonDetailDto,
+  LessonPaginationDto,
+} from '~/modules/system/lession/dtos/lesson-res.dto';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
@@ -17,17 +20,22 @@ import {
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
 import { ExamService } from '~/modules/system/exam/exam.service';
+import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { ChapterService } from '~/modules/system/chapter/chapter.service';
 
 @Injectable()
 export class LessonService {
   constructor(
     @Inject(forwardRef(() => ExamService))
     private readonly examService: ExamService,
+    @Inject(forwardRef(() => ChapterService))
+    private readonly chapterService: ChapterService,
     @InjectRepository(LessonEntity)
     private readonly lessonRepo: MongoRepository<LessonEntity>,
   ) {}
 
   async findAll(
+    uid: string,
     pageOptions: LessonPageOptions = new LessonPageOptions(),
   ): Promise<LessonPaginationDto> {
     const filterOptions = {
@@ -44,6 +52,19 @@ export class LessonService {
       {
         $facet: {
           data: [
+            {
+              $match: {
+                $or: [
+                  { status: StatusShareEnum.PUBLIC },
+                  { enable: true },
+                  { enable: false, create_by: uid },
+                  {
+                    status: StatusShareEnum.PRIVATE,
+                    create_by: uid,
+                  },
+                ],
+              },
+            },
             { $match: filterOptions },
             { $skip: pageOptions.skip },
             { $limit: pageOptions.take },
@@ -59,13 +80,39 @@ export class LessonService {
       .toArray();
 
     const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
+    const lessonModels = new Array(entities.length);
+
+    for (let i = 0; i < entities.length; i++) {
+      const chapterIds = entities[i].chapterIds;
+      const examsIds = entities[i].examIds;
+
+      delete entities[i].chapterIds;
+      delete entities[i].examIds;
+
+      entities[i]['chapters'] = await Promise.all(
+        chapterIds.map(
+          async (chapterId: string) =>
+            await this.chapterService.detailChapter(chapterId),
+        ),
+      );
+
+      entities[i]['exams'] = await Promise.all(
+        examsIds.map(
+          async (examId: string) =>
+            await this.examService.getExamDetail(examId),
+        ),
+      );
+
+      lessonModels[i] = entities[i];
+    }
+
+    const numberRecords = lessonModels.length > 0 && pageInfo[0].numberRecords;
     const pageMetaDto = new PageMetaDto({
       pageOptions,
       numberRecords,
     });
 
-    return new LessonPaginationDto(entities, pageMetaDto);
+    return new LessonPaginationDto(lessonModels, pageMetaDto);
   }
 
   async findByName(name: string): Promise<LessonEntity> {
@@ -78,6 +125,30 @@ export class LessonService {
     });
 
     if (isExisted) return isExisted;
+  }
+
+  async detailLesson(id: string): Promise<any> {
+    const isExisted = await this.findOne(id);
+    const chapterIds = isExisted.chapterIds;
+    const examsIds = isExisted.examIds;
+
+    delete isExisted.chapterIds;
+    delete isExisted.examIds;
+
+    isExisted['chapters'] = await Promise.all(
+      chapterIds.map(
+        async (chapterId: string) =>
+          await this.chapterService.detailChapter(chapterId),
+      ),
+    );
+
+    isExisted['exams'] = await Promise.all(
+      examsIds.map(
+        async (examId: string) => await this.examService.getExamDetail(examId),
+      ),
+    );
+
+    return isExisted;
   }
 
   async findOne(id: string): Promise<LessonEntity> {

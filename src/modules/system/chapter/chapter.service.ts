@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { MongoRepository } from 'typeorm';
 import {
   ChapterPageOptions,
   CreateChapterDto,
-  UpdateChapterDto,
   EnableChaptersDto,
+  UpdateChapterDto,
   UpdateChaptersStatusDto,
 } from '~/modules/system/chapter/dtos/chapter-req.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
@@ -28,9 +28,10 @@ import { QuestionEntity } from '~/modules/system/question/entities/question.enti
 @Injectable()
 export class ChapterService {
   constructor(
+    @Inject(forwardRef(() => LessonService))
+    private readonly lessonService: LessonService,
     @InjectRepository(ChapterEntity)
     private readonly chapterRepo: MongoRepository<ChapterEntity>,
-    private readonly lessonService: LessonService,
   ) {}
 
   async findAll(
@@ -61,6 +62,40 @@ export class ChapterService {
       {
         $facet: {
           data: [
+            {
+              $lookup: {
+                from: 'lesson_entity',
+                localField: 'lessonId',
+                foreignField: 'id',
+                as: 'lesson',
+              },
+            },
+            {
+              $addFields: {
+                lesson: { $arrayElemAt: ['$lesson', 0] },
+              },
+            },
+            {
+              $lookup: {
+                from: 'question_entity',
+                localField: 'questionIds',
+                foreignField: 'id',
+                as: 'questions',
+              },
+            },
+            {
+              $match: {
+                $or: [
+                  { status: StatusShareEnum.PUBLIC },
+                  { status: true },
+                  { enable: false, create_by: uid },
+                  {
+                    status: StatusShareEnum.PRIVATE,
+                    create_by: uid,
+                  },
+                ],
+              },
+            },
             { $match: filterOptions },
             { $skip: pageOptions.skip },
             { $limit: pageOptions.take },
@@ -81,7 +116,40 @@ export class ChapterService {
       pageOptions,
       numberRecords,
     });
+
     return new ChapterPagination(entities, pageMetaDto);
+  }
+
+  async detailChapter(id: string): Promise<any> {
+    const chapter = await this.chapterRepo
+      .aggregate([
+        {
+          $lookup: {
+            from: 'lesson_entity',
+            localField: 'lessonId',
+            foreignField: 'id',
+            as: 'lesson',
+          },
+        },
+        {
+          $addFields: {
+            lesson: { $arrayElemAt: ['$lesson', 0] },
+          },
+        },
+        {
+          $lookup: {
+            from: 'question_entity',
+            localField: 'questionIds',
+            foreignField: 'id',
+            as: 'questions',
+          },
+        },
+        { $match: { id } },
+      ])
+      .toArray();
+
+    if (chapter.length > 0) return chapter[0];
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
   }
 
   async findOne(id: string): Promise<ChapterEntity> {

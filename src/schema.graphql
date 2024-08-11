@@ -231,8 +231,7 @@ type answers {
   meta: pagination!
 }
 
-"""Chapter Model"""
-type ChapterModel {
+type ChapterEntity {
   id: String!
 
   """Trạng thái quản lý"""
@@ -255,13 +254,7 @@ type ChapterModel {
   questionIds: [String!]!
 }
 
-type ChapterPagination {
-  data: [ChapterModel!]!
-  meta: pagination!
-}
-
-"""Lesson Model"""
-type LessonModel {
+type LessonEntity {
   id: String!
 
   """Trạng thái quản lý"""
@@ -282,8 +275,31 @@ type LessonModel {
   examIds: [String!]!
 }
 
-type lessons {
-  data: [LessonModel!]!
+type ChapterModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String
+  lesson: LessonEntity!
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+  questions: [QuestionEntity!]!
+}
+
+type ChapterPagination {
+  data: [ChapterModel!]!
   meta: pagination!
 }
 
@@ -347,6 +363,32 @@ type ExamPagination {
   meta: pagination!
 }
 
+type LessonModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String!
+  status: StatusShareEnum!
+  chapters: [ChapterModel!]
+  exams: [ExamModel!]
+}
+
+type lessons {
+  data: [LessonModel!]!
+  meta: pagination!
+}
+
 type Query {
   users(userPageOptions: UserPageOptions): UserPagination!
   userDetail(id: String!): UserProfile!
@@ -367,9 +409,9 @@ type Query {
 
   """Lấy danh sách chương theo học phần"""
   chaptersByLesson(lessonId: String!, chapterPageOptions: ChapterPageOptions): ChapterPagination!
-
-  """Lấy danh sách chương user"""
-  myChapters(chapterPageOptions: ChapterPageOptions): ChapterPagination!
+  chapter(chapterId: String!): ChapterModel!
+  lessons(lessonPageOptions: LessonPageOptions!): lessons!
+  lesson(lessonId: String!): LessonModel!
 
   """Lấy danh sách đề thi"""
   exams(examPageOptions: ExamPageOptions): ExamPagination!
@@ -377,6 +419,8 @@ type Query {
 
   """Lấy danh sách câu hỏi"""
   questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
+  question(questionId: String!): QuestionModel!
+  answer(answerId: String!): AnswerModel!
 
   """Lấy danh sách đáp án"""
   answers(answerPageOptions: AnswerPageOptions): answers!
@@ -455,6 +499,20 @@ input ChapterPageOptions {
   chapterStatus: [StatusShareEnum!]
 }
 
+input LessonPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  lessonStatus: [StatusShareEnum!]
+}
+
 input ExamPageOptions {
   keyword: String = ""
 
@@ -517,15 +575,14 @@ type Mutation {
   registerUser(registerUserArgs: RegisterArgs!): String!
   refreshToken(token: String!): String!
   updateInfo(updateAccountArgs: UpdateAccountArgs!): UserProfile!
-  createChapter(createChapterArgs: CreateChapterArgs!): ChapterModel!
-  updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterModel!
+  createChapter(createChapterArgs: CreateChapterArgs!): ChapterEntity!
+  updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterEntity!
 
   """Kích hoạt chương"""
   enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
   deleteChapters(chapterIds: [String!]!): [String!]!
-  lessons(lessonPageOptions: LessonPageOptions!): lessons!
-  createLessons(createLessonArgs: CreateLessonArgs!): [LessonModel!]!
-  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonModel!
+  createLessons(createLessonArgs: CreateLessonArgs!): [LessonEntity!]!
+  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonEntity!
   createExamination(createExamArgs: CreateExamDto!): [ExamEntity!]!
   generateExams(generateExamArgs: GenerateExamArgs!): [ExamEntity!]!
   updateExam(examId: String!, updateExamArgs: UpdateExamArgs!): ExamEntity!
@@ -693,20 +750,6 @@ input EnableChaptersArgs {
 input EnableChapterDto {
   chapterId: String!
   enable: Boolean!
-}
-
-input LessonPageOptions {
-  keyword: String = ""
-
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
-  sort: String = "created_at"
-
-  """Thứ tự sắp xếp (Mặc định giảm dần)"""
-  sorted: Boolean = false
-  enable: Boolean
-  page: Int = 1
-  take: Int = 10
-  lessonStatus: [StatusShareEnum!]
 }
 
 input CreateLessonArgs {

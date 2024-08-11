@@ -8,7 +8,7 @@ import {
 } from '~/modules/system/exam/entities/exam.entity';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { QuestionDetail } from '~/modules/system/question/dtos/question-res.dto';
+import { QuestionDetailDto } from '~/modules/system/question/dtos/question-res.dto';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 
 @ObjectType('ExamModel')
@@ -31,8 +31,8 @@ export class ExamDetailDto extends ExtendedEntity {
   @Field(() => [ScaleDto])
   scales: IScale[];
 
-  @Field(() => [QuestionDetail])
-  questions: QuestionDetail[];
+  @Field(() => [QuestionDetailDto])
+  questions: QuestionDetailDto[];
 
   @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;

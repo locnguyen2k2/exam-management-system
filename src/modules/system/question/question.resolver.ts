@@ -12,7 +12,10 @@ import { Permissions } from '~/common/decorators/permission.decorator';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
-import { QuestionPagination } from '~/modules/system/question/dtos/question-res.dto';
+import {
+  QuestionDetailDto,
+  QuestionPagination,
+} from '~/modules/system/question/dtos/question-res.dto';
 import { UpdateChaptersStatusDto } from '~/modules/system/chapter/dtos/chapter-req.dto';
 
 @Resolver('Questions')
@@ -25,10 +28,17 @@ export class QuestionResolver {
     description: 'Lấy danh sách câu hỏi',
   })
   async questions(
+    @CurrentUser() user: IAuthPayload,
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ): Promise<QuestionPagination> {
-    return this.questionService.findAll(questionPageOptions);
+    return this.questionService.findAll(user.id, questionPageOptions);
+  }
+
+  @Permissions(PermissionEnum.DETAIL_QUESTION)
+  @Query(() => QuestionDetailDto, { name: 'question' })
+  async question(@Args('questionId') id: string): Promise<QuestionDetailDto> {
+    return this.questionService.detailQuestion(id);
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)

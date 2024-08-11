@@ -8,7 +8,7 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
 @ObjectType('QuestionModel')
-export class QuestionDetail extends ExtendedEntity {
+export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => String)
   label: string;
 
@@ -44,14 +44,14 @@ export class QuestionDetail extends ExtendedEntity {
 
 @ObjectType('QuestionPagination')
 export class QuestionPagination {
-  @Field(() => [QuestionDetail])
+  @Field(() => [QuestionDetailDto])
   @IsArray()
-  readonly data: QuestionDetail[];
+  readonly data: QuestionDetailDto[];
 
   @Field(() => PageMetaDto)
   readonly meta: PageMetaDto;
 
-  constructor(data: QuestionDetail[], meta: PageMetaDto) {
+  constructor(data: QuestionDetailDto[], meta: PageMetaDto) {
     this.data = data;
     this.meta = meta;
   }

@@ -10,7 +10,10 @@ import { Permissions } from '~/common/decorators/permission.decorator';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { plainToClass } from 'class-transformer';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
-import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto';
+import {
+  ChapterDetailDto,
+  ChapterPagination,
+} from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 
@@ -24,10 +27,11 @@ export class ChapterResolver {
     description: 'Lấy danh sách chương',
   })
   async chapters(
+    @CurrentUser() user: IAuthPayload,
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ): Promise<ChapterPagination> {
-    return this.chapterService.findAll(null, null, chapterPageOptions);
+    return this.chapterService.findAll(user.id, null, chapterPageOptions);
   }
 
   @Permissions(PermissionEnum.LIST_CHAPTER)
@@ -36,24 +40,31 @@ export class ChapterResolver {
     description: 'Lấy danh sách chương theo học phần',
   })
   async getByLesson(
+    @CurrentUser() user: IAuthPayload,
     @Args('lessonId') lessonId: string,
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ): Promise<ChapterPagination> {
-    return this.chapterService.findAll(null, lessonId, chapterPageOptions);
+    return this.chapterService.findAll(user.id, lessonId, chapterPageOptions);
   }
 
-  @Permissions(PermissionEnum.MY_CHAPTER)
-  @Query(() => ChapterPagination, {
-    name: 'myChapters',
-    description: 'Lấy danh sách chương user',
-  })
-  async myChapters(
-    @CurrentUser() user: IAuthPayload,
-    @Args('chapterPageOptions', { nullable: true })
-    chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
-  ): Promise<ChapterPagination> {
-    return this.chapterService.findAll(user.id, null, chapterPageOptions);
+  // @Permissions(PermissionEnum.MY_CHAPTER)
+  // @Query(() => ChapterPagination, {
+  //   name: 'myChapters',
+  //   description: 'Lấy danh sách chương user',
+  // })
+  // async myChapters(
+  //   @CurrentUser() user: IAuthPayload,
+  //   @Args('chapterPageOptions', { nullable: true })
+  //   chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
+  // ): Promise<ChapterPagination> {
+  //   return this.chapterService.findAll(user.id, null, chapterPageOptions);
+  // }
+
+  @Permissions(PermissionEnum.DETAIL_CHAPTER)
+  @Query(() => ChapterDetailDto, { name: 'chapter' })
+  async chapter(@Args('chapterId') id: string): Promise<ChapterDetailDto> {
+    return this.chapterService.detailChapter(id);
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)

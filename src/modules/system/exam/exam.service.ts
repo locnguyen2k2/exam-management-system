@@ -29,6 +29,7 @@ import {
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lession/lesson.service';
+import { StatusShareEnum } from '~/common/enums/status-share.enum';
 
 @Injectable()
 export class ExamService {
@@ -43,6 +44,7 @@ export class ExamService {
   ) {}
 
   async findAll(
+    uid: string,
     pageOptions: ExamPageOptions = new ExamPageOptions(),
   ): Promise<ExamPaginationDto> {
     const filterOptions = {
@@ -58,6 +60,19 @@ export class ExamService {
       {
         $facet: {
           data: [
+            {
+              $match: {
+                $or: [
+                  { status: StatusShareEnum.PUBLIC },
+                  { enable: true },
+                  { enable: false, create_by: uid },
+                  {
+                    status: StatusShareEnum.PRIVATE,
+                    create_by: uid,
+                  },
+                ],
+              },
+            },
             { $match: filterOptions },
             { $skip: pageOptions.skip },
             { $limit: pageOptions.take },

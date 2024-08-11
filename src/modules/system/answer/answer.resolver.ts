@@ -17,6 +17,12 @@ import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 export class AnswerResolver {
   constructor(private readonly answerService: AnswerService) {}
 
+  @Permissions(PermissionEnum.DETAIL_ANSWER)
+  @Query(() => AnswerEntity, { name: 'answer' })
+  async answer(@Args('answerId') id: string): Promise<AnswerEntity> {
+    return this.answerService.findOne(id);
+  }
+
   @Permissions(PermissionEnum.LIST_ANSWER)
   @Query(() => AnswerPagination, {
     name: 'answers',

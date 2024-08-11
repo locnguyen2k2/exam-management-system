@@ -3,7 +3,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 
-@ObjectType('LessonModel', { description: 'Lesson Model' })
+@ObjectType()
 @Entity('lesson_entity')
 export class LessonEntity extends ExtendedEntity {
   @Field(() => String)

@@ -26,6 +26,7 @@ import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
+import { StatusShareEnum } from '~/common/enums/status-share.enum';
 
 export interface IDetailChapter {
   chapter: ChapterEntity;
@@ -52,6 +53,7 @@ export class QuestionService {
   ) {}
 
   async findAll(
+    uid: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ): Promise<QuestionPagination> {
     const filterOptions = {
@@ -74,6 +76,19 @@ export class QuestionService {
       {
         $facet: {
           data: [
+            {
+              $match: {
+                $or: [
+                  { status: StatusShareEnum.PUBLIC },
+                  { enable: true },
+                  { enable: false, create_by: uid },
+                  {
+                    status: StatusShareEnum.PRIVATE,
+                    create_by: uid,
+                  },
+                ],
+              },
+            },
             {
               $lookup: {
                 from: 'answer_entity',
@@ -117,6 +132,39 @@ export class QuestionService {
       numberRecords,
     });
     return new QuestionPagination(entities, pageMetaDto);
+  }
+
+  async detailQuestion(id: string): Promise<any> {
+    const isExisted = await this.questionRepo
+      .aggregate([
+        {
+          $lookup: {
+            from: 'answer_entity',
+            localField: 'answerIds',
+            foreignField: 'id',
+            as: 'answers',
+          },
+        },
+        {
+          $lookup: {
+            from: 'answer_entity',
+            localField: 'correctAnswerId',
+            foreignField: 'id',
+            as: 'correctAnswer',
+          },
+        },
+        {
+          $addFields: {
+            correctAnswer: { $arrayElemAt: ['$correctAnswer', 0] }, // Ensure only one item in array
+            chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
+          },
+        },
+        { $match: { id } },
+      ])
+      .toArray();
+
+    if (isExisted.length > 0) return isExisted[0];
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
   }
 
   async findByChapter(chapterId: string): Promise<QuestionEntity[]> {

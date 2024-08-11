@@ -27,10 +27,11 @@ export class ExamResolver {
     description: 'Lấy danh sách đề thi',
   })
   async exams(
+    @CurrentUser() user: IAuthPayload,
     @Args('examPageOptions', { nullable: true })
     examPageOptions: ExamPageOptions = new ExamPageOptions(),
   ): Promise<ExamPaginationDto> {
-    return this.examService.findAll(examPageOptions);
+    return this.examService.findAll(user.id, examPageOptions);
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)

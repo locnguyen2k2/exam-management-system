@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { LessonService } from '~/modules/system/lession/lesson.service';
 import {
   CreateLessonDto,
@@ -11,19 +11,29 @@ import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
-import { LessonPaginationDto } from '~/modules/system/lession/dtos/lesson-res.dto';
+import {
+  LessonDetailDto,
+  LessonPaginationDto,
+} from '~/modules/system/lession/dtos/lesson-res.dto';
 
 @Resolver('Lessons')
 export class LessonResolver {
   constructor(private readonly lessonService: LessonService) {}
 
   @Permissions(PermissionEnum.LIST_LESSON)
-  @Mutation(() => LessonPaginationDto, { name: 'lessons' })
+  @Query(() => LessonPaginationDto, { name: 'lessons' })
   async lessons(
+    @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
     pageOptions: LessonPageOptions = new LessonPageOptions(),
   ): Promise<LessonPaginationDto> {
-    return await this.lessonService.findAll(pageOptions);
+    return await this.lessonService.findAll(user.id, pageOptions);
+  }
+
+  @Permissions(PermissionEnum.DETAIL_LESSON)
+  @Query(() => LessonDetailDto, { name: 'lesson' })
+  async lesson(@Args('lessonId') id: string): Promise<LessonDetailDto> {
+    return await this.lessonService.detailLesson(id);
   }
 
   @Permissions(PermissionEnum.ADD_LESSON)
