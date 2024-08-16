@@ -159,10 +159,12 @@ export class AuthService {
 
     const accessToken = await this.tokenService.getAccessToken(user.id);
     const refreshToken = await this.tokenService.getRefreshToken(user.id);
+    const profile = await this.userService.getProfile(user.id);
 
     return {
       access_token: accessToken.value,
       refresh_token: refreshToken.value,
+      profile,
     };
   }
 
@@ -206,8 +208,10 @@ export class AuthService {
 
     const accessToken = await this.tokenService.getAccessToken(user.id);
     const refreshToken = await this.tokenService.getRefreshToken(user.id);
+    const profile = await this.userService.getProfile(user.id);
 
     return {
+      profile,
       access_token: accessToken.value,
       refresh_token: refreshToken.value,
     };

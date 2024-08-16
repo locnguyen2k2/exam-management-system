@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, AuthTypes.JWT) {
       ignoreExpiration: true,
     });
   }
+
   async validate(payload: IAuthPayload) {
     return payload;
   }
