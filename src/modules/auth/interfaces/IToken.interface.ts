@@ -10,5 +10,5 @@ export interface ICreateUserToken {
   email: string;
   status: boolean;
   enable: boolean;
-  roles: string[];
+  roles: any[];
 }

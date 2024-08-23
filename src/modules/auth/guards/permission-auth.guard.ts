@@ -60,11 +60,12 @@ export class PermissionAuthGuard implements CanActivate {
 
     // Kiểm tra nếu PermissionGuard không có yêu cu quyền truy cập
     if (!requirePerVals) return true;
+    const roles = await this.userService.getUserPermissions(user.id);
     // Thông qua với user có quyền quản trị
-    if (user.roles.includes(RoleEnum.ADMIN)) return true;
+    if (roles.includes((role: any) => role.value === RoleEnum.ADMIN))
+      return true;
     // Lấy danh sách phân quyền của người dùng vơi id
-    const userPers = await this.userService.getUserPermissions(user.id);
-
+    const userPers = roles.map((role: any) => role.permissions).flat();
     let allowAccess = false;
     // Nếu PermissionGuard yêu cầu một danh sách phân quyền
     if (Array.isArray(requirePerVals)) {
@@ -73,7 +74,6 @@ export class PermissionAuthGuard implements CanActivate {
       );
     }
 
-    // Nếu PermissionGuard chỉ yêu cầu 1 phân quyền
     if (typeof requirePerVals === 'string') {
       allowAccess = userPers.includes(requirePerVals);
     }

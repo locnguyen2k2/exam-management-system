@@ -17,6 +17,8 @@ import { TokenEnum } from '~/modules/auth/auth.constant';
 import * as _ from 'lodash';
 import * as bcrypt from 'bcryptjs';
 import { searchIndexes } from '~/utils/search';
+import { RoleEntity } from '~/modules/system/role/entities/role.entity';
+import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 
 @Injectable()
 export class UserService {
@@ -183,25 +185,40 @@ export class UserService {
     return true;
   }
 
-  async getUserPermissions(id: string): Promise<string[]> {
+  async getUserPermissions(id: string): Promise<any[]> {
     const isExisted = await this.findOne(id);
+    const roles: any[] = [];
 
     const userRoles = await Promise.all(
       isExisted.roleIds.map(async (rid) => await this.roleService.findOne(rid)),
     );
 
-    const permissions = (
-      await Promise.all(
-        userRoles.map(
-          async (role) =>
-            (await this.roleService.getPermissions(role.id)).permissions,
-        ),
-      )
-    )
-      .flat()
-      .map((permission) => permission.value);
+    await Promise.all(
+      userRoles.map(async (role: RoleEntity) => {
+        const permissions = (await this.roleService.getPermissions(role.id))
+          .permissions;
 
-    return permissions;
+        roles.push({
+          value: role.value,
+          permissions: permissions.map((pers: PermissionEntity) => pers.value),
+        });
+      }),
+    );
+
+    return roles;
+
+    // const permissions = (
+    //   await Promise.all(
+    //     userRoles.map(
+    //       async (role) =>
+    //         (await this.roleService.getPermissions(role.id)).permissions,
+    //     ),
+    //   )
+    // )
+    //   .flat()
+    //   .map((permission) => permission.value);
+    //
+    // return permissions;
   }
 
   async getProfile(uid: string): Promise<UserProfile> {
