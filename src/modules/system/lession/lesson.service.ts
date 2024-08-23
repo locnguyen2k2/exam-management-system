@@ -45,6 +45,17 @@ export class LessonService {
       ...(!_.isEmpty(pageOptions.lessonStatus) && {
         status: { $in: pageOptions.lessonStatus },
       }),
+      ...(uid && {
+        $or: [
+          { status: StatusShareEnum.PUBLIC },
+          { enable: true },
+          { enable: false, create_by: uid },
+          {
+            status: StatusShareEnum.PRIVATE,
+            create_by: uid,
+          },
+        ],
+      }),
     };
 
     const pipeLine = [
@@ -52,19 +63,6 @@ export class LessonService {
       {
         $facet: {
           data: [
-            {
-              $match: {
-                $or: [
-                  { status: StatusShareEnum.PUBLIC },
-                  { enable: true },
-                  { enable: false, create_by: uid },
-                  {
-                    status: StatusShareEnum.PRIVATE,
-                    create_by: uid,
-                  },
-                ],
-              },
-            },
             { $match: filterOptions },
             { $skip: pageOptions.skip },
             { $limit: pageOptions.take },

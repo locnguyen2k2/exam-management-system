@@ -16,6 +16,7 @@ import {
 } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
+import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Chapters')
 export class ChapterResolver {
@@ -45,7 +46,15 @@ export class ChapterResolver {
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ): Promise<ChapterPagination> {
-    return this.chapterService.findAll(user.id, lessonId, chapterPageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return this.chapterService.findAll(
+      isAdmin ? null : user.id,
+      lessonId,
+      chapterPageOptions,
+    );
   }
 
   // @Permissions(PermissionEnum.MY_CHAPTER)

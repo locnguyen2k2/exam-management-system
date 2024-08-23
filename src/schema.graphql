@@ -55,10 +55,10 @@ type UserPagination {
 type UserProfile {
   email: String!
   name: String!
-  photo: String!
-  address: String!
-  phone: String!
-  gender: GenderEnum!
+  photo: String
+  address: String
+  phone: String
+  gender: GenderEnum
   status: Boolean!
   enable: Boolean!
 }
@@ -113,6 +113,7 @@ type PermissionPagination {
 }
 
 type Credential {
+  profile: UserProfile!
   access_token: String!
   refresh_token: String!
 }

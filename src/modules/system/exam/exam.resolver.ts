@@ -16,6 +16,7 @@ import {
   ExamPaginationDto,
 } from '~/modules/system/exam/dtos/exam-res.dto';
 import { plainToClass } from 'class-transformer';
+import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Exams')
 export class ExamResolver {
@@ -31,7 +32,11 @@ export class ExamResolver {
     @Args('examPageOptions', { nullable: true })
     examPageOptions: ExamPageOptions = new ExamPageOptions(),
   ): Promise<ExamPaginationDto> {
-    return this.examService.findAll(user.id, examPageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return this.examService.findAll(isAdmin ? null : user.id, examPageOptions);
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)

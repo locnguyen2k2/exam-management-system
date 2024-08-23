@@ -54,7 +54,17 @@ export class ChapterService {
         },
       }),
 
-      ...(!_.isNil(uid) && { create_by: uid }),
+      ...(uid && {
+        $or: [
+          { status: StatusShareEnum.PUBLIC },
+          { status: true },
+          { enable: false, create_by: uid },
+          {
+            status: StatusShareEnum.PRIVATE,
+            create_by: uid,
+          },
+        ],
+      }),
     };
 
     const pipeLine = [
@@ -81,19 +91,6 @@ export class ChapterService {
                 localField: 'questionIds',
                 foreignField: 'id',
                 as: 'questions',
-              },
-            },
-            {
-              $match: {
-                $or: [
-                  { status: StatusShareEnum.PUBLIC },
-                  { status: true },
-                  { enable: false, create_by: uid },
-                  {
-                    status: StatusShareEnum.PRIVATE,
-                    create_by: uid,
-                  },
-                ],
               },
             },
             { $match: filterOptions },

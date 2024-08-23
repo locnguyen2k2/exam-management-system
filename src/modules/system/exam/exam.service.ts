@@ -44,7 +44,7 @@ export class ExamService {
   ) {}
 
   async findAll(
-    uid: string,
+    uid: string = null,
     pageOptions: ExamPageOptions = new ExamPageOptions(),
   ): Promise<ExamPaginationDto> {
     const filterOptions = {
@@ -54,25 +54,23 @@ export class ExamService {
       ...(!_.isEmpty(pageOptions.examStatus) && {
         status: { $in: pageOptions.examStatus },
       }),
+      ...(uid && {
+        $or: [
+          { status: StatusShareEnum.PUBLIC },
+          { enable: true },
+          { enable: false, create_by: uid },
+          {
+            status: StatusShareEnum.PRIVATE,
+            create_by: uid,
+          },
+        ],
+      }),
     };
     const pipeLine = [
       searchAtlas('searchExams', pageOptions.keyword),
       {
         $facet: {
           data: [
-            {
-              $match: {
-                $or: [
-                  { status: StatusShareEnum.PUBLIC },
-                  { enable: true },
-                  { enable: false, create_by: uid },
-                  {
-                    status: StatusShareEnum.PRIVATE,
-                    create_by: uid,
-                  },
-                ],
-              },
-            },
             { $match: filterOptions },
             { $skip: pageOptions.skip },
             { $limit: pageOptions.take },

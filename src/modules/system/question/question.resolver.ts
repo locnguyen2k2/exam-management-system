@@ -17,6 +17,7 @@ import {
   QuestionPagination,
 } from '~/modules/system/question/dtos/question-res.dto';
 import { UpdateChaptersStatusDto } from '~/modules/system/chapter/dtos/chapter-req.dto';
+import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Questions')
 export class QuestionResolver {
@@ -32,7 +33,14 @@ export class QuestionResolver {
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ): Promise<QuestionPagination> {
-    return this.questionService.findAll(user.id, questionPageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return this.questionService.findAll(
+      isAdmin ? null : user.id,
+      questionPageOptions,
+    );
   }
 
   @Permissions(PermissionEnum.DETAIL_QUESTION)

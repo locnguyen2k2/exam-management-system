@@ -6,8 +6,6 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 @Entity()
 export class ClassEntity extends ExtendedEntity {
   name: string;
-  sku: string;
-  page: number;
-  items: string[] = [];
-  countItems: number = 0;
+  description: string;
+  lessionIds: string[] = [];
 }

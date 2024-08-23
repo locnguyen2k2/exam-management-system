@@ -69,6 +69,17 @@ export class QuestionService {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
       }),
+      ...(uid && {
+        $or: [
+          { status: StatusShareEnum.PUBLIC },
+          { enable: true },
+          { enable: false, create_by: uid },
+          {
+            status: StatusShareEnum.PRIVATE,
+            create_by: uid,
+          },
+        ],
+      }),
     };
 
     const pipeLine: any[] = [
@@ -76,19 +87,6 @@ export class QuestionService {
       {
         $facet: {
           data: [
-            {
-              $match: {
-                $or: [
-                  { status: StatusShareEnum.PUBLIC },
-                  { enable: true },
-                  { enable: false, create_by: uid },
-                  {
-                    status: StatusShareEnum.PRIVATE,
-                    create_by: uid,
-                  },
-                ],
-              },
-            },
             {
               $lookup: {
                 from: 'answer_entity',

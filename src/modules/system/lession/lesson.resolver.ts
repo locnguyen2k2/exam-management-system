@@ -15,6 +15,7 @@ import {
   LessonDetailDto,
   LessonPaginationDto,
 } from '~/modules/system/lession/dtos/lesson-res.dto';
+import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Lessons')
 export class LessonResolver {
@@ -27,7 +28,14 @@ export class LessonResolver {
     @Args('lessonPageOptions')
     pageOptions: LessonPageOptions = new LessonPageOptions(),
   ): Promise<LessonPaginationDto> {
-    return await this.lessonService.findAll(user.id, pageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return await this.lessonService.findAll(
+      isAdmin ? null : user.id,
+      pageOptions,
+    );
   }
 
   @Permissions(PermissionEnum.DETAIL_LESSON)
