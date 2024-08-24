@@ -19,6 +19,7 @@ import * as bcrypt from 'bcryptjs';
 import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
+import { pipeLine } from '~/utils/pagination';
 
 @Injectable()
 export class UserService {
@@ -52,23 +53,13 @@ export class UserService {
       }),
     };
 
-    const pipeLine: any[] = [
+    const pipes = [
       searchIndexes(pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.userRepository
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;

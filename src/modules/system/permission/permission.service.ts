@@ -18,6 +18,7 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
+import { pipeLine } from '~/utils/pagination';
 
 @Injectable()
 export class PermissionService {
@@ -46,23 +47,13 @@ export class PermissionService {
       }),
     };
 
-    const pipeLine = [
+    const pipes = [
       searchIndexes(pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.permissionRepository
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;

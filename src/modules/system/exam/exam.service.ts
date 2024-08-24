@@ -30,6 +30,7 @@ import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lession/lesson.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { pipeLine } from '~/utils/pagination';
 
 @Injectable()
 export class ExamService {
@@ -66,23 +67,14 @@ export class ExamService {
         ],
       }),
     };
-    const pipeLine = [
+
+    const pipes = [
       searchAtlas('searchExams', pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.examRepo
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;

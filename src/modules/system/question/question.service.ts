@@ -27,6 +27,7 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { pipeLine } from '~/utils/pagination';
 
 export interface IDetailChapter {
   chapter: ChapterEntity;
@@ -42,6 +43,31 @@ export interface IClassifyLevel {
   chapterId: string;
   info: { level: LevelEnum; questions: QuestionEntity[] }[];
 }
+
+const defaultLookup = [
+  {
+    $lookup: {
+      from: 'answer_entity',
+      localField: 'answerIds',
+      foreignField: 'id',
+      as: 'answers',
+    },
+  },
+  {
+    $lookup: {
+      from: 'answer_entity',
+      localField: 'correctAnswerId',
+      foreignField: 'id',
+      as: 'correctAnswer',
+    },
+  },
+  {
+    $addFields: {
+      correctAnswer: { $arrayElemAt: ['$correctAnswer', 0] }, // Ensure only one item in array
+      chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
+    },
+  },
+];
 
 @Injectable()
 export class QuestionService {
@@ -82,45 +108,13 @@ export class QuestionService {
       }),
     };
 
-    const pipeLine: any[] = [
+    const pipes = [
       searchIndexes(pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            {
-              $lookup: {
-                from: 'answer_entity',
-                localField: 'answerIds',
-                foreignField: 'id',
-                as: 'answers',
-              },
-            },
-            {
-              $lookup: {
-                from: 'answer_entity',
-                localField: 'correctAnswerId',
-                foreignField: 'id',
-                as: 'correctAnswer',
-              },
-            },
-            {
-              $addFields: {
-                correctAnswer: { $arrayElemAt: ['$correctAnswer', 0] }, // Ensure only one item in array
-                chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
-              },
-            },
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions, defaultLookup),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.questionRepo
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;
@@ -134,31 +128,7 @@ export class QuestionService {
 
   async detailQuestion(id: string): Promise<any> {
     const isExisted = await this.questionRepo
-      .aggregate([
-        {
-          $lookup: {
-            from: 'answer_entity',
-            localField: 'answerIds',
-            foreignField: 'id',
-            as: 'answers',
-          },
-        },
-        {
-          $lookup: {
-            from: 'answer_entity',
-            localField: 'correctAnswerId',
-            foreignField: 'id',
-            as: 'correctAnswer',
-          },
-        },
-        {
-          $addFields: {
-            correctAnswer: { $arrayElemAt: ['$correctAnswer', 0] }, // Ensure only one item in array
-            chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
-          },
-        },
-        { $match: { id } },
-      ])
+      .aggregate([...defaultLookup, { $match: { id } }])
       .toArray();
 
     if (isExisted.length > 0) return isExisted[0];

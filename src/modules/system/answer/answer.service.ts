@@ -18,6 +18,7 @@ import * as _ from 'lodash';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { searchIndexes } from '~/utils/search';
+import { pipeLine } from '~/utils/pagination';
 
 @Injectable()
 export class AnswerService {
@@ -35,23 +36,13 @@ export class AnswerService {
       }),
     };
 
-    const pipeLine = [
+    const pipes = [
       searchIndexes(pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.answerRepo
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;

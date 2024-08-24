@@ -24,6 +24,31 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lession/lesson.service';
 import { IDetailChapter } from '~/modules/system/question/question.service';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
+import { pipeLine } from '~/utils/pagination';
+
+const defaultLookup = [
+  {
+    $lookup: {
+      from: 'lesson_entity',
+      localField: 'lessonId',
+      foreignField: 'id',
+      as: 'lesson',
+    },
+  },
+  {
+    $addFields: {
+      lesson: { $arrayElemAt: ['$lesson', 0] },
+    },
+  },
+  {
+    $lookup: {
+      from: 'question_entity',
+      localField: 'questionIds',
+      foreignField: 'id',
+      as: 'questions',
+    },
+  },
+];
 
 @Injectable()
 export class ChapterService {
@@ -67,44 +92,13 @@ export class ChapterService {
       }),
     };
 
-    const pipeLine = [
+    const pipes = [
       searchIndexes(pageOptions.keyword),
-      {
-        $facet: {
-          data: [
-            {
-              $lookup: {
-                from: 'lesson_entity',
-                localField: 'lessonId',
-                foreignField: 'id',
-                as: 'lesson',
-              },
-            },
-            {
-              $addFields: {
-                lesson: { $arrayElemAt: ['$lesson', 0] },
-              },
-            },
-            {
-              $lookup: {
-                from: 'question_entity',
-                localField: 'questionIds',
-                foreignField: 'id',
-                as: 'questions',
-              },
-            },
-            { $match: filterOptions },
-            { $skip: pageOptions.skip },
-            { $limit: pageOptions.take },
-            { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-          ],
-          pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-        },
-      },
+      ...pipeLine(pageOptions, filterOptions, defaultLookup),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.chapterRepo
-      .aggregate([...pipeLine])
+      .aggregate(pipes)
       .toArray();
 
     const entities = data;
@@ -119,30 +113,7 @@ export class ChapterService {
 
   async detailChapter(id: string): Promise<any> {
     const chapter = await this.chapterRepo
-      .aggregate([
-        {
-          $lookup: {
-            from: 'lesson_entity',
-            localField: 'lessonId',
-            foreignField: 'id',
-            as: 'lesson',
-          },
-        },
-        {
-          $addFields: {
-            lesson: { $arrayElemAt: ['$lesson', 0] },
-          },
-        },
-        {
-          $lookup: {
-            from: 'question_entity',
-            localField: 'questionIds',
-            foreignField: 'id',
-            as: 'questions',
-          },
-        },
-        { $match: { id } },
-      ])
+      .aggregate([...defaultLookup, { $match: { id } }])
       .toArray();
 
     if (chapter.length > 0) return chapter[0];
