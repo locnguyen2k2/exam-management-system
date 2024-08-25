@@ -45,8 +45,8 @@ class QuestionBaseDto extends BaseDto {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => String)
-  correctAnswerId: string;
+  @Field(() => [String])
+  correctAnswerIds: string[];
 
   @Field(() => [String!]!)
   answerIds: string[];

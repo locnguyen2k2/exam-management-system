@@ -32,8 +32,8 @@ export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => AnswerEntity)
-  correctAnswer: AnswerEntity;
+  @Field(() => [AnswerEntity])
+  correctAnswers: AnswerEntity[];
 
   @Field(() => [AnswerEntity!]!)
   answers: AnswerEntity[];

@@ -194,7 +194,7 @@ type QuestionEntity {
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswerId: String!
+  correctAnswerIds: [String!]!
   answerIds: [String!]!
 }
 
@@ -324,7 +324,7 @@ type QuestionModel {
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswer: AnswerModel!
+  correctAnswers: [AnswerModel!]!
   answers: [AnswerModel!]!
   sku: String
 }
@@ -872,7 +872,7 @@ input QuestionBaseDto {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswerId: String!
+  correctAnswerIds: [String!]!
   answerIds: [String!]!
 }
 
@@ -885,7 +885,7 @@ input UpdateQuestionArgs {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum
-  correctAnswerId: String
+  correctAnswerIds: [String!]
   answerIds: [String!]
 }
 

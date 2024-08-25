@@ -47,9 +47,9 @@ export class QuestionEntity extends ExtendedEntity {
   @Column('enum', { enum: CategoryEnum })
   category: CategoryEnum;
 
-  @Field(() => String)
-  @Column({ type: 'string' })
-  correctAnswerId: string;
+  @Field(() => [String])
+  @Column('string', { array: true })
+  correctAnswerIds: string[];
 
   @Field(() => [String])
   @Column('string', { array: true })

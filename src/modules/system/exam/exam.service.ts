@@ -105,19 +105,20 @@ export class ExamService {
       const isQuestion = {
         ...(await this.questionService.findOne(question.questionId)),
         answers: [],
-        correctAnswer: {},
+        correctAnswers: [],
       };
 
-      isQuestion.correctAnswer = answers.find(
-        ({ id }) => id === isQuestion.correctAnswerId,
-      );
       isQuestion['label'] = question.label;
+      isQuestion.correctAnswers = answers.filter((answer) =>
+        isQuestion.correctAnswerIds.includes(answer.id),
+      );
+
       isQuestion.answers = answers.filter((answer) =>
         isQuestion.answerIds.includes(answer.id),
       );
 
       delete isQuestion.answerIds;
-      delete isQuestion.correctAnswerId;
+      delete isQuestion.correctAnswerIds;
 
       questions.push(isQuestion);
     }

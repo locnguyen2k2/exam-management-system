@@ -28,6 +28,7 @@ import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pagination';
+import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 export interface IDetailChapter {
   chapter: ChapterEntity;
@@ -56,14 +57,13 @@ const defaultLookup = [
   {
     $lookup: {
       from: 'answer_entity',
-      localField: 'correctAnswerId',
+      localField: 'correctAnswerIds',
       foreignField: 'id',
-      as: 'correctAnswer',
+      as: 'correctAnswers',
     },
   },
   {
     $addFields: {
-      correctAnswer: { $arrayElemAt: ['$correctAnswer', 0] }, // Ensure only one item in array
       chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
     },
   },
@@ -166,34 +166,64 @@ export class QuestionService {
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: QuestionEntity[] = [];
     const answerIds: string[] = [];
+    const correctAnswerIds: string[] = [];
 
     await Promise.all(
       data.questions.map(async (questionData) => {
         // Kiểm tra chương
         await this.chapterService.findOne(questionData.chapterId);
-        // Kiểm tra nếu tồn tại đáp án
-        await this.answerService.findOne(questionData.correctAnswerId);
         // Kiểm tra nội dung đã tồn tại
         if (await this.findByContent(questionData.content))
           throw new BusinessException(
             `400:Nội dung câu hỏi "${questionData.content}" đã tồn tại`,
           );
 
-        answerIds.push(...questionData.answerIds, questionData.correctAnswerId);
+        for (const answerId of questionData.answerIds) {
+          const index = answerIds.findIndex((value) => value === answerId);
+          if (index === -1) {
+            await this.answerService.findOne(answerId);
+            answerIds.push(answerId);
+          }
+        }
+
+        if (
+          questionData.category !== CategoryEnum.MULTIPLE_CHOICE &&
+          questionData.correctAnswerIds.length > 1
+        ) {
+          throw new BusinessException(
+            '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án!',
+          );
+        }
+
+        for (const correctAnswerId of questionData.correctAnswerIds) {
+          const index = correctAnswerIds.findIndex(
+            (value) => value === correctAnswerId,
+          );
+          const hasInAnswerIds = answerIds.find(
+            (value) => value === correctAnswerId,
+          );
+
+          if (!hasInAnswerIds)
+            throw new BusinessException(
+              '400:Đáp án phải đúng có trong câu trả lời',
+            );
+          if (index === -1) {
+            await this.answerService.findOne(correctAnswerId);
+            correctAnswerIds.push(correctAnswerId);
+          }
+        }
       }),
     );
-
-    for (const answerId of answerIds) {
-      await this.answerService.findOne(answerId);
-    }
 
     await Promise.all(
       data.questions.map(async (questionData) => {
         const { answerIds, chapterId } = questionData;
         delete questionData.answerIds;
+        delete questionData.correctAnswerIds;
 
         const question = new QuestionEntity({
           ...questionData,
+          correctAnswerIds: [...new Set(correctAnswerIds)],
           answerIds: [...new Set(answerIds)],
           create_by: data.createBy,
           update_by: data.createBy,
@@ -338,6 +368,7 @@ export class QuestionService {
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
     const listAnswers: string[] = [];
+    const correctAnswerIds: string[] = [];
 
     if (data.content) {
       const isContent = await this.findByContent(data.content);
@@ -346,19 +377,49 @@ export class QuestionService {
     }
 
     data.chapterId && (await this.chapterService.findOne(data.chapterId));
-    data.correctAnswerId &&
-      (await this.answerService.findOne(data.correctAnswerId));
+
+    const category = data.category ? data.category : isExisted.category;
+
+    if (
+      category !== CategoryEnum.MULTIPLE_CHOICE &&
+      ((data.correctAnswerIds && data.correctAnswerIds.length > 1) ||
+        isExisted.correctAnswerIds.length > 1)
+    ) {
+      throw new BusinessException(
+        '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
+      );
+    }
 
     if (data.answerIds) {
-      await Promise.all(
-        data.answerIds.map(async (answerId) => {
-          await this.answerService.findOne(answerId);
-          if (!(await this.questionHasAnswer(id, answerId))) {
-            const index = listAnswers.findIndex((isId) => answerId === isId);
-            index === -1 && listAnswers.push(answerId);
-          }
-        }),
-      );
+      for (const answerId of data.answerIds) {
+        await this.answerService.findOne(answerId);
+        const index = listAnswers.findIndex((value) => answerId === value);
+        index === -1 && listAnswers.push(answerId);
+      }
+    }
+
+    if (data.correctAnswerIds) {
+      const answers =
+        listAnswers.length > 0 ? listAnswers : isExisted.answerIds;
+
+      for (const correctAnswerId of data.correctAnswerIds) {
+        const hasInAnswers = answers.find((value) => value === correctAnswerId);
+
+        if (!hasInAnswers) {
+          throw new BusinessException(
+            '400:Đáp án phải có trong danh sách câu trả lời!',
+          );
+        }
+
+        const index = correctAnswerIds.findIndex(
+          (value) => value === correctAnswerId,
+        );
+
+        if (index === -1) {
+          await this.answerService.findOne(correctAnswerId);
+          correctAnswerIds.push(correctAnswerId);
+        }
+      }
     }
 
     const { affected } = await this.questionRepo.update(
@@ -370,6 +431,7 @@ export class QuestionService {
         ...(data.level && { level: data.level }),
         ...(data.status && { status: data.status }),
         ...(data.category && { category: data.category }),
+        ...(correctAnswerIds.length > 0 && { correctAnswerIds }),
         ...(listAnswers.length > 0 && { answerIds: listAnswers }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
         update_by: data.updateBy,
