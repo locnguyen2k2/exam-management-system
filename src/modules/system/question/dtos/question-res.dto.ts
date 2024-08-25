@@ -7,6 +7,12 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
+export interface IFileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+}
+
 @ObjectType('QuestionModel')
 export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => String)
@@ -14,6 +20,9 @@ export class QuestionDetailDto extends ExtendedEntity {
 
   @Field(() => String)
   content: string;
+
+  @Field(() => String, { nullable: true })
+  picture: string;
 
   @Field(() => String, { nullable: true })
   remark: string;

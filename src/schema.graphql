@@ -189,6 +189,7 @@ type QuestionEntity {
   """Cập nhật bởi"""
   updateBy: String
   content: String!
+  picture: String
   remark: String
   chapterId: String!
   level: LevelEnum!
@@ -319,6 +320,7 @@ type QuestionModel {
   updateBy: String
   label: String!
   content: String!
+  picture: String
   remark: String
   chapterId: String!
   level: LevelEnum!
@@ -866,6 +868,7 @@ input CreateQuestionsArgs {
 input QuestionBaseDto {
   sku: String
   content: String!
+  picture: Upload
   remark: String
   chapterId: String!
   level: LevelEnum!
@@ -876,9 +879,13 @@ input QuestionBaseDto {
   answerIds: [String!]!
 }
 
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
 input UpdateQuestionArgs {
   sku: String
   content: String
+  picture: Upload
   remark: String
   chapterId: String
   level: LevelEnum

@@ -17,6 +17,10 @@ export class QuestionEntity extends ExtendedEntity {
   content: string;
 
   @Field(() => String, { nullable: true })
+  @Column({ type: 'string', nullable: true })
+  picture: string;
+
+  @Field(() => String, { nullable: true })
   @Column({ type: 'string' })
   remark: string = '';
 

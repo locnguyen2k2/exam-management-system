@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKeyPaths } from '~/config';
 import { useContainer } from 'class-validator';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 declare const module: any;
 
@@ -13,9 +14,15 @@ async function bootstrap() {
   const { port, globalPrefix } = configService.get('app', { infer: true });
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   app.setGlobalPrefix(globalPrefix);
   app.enableCors({ origin: '*', credentials: true });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
+  app.use(
+    '/graphql',
+    graphqlUploadExpress({ maxFileSize: 1000000, maxFile: 5 }),
+  );
 
   await app.listen(port, '0.0.0.0', async () => {
     const url = await app.getUrl();

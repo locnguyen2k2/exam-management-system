@@ -29,6 +29,7 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pagination';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
+import { ImageService } from '~/modules/system/image/image.service';
 
 export interface IDetailChapter {
   chapter: ChapterEntity;
@@ -76,6 +77,7 @@ export class QuestionService {
     private readonly questionRepo: MongoRepository<QuestionEntity>,
     private readonly answerService: AnswerService,
     private readonly chapterService: ChapterService,
+    private readonly imageService: ImageService,
   ) {}
 
   async findAll(
@@ -218,13 +220,19 @@ export class QuestionService {
     await Promise.all(
       data.questions.map(async (questionData) => {
         const { answerIds, chapterId } = questionData;
+        let picture = '';
         delete questionData.answerIds;
         delete questionData.correctAnswerIds;
+
+        if (questionData.picture) {
+          picture += await this.imageService.uploadImage(questionData.picture);
+        }
 
         const question = new QuestionEntity({
           ...questionData,
           correctAnswerIds: [...new Set(correctAnswerIds)],
           answerIds: [...new Set(answerIds)],
+          picture,
           create_by: data.createBy,
           update_by: data.createBy,
         });
@@ -369,6 +377,7 @@ export class QuestionService {
     const isExisted = await this.findOne(id);
     const listAnswers: string[] = [];
     const correctAnswerIds: string[] = [];
+    let picture = '';
 
     if (data.content) {
       const isContent = await this.findByContent(data.content);
@@ -422,6 +431,10 @@ export class QuestionService {
       }
     }
 
+    if (data.picture) {
+      picture += await this.imageService.uploadImage(data.picture);
+    }
+
     const { affected } = await this.questionRepo.update(
       { id },
       {
@@ -433,6 +446,7 @@ export class QuestionService {
         ...(data.category && { category: data.category }),
         ...(correctAnswerIds.length > 0 && { correctAnswerIds }),
         ...(listAnswers.length > 0 && { answerIds: listAnswers }),
+        ...(!_.isEmpty(picture) && { picture: picture }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
         update_by: data.updateBy,
       },
