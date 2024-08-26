@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { MailerService as NestedMailerService } from '@nestjs-modules/mailer';
-const emailValidator = require('deep-email-validator');
+import * as emailValidator from 'deep-email-validator';
 
 @Injectable()
 export class MailerService {
@@ -44,8 +44,8 @@ export class MailerService {
   }
 
   async isCtuetEmail(email: string): Promise<boolean | HttpException> {
-    // const idValid = await this.verifyEmail(email);
-    // if (!idValid) throw new BusinessException('400:Email không tồn tại!');
+    const idValid = await this.verifyEmail(email);
+    if (!idValid) throw new BusinessException('400:Email không tồn tại!');
     const teacherEmail = await this.isTeacherCtutEmail(email);
     const studentEmail = await this.isStudentCtuetEmail(email);
     if (!teacherEmail && !studentEmail) {
