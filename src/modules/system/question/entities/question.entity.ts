@@ -1,4 +1,4 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Float, ObjectType } from '@nestjs/graphql';
 import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
@@ -6,12 +6,17 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 @ObjectType()
+export class CorrectAnswerIds {
+  @Field(() => String)
+  correctAnswerId: string;
+
+  @Field(() => Float, { nullable: true })
+  score: number;
+}
+
+@ObjectType()
 @Entity('question_entity')
 export class QuestionEntity extends ExtendedEntity {
-  // @HideField()
-  // @Column({ type: 'string' })
-  // label: string = '';
-
   @Field(() => String)
   @Column({ type: 'string' })
   content: string;
@@ -51,9 +56,9 @@ export class QuestionEntity extends ExtendedEntity {
   @Column('enum', { enum: CategoryEnum })
   category: CategoryEnum;
 
-  @Field(() => [String])
-  @Column('string', { array: true })
-  correctAnswerIds: string[];
+  @Field(() => [CorrectAnswerIds])
+  @Column('json', { array: true })
+  correctAnswerIds: CorrectAnswerIds[];
 
   @Field(() => [String])
   @Column('string', { array: true })

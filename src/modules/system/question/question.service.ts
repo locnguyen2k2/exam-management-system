@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { MongoRepository } from 'typeorm';
 import {
+  CorrectAnswerIdsDto,
   CreateQuestionsDto,
   QuestionPageOptions,
   UpdateQuestionDto,
@@ -53,14 +54,6 @@ const defaultLookup = [
       localField: 'answerIds',
       foreignField: 'id',
       as: 'answers',
-    },
-  },
-  {
-    $lookup: {
-      from: 'answer_entity',
-      localField: 'correctAnswerIds',
-      foreignField: 'id',
-      as: 'correctAnswers',
     },
   },
   {
@@ -119,6 +112,27 @@ export class QuestionService {
       .aggregate(pipes)
       .toArray();
 
+    if (data.length > 0) {
+      for (const question of data) {
+        const correctAnswerList = [];
+        for (const correctAnswer of question.correctAnswerIds) {
+          const newCorrectAnswer = {
+            score: correctAnswer.score,
+            ...(!_.isEmpty(correctAnswer.correctAnswerId) &&
+              (await this.answerService.findOne(
+                correctAnswer.correctAnswerId,
+              ))),
+          };
+          correctAnswerList.push(newCorrectAnswer);
+        }
+
+        if (correctAnswerList.length > 0) {
+          question['correctAnswers'] = correctAnswerList;
+          delete question.correctAnswerIds;
+        }
+      }
+    }
+
     const entities = data;
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
     const pageMetaDto = new PageMetaDto({
@@ -133,7 +147,26 @@ export class QuestionService {
       .aggregate([...defaultLookup, { $match: { id } }])
       .toArray();
 
-    if (isExisted.length > 0) return isExisted[0];
+    if (isExisted.length > 0) {
+      const correctAnswerList = [];
+      if (isExisted[0].correctAnswerIds.length > 0) {
+        for (const correctAnswer of isExisted[0].correctAnswerIds) {
+          const newCorrectAnswer = {
+            score: correctAnswer.score,
+            ...(!_.isEmpty(correctAnswer.correctAnswerId) &&
+              (await this.answerService.findOne(
+                correctAnswer.correctAnswerId,
+              ))),
+          };
+          correctAnswerList.push(newCorrectAnswer);
+        }
+      }
+      if (correctAnswerList.length > 0) {
+        isExisted[0]['correctAnswers'] = correctAnswerList;
+        delete isExisted[0].correctAnswerIds;
+      }
+      return isExisted[0];
+    }
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
   }
 
@@ -168,7 +201,7 @@ export class QuestionService {
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: QuestionEntity[] = [];
     const answerIds: string[] = [];
-    const correctAnswerIds: string[] = [];
+    const correctAnswers: CorrectAnswerIdsDto[] = [];
 
     await Promise.all(
       data.questions.map(async (questionData) => {
@@ -190,19 +223,19 @@ export class QuestionService {
 
         if (
           questionData.category !== CategoryEnum.MULTIPLE_CHOICE &&
-          questionData.correctAnswerIds.length > 1
+          questionData.correctAnswers.length > 1
         ) {
           throw new BusinessException(
             '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án!',
           );
         }
 
-        for (const correctAnswerId of questionData.correctAnswerIds) {
-          const index = correctAnswerIds.findIndex(
-            (value) => value === correctAnswerId,
+        for (const correctAnswer of questionData.correctAnswers) {
+          const index = correctAnswers.findIndex(
+            (value) => value.correctAnswerId === correctAnswer.correctAnswerId,
           );
           const hasInAnswerIds = answerIds.find(
-            (value) => value === correctAnswerId,
+            (value) => value === correctAnswer.correctAnswerId,
           );
 
           if (!hasInAnswerIds)
@@ -210,8 +243,8 @@ export class QuestionService {
               '400:Đáp án phải đúng có trong câu trả lời',
             );
           if (index === -1) {
-            await this.answerService.findOne(correctAnswerId);
-            correctAnswerIds.push(correctAnswerId);
+            await this.answerService.findOne(correctAnswer.correctAnswerId);
+            correctAnswers.push(correctAnswer);
           }
         }
       }),
@@ -222,7 +255,7 @@ export class QuestionService {
         const { answerIds, chapterId } = questionData;
         let picture = '';
         delete questionData.answerIds;
-        delete questionData.correctAnswerIds;
+        delete questionData.correctAnswers;
 
         if (questionData.picture) {
           picture += await this.imageService.uploadImage(questionData.picture);
@@ -230,7 +263,7 @@ export class QuestionService {
 
         const question = new QuestionEntity({
           ...questionData,
-          correctAnswerIds: [...new Set(correctAnswerIds)],
+          correctAnswerIds: [...new Set(correctAnswers)],
           answerIds: [...new Set(answerIds)],
           picture,
           create_by: data.createBy,
@@ -376,7 +409,7 @@ export class QuestionService {
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
     const listAnswers: string[] = [];
-    const correctAnswerIds: string[] = [];
+    const correctAnswers: CorrectAnswerIdsDto[] = [];
     let picture = '';
 
     if (data.content) {
@@ -391,7 +424,7 @@ export class QuestionService {
 
     if (
       category !== CategoryEnum.MULTIPLE_CHOICE &&
-      ((data.correctAnswerIds && data.correctAnswerIds.length > 1) ||
+      ((data.correctAnswers && data.correctAnswers.length > 1) ||
         isExisted.correctAnswerIds.length > 1)
     ) {
       throw new BusinessException(
@@ -407,12 +440,14 @@ export class QuestionService {
       }
     }
 
-    if (data.correctAnswerIds) {
+    if (data.correctAnswers) {
       const answers =
         listAnswers.length > 0 ? listAnswers : isExisted.answerIds;
 
-      for (const correctAnswerId of data.correctAnswerIds) {
-        const hasInAnswers = answers.find((value) => value === correctAnswerId);
+      for (const correctAnswer of data.correctAnswers) {
+        const hasInAnswers = answers.find(
+          (value) => value === correctAnswer.correctAnswerId,
+        );
 
         if (!hasInAnswers) {
           throw new BusinessException(
@@ -420,13 +455,16 @@ export class QuestionService {
           );
         }
 
-        const index = correctAnswerIds.findIndex(
-          (value) => value === correctAnswerId,
+        const index = correctAnswers.findIndex(
+          (value) => value.correctAnswerId === correctAnswer.correctAnswerId,
         );
 
         if (index === -1) {
-          await this.answerService.findOne(correctAnswerId);
-          correctAnswerIds.push(correctAnswerId);
+          await this.answerService.findOne(correctAnswer.correctAnswerId);
+          correctAnswers.push({
+            correctAnswerId: correctAnswer.correctAnswerId,
+            score: correctAnswer.score,
+          });
         }
       }
     }
@@ -444,7 +482,7 @@ export class QuestionService {
         ...(data.level && { level: data.level }),
         ...(data.status && { status: data.status }),
         ...(data.category && { category: data.category }),
-        ...(correctAnswerIds.length > 0 && { correctAnswerIds }),
+        ...(correctAnswers.length > 0 && { correctAnswerIds: correctAnswers }),
         ...(listAnswers.length > 0 && { answerIds: listAnswers }),
         ...(!_.isEmpty(picture) && { picture: picture }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),

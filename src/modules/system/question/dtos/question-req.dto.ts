@@ -1,4 +1,10 @@
-import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
+import {
+  Field,
+  Float,
+  HideField,
+  InputType,
+  PartialType,
+} from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -12,6 +18,15 @@ export interface FileUpload {
   mimetype: string;
   encoding: string;
   createReadStream: () => Stream;
+}
+
+@InputType()
+export class CorrectAnswerIdsDto {
+  @Field(() => String)
+  correctAnswerId: string;
+
+  @Field(() => Float, { nullable: true })
+  score: number;
 }
 
 @InputType('QuestionPageOptions')
@@ -57,8 +72,8 @@ class QuestionBaseDto extends BaseDto {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => [String])
-  correctAnswerIds: string[];
+  @Field(() => [CorrectAnswerIdsDto])
+  correctAnswers: CorrectAnswerIdsDto[];
 
   @Field(() => [String!]!)
   answerIds: string[];

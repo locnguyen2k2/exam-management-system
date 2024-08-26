@@ -109,9 +109,19 @@ export class ExamService {
       };
 
       isQuestion['label'] = question.label;
-      isQuestion.correctAnswers = answers.filter((answer) =>
-        isQuestion.correctAnswerIds.includes(answer.id),
-      );
+
+      for (const answer of answers) {
+        const index = isQuestion.correctAnswerIds.findIndex(
+          (value) => value.correctAnswerId === answer.id,
+        );
+
+        if (index > -1) {
+          isQuestion.correctAnswers.push({
+            ...answer,
+            score: isQuestion.correctAnswerIds[index].score,
+          });
+        }
+      }
 
       isQuestion.answers = answers.filter((answer) =>
         isQuestion.answerIds.includes(answer.id),

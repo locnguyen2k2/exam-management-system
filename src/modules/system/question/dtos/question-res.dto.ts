@@ -1,4 +1,4 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Float, ObjectType } from '@nestjs/graphql';
 import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
@@ -7,15 +7,15 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
-export interface IFileUpload {
-  filename: string;
-  mimetype: string;
-  encoding: string;
+@ObjectType()
+export class CorrectAnswer extends AnswerEntity {
+  @Field(() => Float, { nullable: true })
+  score: number;
 }
 
 @ObjectType('QuestionModel')
 export class QuestionDetailDto extends ExtendedEntity {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   label: string;
 
   @Field(() => String)
@@ -41,8 +41,8 @@ export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => [AnswerEntity])
-  correctAnswers: AnswerEntity[];
+  @Field(() => [CorrectAnswer])
+  correctAnswers: CorrectAnswer[];
 
   @Field(() => [AnswerEntity!]!)
   answers: AnswerEntity[];

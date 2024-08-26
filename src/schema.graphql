@@ -177,6 +177,11 @@ enum StatusShareEnum {
   PRIVATE
 }
 
+type CorrectAnswerIds {
+  correctAnswerId: String!
+  score: Float
+}
+
 type QuestionEntity {
   id: String!
   enable: Boolean
@@ -195,7 +200,7 @@ type QuestionEntity {
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswerIds: [String!]!
+  correctAnswerIds: [CorrectAnswerIds!]!
   answerIds: [String!]!
 }
 
@@ -305,7 +310,7 @@ type ChapterPagination {
   meta: pagination!
 }
 
-type QuestionModel {
+type CorrectAnswer {
   id: String!
 
   """Trạng thái quản lý"""
@@ -319,6 +324,25 @@ type QuestionModel {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
+  value: String!
+  remark: String
+  score: Float
+}
+
+type QuestionModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String
   content: String!
   picture: String
   remark: String
@@ -326,7 +350,7 @@ type QuestionModel {
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswers: [AnswerModel!]!
+  correctAnswers: [CorrectAnswer!]!
   answers: [AnswerModel!]!
   sku: String
 }
@@ -875,12 +899,17 @@ input QuestionBaseDto {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswerIds: [String!]!
+  correctAnswers: [CorrectAnswerIdsDto!]!
   answerIds: [String!]!
 }
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+input CorrectAnswerIdsDto {
+  correctAnswerId: String!
+  score: Float
+}
 
 input UpdateQuestionArgs {
   sku: String
@@ -892,7 +921,7 @@ input UpdateQuestionArgs {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum
-  correctAnswerIds: [String!]
+  correctAnswers: [CorrectAnswerIdsDto!]
   answerIds: [String!]
 }
 
