@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { env } from '~/utils/env';
-import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import { Upload } from 'graphql-upload-minimal';
 
 @Injectable()
 export class ImageService {
@@ -10,8 +10,9 @@ export class ImageService {
     @Inject('FIREBASE_ADMIN') private readonly firebaseAdmin: admin.app.App,
   ) {}
 
-  async handleImage(file: GraphQLUpload): Promise<Express.Multer.File> {
-    const { createReadStream, mimetype, filename } = file;
+  async handleImage(file: Upload): Promise<Express.Multer.File> {
+    // @ts-ignore
+    const { createReadStream, mimetype, filename } = await file;
 
     const buffer = await new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
@@ -28,8 +29,8 @@ export class ImageService {
     } as Express.Multer.File;
   }
 
-  async uploadImage(picture: GraphQLUpload): Promise<string> {
-    const file = await this.handleImage(await picture);
+  async uploadImage(picture: Upload): Promise<string> {
+    const file = await this.handleImage(picture);
     const bucket = this.firebaseAdmin.storage().bucket(env('FIREBASE_BUCKET'));
     const filename = `${uuidv4()}-${file.originalname}`;
     const fileUpload = bucket.file(`uploads/imgs/${filename}`);

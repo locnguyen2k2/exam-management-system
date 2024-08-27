@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKeyPaths } from '~/config';
 import { useContainer } from 'class-validator';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
+import { graphqlUploadExpress } from 'graphql-upload-minimal';
 
 declare const module: any;
 
@@ -21,7 +21,7 @@ async function bootstrap() {
 
   app.use(
     '/graphql',
-    graphqlUploadExpress({ maxFileSize: 1000000, maxFile: 5 }),
+    graphqlUploadExpress({ maxFileSize: 1000000, maxFiles: 5 }),
   );
 
   await app.listen(port, '0.0.0.0', async () => {
