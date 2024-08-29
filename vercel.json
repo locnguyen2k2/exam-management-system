@@ -1,19 +1,9 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "src/main.ts",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/graphql",
-            "dest": "src/main.ts",
-            "methods": [
-                "GET",
-                "POST"
-            ]
-        }
-    ]
+  "version": 2,
+  "builds": [
+    { "src": "src/main.ts", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/.*", "dest": "src/main.ts" }
+  ]
 }
