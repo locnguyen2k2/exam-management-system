@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKeyPaths } from '~/config';
 import { useContainer } from 'class-validator';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { graphqlUploadExpress } from 'graphql-upload-minimal';
+import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 declare const module: any;
 

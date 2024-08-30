@@ -10,7 +10,15 @@ import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
-import { GraphQLUpload, Upload } from 'graphql-upload-minimal';
+import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import { Stream } from 'stream';
+
+export interface FileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => Stream;
+}
 
 @InputType()
 export class CorrectAnswerIdsDto {
@@ -42,7 +50,7 @@ class QuestionBaseDto extends BaseDto {
   content: string;
 
   @Field(() => GraphQLUpload, { nullable: true })
-  picture: Upload;
+  picture: Promise<FileUpload>;
 
   @Field(() => String, { nullable: true })
   remark: string;
