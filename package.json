@@ -20,7 +20,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@apollo/server": "^4.10.4",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/apollo": "^12.1.0",
     "@nestjs/common": "^10.0.0",
@@ -29,7 +28,6 @@
     "@nestjs/graphql": "^12.1.1",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
-    "@nestjs/platform-express": "^10.0.0",
     "@nestjs/throttler": "^6.0.0",
     "@nestjs/typeorm": "^10.0.2",
     "@types/lodash": "^4.17.7",
@@ -44,12 +42,10 @@
     "firebase-admin": "^12.4.0",
     "google-auth-library": "^9.14.0",
     "graphql": "^16.9.0",
-    "graphql-tools": "^9.0.1",
     "graphql-upload-minimal": "^1.6.1",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
     "mongodb": "^6.8.0",
-    "nodemailer": "^6.9.14",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.0",
