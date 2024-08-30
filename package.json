@@ -41,7 +41,6 @@
     "dotenv": "^16.4.5",
     "firebase-admin": "^12.4.0",
     "google-auth-library": "^9.14.0",
-    "graphql": "^16.9.0",
     "graphql-upload-minimal": "^1.6.1",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",

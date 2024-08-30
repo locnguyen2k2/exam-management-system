@@ -89,7 +89,7 @@ export class ExamService {
 
   async getExamDetail(id: string) {
     const questions = [];
-    const exam = await this.examRepo.findOneBy({ id });
+    const exam = await this.findOne(id);
     const questionIds = exam.questions.flat();
     const answerIds = questionIds.flatMap((question) => question.answerIds);
     const answers = await Promise.all(

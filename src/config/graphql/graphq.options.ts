@@ -3,16 +3,12 @@ import { GqlOptionsFactory } from '@nestjs/graphql';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKeyPaths, IGraphqlConfig } from '~/config';
 import { ApolloDriverConfig } from '@nestjs/apollo';
-import { GraphQLError } from 'graphql/error';
-import { GraphQLSchema } from 'graphql/type';
 import { cwd } from '~/utils/env';
 
 const configService = new ConfigService<ConfigKeyPaths>();
 
 @Injectable()
 export class GraphqlOptions implements GqlOptionsFactory {
-  public base_schema: GraphQLSchema = null;
-
   public createGqlOptions(): Promise<ApolloDriverConfig> | ApolloDriverConfig {
     return {
       ...configService.get<IGraphqlConfig>('graphql'),
@@ -21,7 +17,7 @@ export class GraphqlOptions implements GqlOptionsFactory {
         connection
           ? { req: { headers: connection.context }, res }
           : { req, res },
-      formatError: (error: GraphQLError) => {
+      formatError: (error: any) => {
         error.message = error.extensions.originalError
           ? error.extensions.originalError['message']
           : error.message;
