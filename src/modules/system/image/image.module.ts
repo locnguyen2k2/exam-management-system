@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ImageService } from './image.service';
-import { FirebaseModule } from '~/config/firebase/firebase.module';
+
+// import { FirebaseModule } from '~/config/firebase/firebase.module';
 
 @Module({
-  imports: [FirebaseModule],
+  // imports: [FirebaseModule],
   providers: [ImageService],
   exports: [ImageService],
 })

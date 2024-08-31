@@ -1,46 +1,55 @@
-import { Inject, Injectable } from '@nestjs/common';
-import * as admin from 'firebase-admin';
-import { v4 as uuidv4 } from 'uuid';
-import { env } from '~/utils/env';
-import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import { Injectable } from '@nestjs/common';
+import { FileUpload } from '~/modules/system/question/dtos/question-req.dto';
+import * as FormData from 'form-data';
+import axios from 'axios';
+import * as fs from 'fs';
+import { createWriteStream } from 'fs';
+import * as path from 'path';
+import { BusinessException } from '~/common/exceptions/biz.exception';
 
 @Injectable()
 export class ImageService {
-  constructor(
-    @Inject('FIREBASE_ADMIN') private readonly firebaseAdmin: admin.app.App,
-  ) {}
+  // @Inject('FIREBASE_ADMIN') private readonly firebaseAdmin: admin.app.App,
+  constructor() {}
 
-  async handleImage(file: GraphQLUpload): Promise<Express.Multer.File> {
-    const { createReadStream, mimetype, filename } = file;
+  async saveFile(file: FileUpload): Promise<string> {
+    const { createReadStream, filename } = file;
+    const filePath = path.join(__dirname, filename);
 
-    const buffer = await new Promise<Buffer>((resolve, reject) => {
-      const chunks: Buffer[] = [];
+    return new Promise((resolve, reject) => {
       createReadStream()
-        .on('data', (chunk: any) => chunks.push(chunk))
-        .on('end', () => resolve(Buffer.concat(chunks)))
+        .pipe(createWriteStream(filePath))
+        .on('finish', () => resolve(filePath))
         .on('error', reject);
     });
-
-    return {
-      originalname: filename,
-      mimetype,
-      buffer,
-    } as Express.Multer.File;
   }
 
-  async uploadImage(picture: GraphQLUpload): Promise<string> {
-    const file = await this.handleImage(await picture);
-    const bucket = this.firebaseAdmin.storage().bucket(env('FIREBASE_BUCKET'));
-    const filename = `${uuidv4()}-${file.originalname}`;
-    const fileUpload = bucket.file(`uploads/imgs/${filename}`);
+  async uploadImage(picture: Promise<FileUpload>): Promise<string> {
+    const formData = new FormData();
+    const file = await picture;
+    const filePath = await this.saveFile(file);
 
-    await fileUpload.save(file.buffer, {
-      metadata: {
-        contentType: file.mimetype,
-      },
-      public: true,
-    });
+    formData.append(
+      'operations',
+      JSON.stringify({
+        query: `query($file: Upload!) { uploadImage(file: $file) }`,
+      }),
+    );
+    formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
+    formData.append('0', fs.createReadStream(filePath), file.filename);
 
-    return `${filename}`;
+    try {
+      const { data } = await axios({
+        method: 'post',
+        url: 'http://localhost:5000/graphql',
+        headers: { ...formData.getHeaders(), 'apollo-require-preflight': true },
+        data: formData,
+      });
+
+      const fileName = data.data.uploadImage;
+      return fileName;
+    } catch {
+      throw new BusinessException('400:Cập nhật hình ảnh thất bại!');
+    }
   }
 }
