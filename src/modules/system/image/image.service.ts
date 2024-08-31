@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { createWriteStream } from 'fs';
 import * as path from 'path';
 import { BusinessException } from '~/common/exceptions/biz.exception';
+import { env } from "~/utils/env";
 
 @Injectable()
 export class ImageService {
@@ -41,7 +42,7 @@ export class ImageService {
     try {
       const { data } = await axios({
         method: 'post',
-        url: 'http://localhost:5000/graphql',
+        url: env('FIREBASE_API_UPLOAD_IMAGE'),
         headers: { ...formData.getHeaders(), 'apollo-require-preflight': true },
         data: formData,
       });
