@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { createWriteStream } from 'fs';
 import * as path from 'path';
 import { BusinessException } from '~/common/exceptions/biz.exception';
-import { env } from "~/utils/env";
+import { env } from '~/utils/env';
 
 @Injectable()
 export class ImageService {
@@ -51,6 +51,32 @@ export class ImageService {
       return fileName;
     } catch {
       throw new BusinessException('400:Cập nhật hình ảnh thất bại!');
+    }
+  }
+
+  async deleteImage(name: string): Promise<boolean> {
+    const query = `
+    query {
+      deleteImage(file: "${name}")
+    }
+  `;
+
+    try {
+      const { data } = await axios({
+        method: 'post',
+        url: env('FIREBASE_API_UPLOAD_IMAGE'), // Replace with your GraphQL endpoint
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: {
+          query: query,
+        },
+      });
+
+      const fileName = data.data.deleteImage;
+      return fileName;
+    } catch {
+      throw new BusinessException('400:Xóa hình ảnh thất bại!');
     }
   }
 }

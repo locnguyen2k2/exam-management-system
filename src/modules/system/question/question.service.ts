@@ -470,6 +470,9 @@ export class QuestionService {
     }
 
     if (data.picture) {
+      if (!_.isEmpty(isExisted.picture)) {
+        await this.imageService.deleteImage(isExisted.picture);
+      }
       picture += await this.imageService.uploadImage(data.picture);
     }
 
