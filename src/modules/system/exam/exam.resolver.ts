@@ -2,10 +2,10 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import { ExamService } from '~/modules/system/exam/exam.service';
 import {
-  CreateExamDto,
-  ExamPageOptions,
-  GenerateExamDto,
-  UpdateExamDto,
+  CreateExamPaperDto,
+  ExamPaperPageOptions,
+  GenerateExamPaperDto,
+  UpdateExamPaperDto,
 } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
@@ -30,7 +30,7 @@ export class ExamResolver {
   async exams(
     @CurrentUser() user: IAuthPayload,
     @Args('examPageOptions', { nullable: true })
-    examPageOptions: ExamPageOptions = new ExamPageOptions(),
+    examPageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
   ): Promise<ExamPaginationDto> {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
@@ -40,55 +40,59 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)
-  @Query(() => ExamDetailDto, { name: 'examDetail' })
+  @Query(() => ExamDetailDto, {
+    name: 'examDetail',
+    description: 'Chi tiết đề thi',
+  })
   async detail(@Args('id') id: string) {
     return await this.examService.getExamDetail(id);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamEntity], { name: 'createExamination' })
+  @Mutation(() => [ExamEntity], {
+    name: 'createExamPapers',
+    description: 'Tạo đề thi',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createExamArgs') dto: CreateExamDto,
+    @Args('createExamPaperArgs') dto: CreateExamPaperDto,
   ): Promise<ExamEntity[]> {
-    const data = CreateExamDto.plainToClass(dto);
+    const data = CreateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.create(data);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamEntity], { name: 'generateExams' })
+  @Mutation(() => [ExamEntity], {
+    name: 'generateExamPapers',
+    description: 'Khởi tạo đề thi từ ngân hàng câu hỏi',
+  })
   async generate(
     @CurrentUser() user: IAuthPayload,
-    @Args('generateExamArgs') dto: GenerateExamDto,
+    @Args('generateExamPaperArgs') dto: GenerateExamPaperDto,
   ): Promise<ExamEntity[]> {
-    const data = GenerateExamDto.plainToClass(dto);
+    const data = GenerateExamPaperDto.plainToClass(dto);
     return await this.examService.generate(user.id, data);
   }
 
   @Permissions(PermissionEnum.UPDATE_EXAM)
-  @Mutation(() => ExamEntity, { name: 'updateExam' })
+  @Mutation(() => ExamEntity, {
+    name: 'updateExamPaper',
+    description: 'Cập nhật đề thi',
+  })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('examId') id: string,
-    @Args('updateExamArgs') dto: UpdateExamDto,
+    @Args('updateExamPaperArgs') dto: UpdateExamPaperDto,
   ): Promise<ExamEntity> {
-    const data = plainToClass(UpdateExamDto, dto);
+    const data = plainToClass(UpdateExamPaperDto, dto);
     data.updateBy = user.id;
     return await this.examService.update(id, data);
   }
 
   @Permissions(PermissionEnum.DELETE_EXAM)
-  @Mutation(() => String, { name: 'deleteExam' })
-  async delete(@Args('examinationId') id: string): Promise<string> {
+  @Mutation(() => String, { name: 'deleteExamPaper' })
+  async delete(@Args('examPaperId') id: string): Promise<string> {
     return await this.examService.delete(id);
-  }
-
-  @Permissions(PermissionEnum.DELETE_QUESTION)
-  @Mutation(() => String, { name: 'deleteQuestions' })
-  async deleteQuestions(
-    @Args('questionIds', { type: () => [String] }) questionIds: string[],
-  ): Promise<string> {
-    return await this.examService.deleteQuestions(questionIds);
   }
 }

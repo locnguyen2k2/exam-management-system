@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { MongoRepository } from 'typeorm';
@@ -17,25 +17,19 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-
-import * as _ from 'lodash';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { QuestionPagination } from '~/modules/system/question/dtos/question-res.dto';
-import { UpdateChaptersStatusDto } from '~/modules/system/chapter/dtos/chapter-req.dto';
 import { searchIndexes } from '~/utils/search';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
-import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
+import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pagination';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ImageService } from '~/modules/system/image/image.service';
-
-export interface IDetailChapter {
-  chapter: ChapterEntity;
-  questions: QuestionEntity[];
-}
+import * as _ from 'lodash';
+import { ExamService } from '~/modules/system/exam/exam.service';
 
 export interface IClassifyChapter {
   chapterId: string;
@@ -68,6 +62,8 @@ export class QuestionService {
   constructor(
     @InjectRepository(QuestionEntity)
     private readonly questionRepo: MongoRepository<QuestionEntity>,
+    @Inject(forwardRef(() => ExamService))
+    private readonly examService: ExamService,
     private readonly answerService: AnswerService,
     private readonly chapterService: ChapterService,
     private readonly imageService: ImageService,
@@ -284,17 +280,6 @@ export class QuestionService {
     const newQuestions = this.questionRepo.create(questionsInfo);
 
     return await this.questionRepo.save(newQuestions);
-  }
-
-  async questionHasAnswer(questId: string, answerId: string): Promise<boolean> {
-    const isExisted = await this.questionRepo.findOneBy({
-      id: questId,
-      answerIds: {
-        $all: [answerId],
-      },
-    });
-
-    return !!isExisted;
   }
 
   async classifyByChapter(
@@ -514,24 +499,10 @@ export class QuestionService {
     return 'Cập nhật thành công!';
   }
 
-  async updateChaptersStatus(data: UpdateChaptersStatusDto): Promise<string> {
-    await Promise.all(
-      data.chaptersStatus.map(async ({ chapterId, status }) => {
-        const questionIds = (await this.findByChapter(chapterId)).map(
-          ({ id }) => id,
-        );
-        await this.questionRepo.updateMany(
-          { id: { $in: questionIds } },
-          { $set: { status } },
-          { upsert: false },
-        );
-      }),
-    );
-    return await this.chapterService.updateStatus(data);
-  }
-
   async deleteMany(ids: string[]): Promise<string> {
+    const listQuestion: string[] = [];
     const listIds: string[] = [];
+
     await Promise.all(
       ids.map(async (id) => {
         await this.findOne(id);
@@ -540,21 +511,20 @@ export class QuestionService {
       }),
     );
 
-    await this.questionRepo.deleteMany({ id: { $in: listIds } });
-    return 'Xóa thành công!';
-  }
-
-  async deleteAnswers(answerIds: string[]): Promise<string> {
-    const listIds = [];
     await Promise.all(
-      answerIds.map(async (id) => {
-        const isExisted = await this.findByAnswerId(id);
-        if (isExisted.length === 0) listIds.push(id);
+      ids.map(async (id) => {
+        const isExisted = await this.examService.findByQuestionId(id);
+        const questInChapters =
+          await this.chapterService.isQuestionInChapters(id);
+        if (isExisted.length === 0 && !questInChapters) listQuestion.push(id);
       }),
     );
-    if (listIds.length === 0)
+
+    if (listQuestion.length === 0)
       throw new BusinessException(ErrorEnum.RECORD_IN_USED);
-    return await this.answerService.deleteMany(listIds);
+
+    await this.questionRepo.deleteMany({ id: { $in: listQuestion } });
+    throw new BusinessException('200:Xoá thành công!');
   }
 
   async randQuestsByChap(
@@ -580,8 +550,8 @@ export class QuestionService {
 
   async shuffle(arr: any[]): Promise<any[]> {
     let i = arr.length;
-    let j;
-    let temp;
+    let j: any;
+    let temp: any;
 
     while (--i > 0) {
       j = Math.floor(Math.random() * (i + 1));

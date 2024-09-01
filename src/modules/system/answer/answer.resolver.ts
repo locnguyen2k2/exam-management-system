@@ -58,4 +58,12 @@ export class AnswerResolver {
     delete data.id;
     return await this.answerService.update(id, data);
   }
+
+  @Permissions(PermissionEnum.DELETE_ANSWER)
+  @Mutation(() => String, { name: 'deleteAnswers' })
+  async deleteAnswers(
+    @Args('answerIds', { type: () => [String] }) answerIds: [string],
+  ): Promise<string> {
+    return await this.answerService.deleteMany(answerIds);
+  }
 }

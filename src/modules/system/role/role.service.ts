@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
@@ -17,12 +22,16 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
 import { pipeLine } from '~/utils/pagination';
+import { RoleEnum } from '~/modules/system/role/role.constant';
+import { UserService } from '~/modules/system/user/user.service';
 
 @Injectable()
 export class RoleService {
   constructor(
     @InjectRepository(RoleEntity)
     private readonly roleRepository: MongoRepository<RoleEntity>,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
     private readonly permissionService: PermissionService,
   ) {}
 
@@ -73,6 +82,16 @@ export class RoleService {
       name: { $regex: new RegExp(name.replace(/\s+/g, '\\s*'), 'i') },
     });
     if (isExisted) return isExisted;
+  }
+
+  async findByPermission(perId: string): Promise<RoleEntity[]> {
+    return await this.roleRepository.find({
+      where: {
+        perIds: {
+          $all: [perId],
+        },
+      },
+    });
   }
 
   async getPermissions(id: string): Promise<any> {
@@ -149,42 +168,35 @@ export class RoleService {
   async deleteMany(ids: string[]): Promise<string> {
     await Promise.all(
       ids.map(async (id) => {
-        await this.findOne(id);
+        const isExisted = await this.findOne(id);
+        if (RoleEnum[`${isExisted.value.toUpperCase()}`])
+          throw new BusinessException(
+            `400:Không thể xóa quyền này! "${isExisted.value}"`,
+          );
+      }),
+    );
+    const listRoles: string[] = [];
+
+    await Promise.all(
+      ids.map(async (roleId) => {
+        const isExisted = await this.userService.findByRole(roleId);
+
+        isExisted.length === 0 &&
+          listRoles.findIndex((rid) => rid === roleId) === -1 &&
+          listRoles.push(roleId);
       }),
     );
 
+    if (listRoles.length === 0)
+      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
+
     await this.roleRepository.deleteMany({
       id: {
-        $in: ids,
+        $in: listRoles,
       },
     });
 
     throw new BusinessException('200:Thao tác thành công');
-  }
-
-  async deletePermissions(ids: string[]): Promise<string> {
-    const permissions: string[] = [];
-
-    await Promise.all(
-      ids.map(async (perId) => {
-        const isExisted = await this.roleRepository.find({
-          where: {
-            perIds: {
-              $all: [perId],
-            },
-          },
-        });
-
-        isExisted.length === 0 &&
-          permissions.findIndex((id) => id === perId) === -1 &&
-          permissions.push(perId);
-      }),
-    );
-
-    permissions.length > 0 &&
-      (await this.permissionService.deleteMany(permissions));
-
-    throw new BusinessException(ErrorEnum.RECORD_IN_USED);
   }
 
   async roleHasPermission(rid: string, perId: string): Promise<boolean> {

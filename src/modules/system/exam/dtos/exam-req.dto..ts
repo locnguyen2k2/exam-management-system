@@ -4,7 +4,7 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Expose, Transform } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
-import { Max, MaxLength, Min, MinLength, Validate } from 'class-validator';
+import { Max, Min, Validate } from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { IsValidString } from '~/common/decorators/string.decorator';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -12,20 +12,17 @@ import {
   AnswerLabelEnum,
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
-import { randomChars } from '~/utils/random';
-import * as _ from 'lodash';
-import { regWhiteSpace } from '~/common/constants/regex.constant';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
 
-@InputType('ExamPageOptions')
-export class ExamPageOptions extends PageOptionDto {
+@InputType('ExamPaperPageOptions')
+export class ExamPaperPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], {
     nullable: true,
   })
   readonly examStatus?: StatusShareEnum[];
 }
 
-@InputType()
+@InputType('QuestionInfoArgs')
 export class QuestionInfoDto {
   @Field(() => String)
   chapterId: string;
@@ -34,7 +31,7 @@ export class QuestionInfoDto {
   questionIds: string[];
 }
 
-@InputType()
+@InputType('ScaleArgs')
 class Scale implements IScale {
   @Field(() => String)
   chapterId: string;
@@ -93,8 +90,8 @@ class BaseExamDto extends BaseDto {
   numberExams: number = 1;
 }
 
-@InputType()
-export class CreateExamDto extends BaseExamDto {
+@InputType('CreateExamPaperArgs')
+export class CreateExamPaperDto extends BaseExamDto {
   @HideField()
   scales: Scale[];
 
@@ -105,8 +102,8 @@ export class CreateExamDto extends BaseExamDto {
   createBy: string;
 }
 
-@InputType('GenerateExamArgs')
-export class GenerateExamDto extends BaseExamDto {
+@InputType('GenerateExamPaperArgs')
+export class GenerateExamPaperDto extends BaseExamDto {
   @Field(() => [Scale])
   @IsScale()
   @Expose()
@@ -119,8 +116,8 @@ export class GenerateExamDto extends BaseExamDto {
   createBy: string;
 }
 
-@InputType('UpdateExamArgs')
-export class UpdateExamDto extends PartialType(BaseExamDto) {
+@InputType('UpdateExamPaperArgs')
+export class UpdateExamPaperDto extends PartialType(BaseExamDto) {
   @HideField()
   numberExams;
   sku;

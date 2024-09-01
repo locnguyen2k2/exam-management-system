@@ -441,12 +441,14 @@ type Query {
   lesson(lessonId: String!): LessonModel!
 
   """Lấy danh sách đề thi"""
-  exams(examPageOptions: ExamPageOptions): ExamPagination!
+  exams(examPageOptions: ExamPaperPageOptions): ExamPagination!
+
+  """Chi tiết đề thi"""
   examDetail(id: String!): ExamModel!
 
   """Lấy danh sách câu hỏi"""
   questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
-  question(questionId: String!): QuestionModel!
+  questionDetail(questionId: String!): QuestionModel!
   answer(answerId: String!): AnswerModel!
 
   """Lấy danh sách đáp án"""
@@ -540,7 +542,7 @@ input LessonPageOptions {
   lessonStatus: [StatusShareEnum!]
 }
 
-input ExamPageOptions {
+input ExamPaperPageOptions {
   keyword: String = ""
 
   """Trường sắp xếp (Mặc định cột ngày tạo)"""
@@ -585,14 +587,14 @@ input AnswerPageOptions {
 
 type Mutation {
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
-  deleteRoles(roleIds: [String!]!): String!
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
 
   """Cập nhật quền"""
   updateRole(id: String!, updateRoleArgs: UpdateRoleArgs!): RoleModel!
-  deletePermissions(permissionIds: [String!]!): String!
+  deleteRoles(roleIds: [String!]!): String!
   createPermission(createPermissionArgs: createPermissionArgs!): PermissionModel!
   updatePermission(id: String!, updatePermissionArgs: updatePermissionArgs!): PermissionModel!
+  deletePermissions(permissionIds: [String!]!): String!
   verify(confirmTokenArgs: ConfirmEmailArgs!): String!
   refreshConfirmToken(email: String!): String!
   forgotPassword(email: String!): String!
@@ -607,23 +609,27 @@ type Mutation {
 
   """Kích hoạt chương"""
   enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
+  updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
   deleteChapters(chapterIds: [String!]!): [String!]!
   createLessons(createLessonArgs: CreateLessonArgs!): [LessonEntity!]!
   updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonEntity!
-  createExamination(createExamArgs: CreateExamDto!): [ExamEntity!]!
-  generateExams(generateExamArgs: GenerateExamArgs!): [ExamEntity!]!
-  updateExam(examId: String!, updateExamArgs: UpdateExamArgs!): ExamEntity!
-  deleteExam(examinationId: String!): String!
-  deleteQuestions(questionIds: [String!]!): String!
-  createQuestions(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
+
+  """Tạo đề thi"""
+  createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamEntity!]!
+
+  """Khởi tạo đề thi từ ngân hàng câu hỏi"""
+  generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamEntity!]!
+
+  """Cập nhật đề thi"""
+  updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
+  deleteExamPaper(examPaperId: String!): String!
+  createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
   updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionEntity!
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
-
-  """Cập nhật trạng thái công khai"""
-  updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
-  deleteAnswers(answerIds: [String!]!): String!
+  deleteQuestions(questionIds: [String!]!): String!
   createAnswers(createAnswersArgs: CreateAnswersArgs!): [String!]!
   updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
+  deleteAnswers(answerIds: [String!]!): String!
 }
 
 input CreateAdminArgs {
@@ -779,6 +785,15 @@ input EnableChapterDto {
   enable: Boolean!
 }
 
+input UpdateChaptersStatusArgs {
+  chaptersStatus: [ChapterStatusDto!]!
+}
+
+input ChapterStatusDto {
+  chapterId: String!
+  status: StatusShareEnum!
+}
+
 input CreateLessonArgs {
   items: [LessonBaseDto!]!
 }
@@ -799,7 +814,7 @@ input UpdateLessonArgs {
   status: StatusShareEnum
 }
 
-input CreateExamDto {
+input CreateExamPaperArgs {
   label: String!
 
   """Thời gian làm bài (phút)"""
@@ -816,7 +831,7 @@ input CreateExamDto {
 
   """Số lượng đề muốn random từ đề gốc đã nhập"""
   numberExams: Float = 1
-  questionInfo: [QuestionInfoDto!]!
+  questionInfo: [QuestionInfoArgs!]!
 }
 
 enum QuestionLabelEnum {
@@ -834,12 +849,12 @@ enum AnswerLabelEnum {
   UP_BRACKET
 }
 
-input QuestionInfoDto {
+input QuestionInfoArgs {
   chapterId: String!
   questionIds: [String!]!
 }
 
-input GenerateExamArgs {
+input GenerateExamPaperArgs {
   label: String!
 
   """Thời gian làm bài (phút)"""
@@ -856,17 +871,17 @@ input GenerateExamArgs {
 
   """Số lượng đề muốn random từ đề gốc đã nhập"""
   numberExams: Float = 1
-  scales: [Scale!]!
+  scales: [ScaleArgs!]!
   totalQuestions: Float!
 }
 
-input Scale {
+input ScaleArgs {
   chapterId: String!
   percent: Float!
   level: LevelEnum!
 }
 
-input UpdateExamArgs {
+input UpdateExamPaperArgs {
   label: String
 
   """Thời gian làm bài (phút)"""
@@ -931,15 +946,6 @@ input UpdateQuestionStatusArgs {
 
 input QuestionStatusDto {
   questionId: String!
-  status: StatusShareEnum!
-}
-
-input UpdateChaptersStatusArgs {
-  chaptersStatus: [ChapterStatusDto!]!
-}
-
-input ChapterStatusDto {
-  chapterId: String!
   status: StatusShareEnum!
 }
 

@@ -43,12 +43,4 @@ export class UserResolver {
     const data = AdminCreateDto.plainToClass(args);
     return await this.userService.create({ ...data, createBy: null });
   }
-
-  @Permissions(PermissionEnum.DELETE_ROLE)
-  @Mutation(() => String, { name: 'deleteRoles' })
-  async deleteRoles(
-    @Args('roleIds', { type: () => [String] }) roleIds: string[],
-  ): Promise<string> {
-    return await this.userService.deleteRoles(roleIds);
-  }
 }

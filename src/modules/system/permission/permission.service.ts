@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 import { MongoRepository } from 'typeorm';
@@ -19,12 +19,16 @@ import {
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
 import { pipeLine } from '~/utils/pagination';
+import { RoleService } from '~/modules/system/role/role.service';
+import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 
 @Injectable()
 export class PermissionService {
   constructor(
     @InjectRepository(PermissionEntity)
     private readonly permissionRepository: MongoRepository<PermissionEntity>,
+    @Inject(forwardRef(() => RoleService))
+    private readonly roleService: RoleService,
   ) {}
 
   async findAll(
@@ -106,9 +110,28 @@ export class PermissionService {
   async deleteMany(ids: string[]): Promise<string> {
     await Promise.all(
       ids.map(async (id) => {
-        await this.findOne(id);
+        const isExisted = await this.findOne(id);
+        if (PermissionEnum[`${isExisted.value.toUpperCase()}`])
+          throw new BusinessException(
+            `400:Không thể xóa phân quyền này "${isExisted.value}"!`,
+          );
       }),
     );
+
+    const permissions: string[] = [];
+
+    await Promise.all(
+      ids.map(async (perId) => {
+        const isExisted = await this.roleService.findByPermission(perId);
+
+        isExisted.length === 0 &&
+          permissions.findIndex((id) => id === perId) === -1 &&
+          permissions.push(perId);
+      }),
+    );
+
+    if (permissions.length === 0)
+      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
 
     await this.permissionRepository.deleteMany({
       id: {
@@ -116,7 +139,7 @@ export class PermissionService {
       },
     });
 
-    throw new BusinessException('200:Thao tác thành công');
+    throw new BusinessException('200:Xóa thành công!');
   }
 
   async isExisted(value: string): Promise<boolean> {

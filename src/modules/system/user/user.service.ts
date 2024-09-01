@@ -85,6 +85,16 @@ export class UserService {
     if (user) return user;
   }
 
+  async findByRole(roleId: string): Promise<UserEntity[]> {
+    return await this.userRepository.find({
+      where: {
+        roleIds: {
+          $all: [roleId],
+        },
+      },
+    });
+  }
+
   async create(data: any): Promise<UserEntity> {
     const isExisted = await this.findByEmail(data.email);
     const roleIds: string[] = await this.handleRoleIds(data.roleIds);
@@ -320,29 +330,5 @@ export class UserService {
       (token) => token.value === value && token.type === type,
     );
     return user.tokens[index];
-  }
-
-  async deleteRoles(ids: string[]): Promise<string> {
-    const listRoles: string[] = [];
-
-    await Promise.all(
-      ids.map(async (roleId) => {
-        const isExisted = await this.userRepository.find({
-          where: {
-            roleIds: {
-              $all: [roleId],
-            },
-          },
-        });
-
-        isExisted.length === 0 &&
-          listRoles.findIndex((rid) => rid === roleId) === -1 &&
-          listRoles.push(roleId);
-      }),
-    );
-
-    listRoles.length > 0 && (await this.roleService.deleteMany(listRoles));
-
-    throw new BusinessException(ErrorEnum.RECORD_IN_USED);
   }
 }

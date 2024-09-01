@@ -2,16 +2,14 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { MongoRepository } from 'typeorm';
-import {
-  IDetailChapter,
-  QuestionService,
-} from '~/modules/system/question/question.service';
+import { QuestionService } from '~/modules/system/question/question.service';
+import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { AnswerService } from '~/modules/system/answer/answer.service';
 import {
-  CreateExamDto,
-  ExamPageOptions,
-  GenerateExamDto,
-  UpdateExamDto,
+  CreateExamPaperDto,
+  ExamPaperPageOptions,
+  GenerateExamPaperDto,
+  UpdateExamPaperDto,
 } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
@@ -46,7 +44,7 @@ export class ExamService {
 
   async findAll(
     uid: string = null,
-    pageOptions: ExamPageOptions = new ExamPageOptions(),
+    pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
   ): Promise<ExamPaginationDto> {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
@@ -177,7 +175,7 @@ export class ExamService {
     );
   }
 
-  async create(data: CreateExamDto): Promise<ExamEntity[]> {
+  async create(data: CreateExamPaperDto): Promise<ExamEntity[]> {
     const exams: ExamEntity[] = [];
     const lesson = await this.lessonService.findOne(data.lessonId);
     const questionInfo: IDetailChapter[] = await Promise.all(
@@ -236,7 +234,7 @@ export class ExamService {
     });
   }
 
-  async generate(uid: string, data: GenerateExamDto): Promise<ExamEntity[]> {
+  async generate(uid: string, data: GenerateExamPaperDto): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
     const lesson = await this.lessonService.findOne(data.lessonId);
@@ -322,7 +320,7 @@ export class ExamService {
     );
   }
 
-  async update(id: string, data: UpdateExamDto): Promise<ExamEntity> {
+  async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
     if (data.lessonId) {
       const newLesson = await this.lessonService.findOne(data.lessonId);
@@ -383,20 +381,5 @@ export class ExamService {
     await this.findOne(id);
     await this.examRepo.deleteOne({ id });
     return 'Xóa thành công';
-  }
-
-  async deleteQuestions(ids: string[]): Promise<string> {
-    const listQuestion: string[] = [];
-    await Promise.all(
-      ids.map(async (id) => {
-        const isExisted = await this.findByQuestionId(id);
-        const questInChapters =
-          await this.chapterService.isQuestionInChapters(id);
-        if (isExisted.length === 0 && !questInChapters) listQuestion.push(id);
-      }),
-    );
-    if (listQuestion.length > 0)
-      return await this.questionService.deleteMany(listQuestion);
-    throw new BusinessException(ErrorEnum.RECORD_IN_USED);
   }
 }

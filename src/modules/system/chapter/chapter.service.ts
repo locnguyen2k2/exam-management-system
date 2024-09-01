@@ -22,9 +22,10 @@ import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto
 import { searchIndexes } from '~/utils/search';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lession/lesson.service';
-import { IDetailChapter } from '~/modules/system/question/question.service';
+import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { pipeLine } from '~/utils/pagination';
+import { QuestionService } from '~/modules/system/question/question.service';
 
 const defaultLookup = [
   {
@@ -55,6 +56,8 @@ export class ChapterService {
   constructor(
     @Inject(forwardRef(() => LessonService))
     private readonly lessonService: LessonService,
+    @Inject(forwardRef(() => QuestionService))
+    private readonly questionService: QuestionService,
     @InjectRepository(ChapterEntity)
     private readonly chapterRepo: MongoRepository<ChapterEntity>,
   ) {}
@@ -295,6 +298,17 @@ export class ChapterService {
 
     await Promise.all(
       data.chaptersStatus.map(async ({ chapterId, status }) => {
+        const questionIds: any = (
+          await this.questionService.findByChapter(chapterId)
+        ).map(({ id }) => {
+          return { questionId: id, status: status };
+        });
+
+        await this.questionService.updateStatus({
+          questionsStatus: questionIds,
+          updateBy: data.updateBy,
+        });
+
         await this.chapterRepo.update(
           { id: chapterId },
           { status, update_by: data.updateBy },

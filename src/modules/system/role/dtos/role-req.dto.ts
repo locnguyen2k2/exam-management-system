@@ -40,9 +40,3 @@ export class UpdateRoleDto extends PartialType(RoleBaseDto) {
   @HideField()
   updateBy: string;
 }
-
-@InputType('DeletePermissionArgs')
-export class DeletePermissionDto {
-  @Field(() => [String])
-  perIds: string[];
-}

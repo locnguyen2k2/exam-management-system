@@ -3,7 +3,6 @@ import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { RoleService } from '~/modules/system/role/role.service';
 import { RolePagination } from '~/modules/system/role/dtos/role-res.dto';
 import {
-  DeletePermissionDto,
   RoleCreateDto,
   RolePageOptions,
   UpdateRoleDto,
@@ -56,11 +55,11 @@ export class RoleResolver {
     return await this.roleService.update(id, data);
   }
 
-  @Permissions(PermissionEnum.DELETE_PERMISSION)
-  @Mutation(() => String, { name: 'deletePermissions' })
-  async deletePermissions(
-    @Args('permissionIds', { type: () => [String] }) perIds: string[],
+  @Permissions(PermissionEnum.DELETE_ROLE)
+  @Mutation(() => String, { name: 'deleteRoles' })
+  async deleteRoles(
+    @Args('roleIds', { type: () => [String] }) roleIds: string[],
   ): Promise<string> {
-    return await this.roleService.deletePermissions(perIds);
+    return await this.roleService.deleteMany(roleIds);
   }
 }

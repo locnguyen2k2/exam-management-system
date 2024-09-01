@@ -11,14 +11,7 @@ import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import { Stream } from 'stream';
-
-export interface FileUpload {
-  filename: string;
-  mimetype: string;
-  encoding: string;
-  createReadStream: () => Stream;
-}
+import { FileUpload } from '~/modules/system/image/image.interface';
 
 @InputType()
 export class CorrectAnswerIdsDto {

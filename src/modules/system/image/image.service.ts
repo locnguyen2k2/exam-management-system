@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FileUpload } from '~/modules/system/question/dtos/question-req.dto';
+import { FileUpload } from './image.interface';
 import * as FormData from 'form-data';
 import axios from 'axios';
 import * as fs from 'fs';

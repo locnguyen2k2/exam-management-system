@@ -54,4 +54,12 @@ export class PermissionResolver {
     const data = plainToClass(UpdatePermissionDto, args);
     return await this.permissionService.update(id, data);
   }
+
+  @Permissions(PermissionEnum.DELETE_PERMISSION)
+  @Mutation(() => String, { name: 'deletePermissions' })
+  async deletePermissions(
+    @Args('permissionIds', { type: () => [String] }) perIds: string[],
+  ): Promise<string> {
+    return await this.permissionService.deleteMany(perIds);
+  }
 }

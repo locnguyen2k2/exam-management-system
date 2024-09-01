@@ -16,7 +16,6 @@ import {
   QuestionDetailDto,
   QuestionPagination,
 } from '~/modules/system/question/dtos/question-res.dto';
-import { UpdateChaptersStatusDto } from '~/modules/system/chapter/dtos/chapter-req.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Questions')
@@ -44,13 +43,13 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_QUESTION)
-  @Query(() => QuestionDetailDto, { name: 'question' })
+  @Query(() => QuestionDetailDto, { name: 'questionDetail' })
   async question(@Args('questionId') id: string): Promise<QuestionDetailDto> {
     return this.questionService.detailQuestion(id);
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)
-  @Mutation(() => [QuestionEntity], { name: 'createQuestions' })
+  @Mutation(() => [QuestionEntity], { name: 'createQuestion' })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createQuestionArgs') args: CreateQuestionsDto,
@@ -82,25 +81,11 @@ export class QuestionResolver {
     return await this.questionService.updateStatus(data);
   }
 
-  @Permissions(PermissionEnum.UPDATE_CHAPTER)
-  @Mutation(() => String, {
-    name: 'updateChaptersStatus',
-    description: 'Cập nhật trạng thái công khai',
-  })
-  async updateChaptersStatus(
-    @CurrentUser() user: IAuthPayload,
-    @Args('updateChaptersStatusArgs') dto: UpdateChaptersStatusDto,
+  @Permissions(PermissionEnum.DELETE_QUESTION)
+  @Mutation(() => String, { name: 'deleteQuestions' })
+  async deleteQuestions(
+    @Args('questionIds', { type: () => [String] }) questionIds: string[],
   ): Promise<string> {
-    const data = plainToClass(UpdateChaptersStatusDto, dto);
-    data.updateBy = user.id ? user.id : null;
-    return await this.questionService.updateChaptersStatus(data);
-  }
-
-  @Permissions(PermissionEnum.DELETE_ANSWER)
-  @Mutation(() => String, { name: 'deleteAnswers' })
-  async deleteAnswers(
-    @Args('answerIds', { type: () => [String] }) answerIds: [string],
-  ): Promise<string> {
-    return await this.questionService.deleteAnswers(answerIds);
+    return await this.questionService.deleteMany(questionIds);
   }
 }

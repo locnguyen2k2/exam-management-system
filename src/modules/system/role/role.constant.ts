@@ -1,7 +1,5 @@
 import { registerEnumType } from '@nestjs/graphql';
 
-const countPerIds = 50;
-
 enum RoleEnum {
   ADMIN = 'admin',
   MANAGER = 'manager',
@@ -9,6 +7,6 @@ enum RoleEnum {
   TEACHER = 'teacher',
 }
 
-export { countPerIds, RoleEnum };
+export { RoleEnum };
 
 registerEnumType(RoleEnum, { name: 'RoleEnum' });

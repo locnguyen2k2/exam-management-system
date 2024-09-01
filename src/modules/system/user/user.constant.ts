@@ -1,7 +1,5 @@
 import { registerEnumType } from '@nestjs/graphql';
 
-const countRoleIds = 5;
-
 enum GenderEnum {
   MALE = 'male',
   FEMALE = 'female',
@@ -13,7 +11,7 @@ enum EmailEnum {
   TEACHER = '@ctuet.edu.vn',
 }
 
-export { countRoleIds, GenderEnum, EmailEnum };
+export { GenderEnum, EmailEnum };
 
 registerEnumType(GenderEnum, { name: 'GenderEnum' });
 registerEnumType(EmailEnum, { name: 'EmailEnum' });

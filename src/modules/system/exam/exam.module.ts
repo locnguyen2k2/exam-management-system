@@ -12,6 +12,7 @@ import { LessonModule } from '~/modules/system/lession/lesson.module';
   imports: [
     forwardRef(() => LessonModule),
     TypeOrmModule.forFeature([ExamEntity]),
+    forwardRef(() => QuestionModule),
     QuestionModule,
     AnswerModule,
     ChapterModule,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { MongoRepository } from 'typeorm';
@@ -19,12 +19,15 @@ import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { searchIndexes } from '~/utils/search';
 import { pipeLine } from '~/utils/pagination';
+import { QuestionService } from '~/modules/system/question/question.service';
 
 @Injectable()
 export class AnswerService {
   constructor(
     @InjectRepository(AnswerEntity)
     private readonly answerRepo: MongoRepository<AnswerEntity>,
+    @Inject(forwardRef(() => QuestionService))
+    private readonly questionService: QuestionService,
   ) {}
 
   async findAll(
@@ -118,12 +121,24 @@ export class AnswerService {
   }
 
   async deleteMany(ids: string[]): Promise<string> {
+    const listIds = [];
+    await Promise.all(
+      ids.map(async (id) => {
+        const isExisted = await this.questionService.findByAnswerId(id);
+        if (isExisted.length === 0) listIds.push(id);
+      }),
+    );
+
+    if (listIds.length === 0)
+      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
+
     await Promise.all(
       ids.map(async (id) => {
         await this.findOne(id);
       }),
     );
     await this.answerRepo.deleteMany({ id: { $in: ids } });
-    throw new BusinessException('200:Delete successfull!');
+
+    throw new BusinessException('200:Delete successfully!');
   }
 }
