@@ -1,20 +1,20 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { LessonService } from '~/modules/system/lession/lesson.service';
+import { LessonService } from '~/modules/system/lesson/lesson.service';
 import {
   CreateLessonDto,
   LessonPageOptions,
   UpdateLessonDto,
-} from '~/modules/system/lession/dtos/lesson-req.dto';
+} from '~/modules/system/lesson/dtos/lesson-req.dto';
 import { plainToClass } from 'class-transformer';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { Permissions } from '~/common/decorators/permission.decorator';
-import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import {
   LessonDetailDto,
   LessonPaginationDto,
-} from '~/modules/system/lession/dtos/lesson-res.dto';
+} from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Lessons')

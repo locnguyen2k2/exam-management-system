@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
-import { LessonResolver } from '~/modules/system/lession/lesson.resolver';
-import { LessonService } from '~/modules/system/lession/lesson.service';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
+import { LessonResolver } from '~/modules/system/lesson/lesson.resolver';
+import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { ExamModule } from '~/modules/system/exam/exam.module';
 import { ChapterModule } from '~/modules/system/chapter/chapter.module';
 import { ClassModule } from '~/modules/system/class/class.module';

@@ -62,8 +62,9 @@ export class AnswerResolver {
   @Permissions(PermissionEnum.DELETE_ANSWER)
   @Mutation(() => String, { name: 'deleteAnswers' })
   async deleteAnswers(
+    @CurrentUser() user: IAuthPayload,
     @Args('answerIds', { type: () => [String] }) answerIds: [string],
   ): Promise<string> {
-    return await this.answerService.deleteMany(answerIds);
+    return await this.answerService.deleteMany(answerIds, user.id);
   }
 }

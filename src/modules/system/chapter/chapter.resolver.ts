@@ -4,8 +4,9 @@ import {
   ChapterPageOptions,
   CreateChapterDto,
   UpdateChapterDto,
-  EnableChaptersDto, UpdateChaptersStatusDto
-} from "~/modules/system/chapter/dtos/chapter-req.dto";
+  EnableChaptersDto,
+  UpdateChaptersStatusDto,
+} from '~/modules/system/chapter/dtos/chapter-req.dto';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { plainToClass } from 'class-transformer';
@@ -114,7 +115,6 @@ export class ChapterResolver {
     return await this.chapterService.enable(data);
   }
 
-
   @Permissions(PermissionEnum.UPDATE_CHAPTER)
   @Mutation(() => String, {
     name: 'updateChaptersStatus',
@@ -131,8 +131,9 @@ export class ChapterResolver {
   @Permissions(PermissionEnum.DELETE_CHAPTER)
   @Mutation(() => [String], { name: 'deleteChapters' })
   async deleteMany(
+    @CurrentUser() user: IAuthPayload,
     @Args('chapterIds', { type: () => [String] }) chapterIds: string[],
   ): Promise<string> {
-    return await this.chapterService.deleteMany(chapterIds);
+    return await this.chapterService.deleteMany(chapterIds, user.id);
   }
 }

@@ -21,7 +21,7 @@ import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { searchIndexes } from '~/utils/search';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { LessonService } from '~/modules/system/lession/lesson.service';
+import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { pipeLine } from '~/utils/pagination';
@@ -233,9 +233,18 @@ export class ChapterService {
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {
     const isExisted = await this.findOne(id);
 
+    if (isExisted.create_by !== data.updateBy)
+      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+
     if (!_.isNil(data.lessonId)) {
-      const newLesson = await this.lessonService.findOne(data.lessonId);
-      const oldLesson = await this.lessonService.findOne(isExisted.lessonId);
+      const newLesson = await this.lessonService.getAvailable(
+        data.lessonId,
+        data.updateBy,
+      );
+      const oldLesson = await this.lessonService.getAvailable(
+        isExisted.lessonId,
+        data.updateBy,
+      );
       const indexReplace = newLesson.chapterIds.indexOf(id, 0);
 
       if (indexReplace === -1 && newLesson.id !== oldLesson.id) {
@@ -333,11 +342,13 @@ export class ChapterService {
     return await this.findOne(id);
   }
 
-  async deleteMany(ids: string[]): Promise<string> {
+  async deleteMany(ids: string[], uid: string): Promise<string> {
     const listChapterIds: string[] = [];
     await Promise.all(
       ids.map(async (id) => {
         const isExisted = await this.findOne(id);
+        if (isExisted.create_by !== uid)
+          throw new BusinessException('400:Khong co quyen xoa ban ghi nay!');
         isExisted.questionIds.length === 0 && listChapterIds.push(id);
       }),
     );

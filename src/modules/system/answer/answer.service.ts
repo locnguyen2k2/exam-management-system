@@ -106,6 +106,9 @@ export class AnswerService {
   async update(id: string, data: UpdateAnswerDto): Promise<AnswerEntity> {
     const isExisted = await this.findOne(id);
 
+    if (isExisted.create_by !== data.updateBy)
+      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+
     const { affected } = await this.answerRepo.update(
       { id },
       {
@@ -120,12 +123,17 @@ export class AnswerService {
     return affected ? await this.findOne(id) : isExisted;
   }
 
-  async deleteMany(ids: string[]): Promise<string> {
+  async deleteMany(ids: string[], uid: string): Promise<string> {
     const listIds = [];
     await Promise.all(
       ids.map(async (id) => {
-        const isExisted = await this.questionService.findByAnswerId(id);
-        if (isExisted.length === 0) listIds.push(id);
+        const isExisted = await this.findOne(id);
+        if (isExisted.create_by !== uid)
+          throw new BusinessException(
+            `400:Khong the xoa ban ghi ${isExisted.id}`,
+          );
+        const isValid = await this.questionService.findByAnswerId(id);
+        if (isValid.length === 0) listIds.push(id);
       }),
     );
 

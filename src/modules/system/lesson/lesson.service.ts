@@ -1,12 +1,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { MongoRepository } from 'typeorm';
 import {
   CreateLessonDto,
   LessonPageOptions,
-} from '~/modules/system/lession/dtos/lesson-req.dto';
-import { LessonPaginationDto } from '~/modules/system/lession/dtos/lesson-res.dto';
+} from '~/modules/system/lesson/dtos/lesson-req.dto';
+import { LessonPaginationDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';

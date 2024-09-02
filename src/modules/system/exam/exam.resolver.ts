@@ -72,7 +72,8 @@ export class ExamResolver {
     @Args('generateExamPaperArgs') dto: GenerateExamPaperDto,
   ): Promise<ExamEntity[]> {
     const data = GenerateExamPaperDto.plainToClass(dto);
-    return await this.examService.generate(user.id, data);
+    data.createBy = user.id;
+    return await this.examService.generate(data);
   }
 
   @Permissions(PermissionEnum.UPDATE_EXAM)
@@ -92,7 +93,10 @@ export class ExamResolver {
 
   @Permissions(PermissionEnum.DELETE_EXAM)
   @Mutation(() => String, { name: 'deleteExamPaper' })
-  async delete(@Args('examPaperId') id: string): Promise<string> {
-    return await this.examService.delete(id);
+  async delete(
+    @CurrentUser() user: IAuthPayload,
+    @Args('examPaperId') id: string,
+  ): Promise<string> {
+    return await this.examService.delete(id, user.id);
   }
 }

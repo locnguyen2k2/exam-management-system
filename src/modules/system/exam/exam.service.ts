@@ -26,9 +26,10 @@ import {
 } from '~/modules/system/exam/enums/label.enum';
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
-import { LessonService } from '~/modules/system/lession/lesson.service';
+import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pagination';
+import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 
 @Injectable()
 export class ExamService {
@@ -181,7 +182,11 @@ export class ExamService {
     const questionInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
-          await this.questionService.validateQuestions(data.lessonId, info),
+          await this.questionService.validateQuestions(
+            data.lessonId,
+            info,
+            data.createBy,
+          ),
       ),
     );
     const questions = questionInfo.map((info) => info.questions).flat();
@@ -227,20 +232,22 @@ export class ExamService {
     return await this.examRepo.save(newExams);
   }
 
-  async countQuestionInExams(questionId: string): Promise<number> {
-    await this.questionService.findOne(questionId);
-    return await this.examRepo.countBy({
-      'questions.questionId': questionId,
-    });
-  }
+  // async countQuestionInExams(questionId: string): Promise<number> {
+  //   await this.questionService.findOne(questionId);
+  //   return await this.examRepo.countBy({
+  //     'questions.questionId': questionId,
+  //   });
+  // }
 
-  async generate(
-    uid: string,
-    data: GenerateExamPaperDto,
-  ): Promise<ExamEntity[]> {
+  async generate(data: GenerateExamPaperDto): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
     const lesson = await this.lessonService.findOne(data.lessonId);
+
+    if (lesson.create_by !== data.createBy)
+      throw new BusinessException(
+        `400:Khong the truy cap hoc phan "${lesson.name}"!`,
+      );
 
     delete data.numberExams;
 
@@ -254,10 +261,13 @@ export class ExamService {
             chapterId,
             level,
             questionQty,
+            data.createBy,
           );
 
         if (questions.length - questionQty < 0)
-          throw new BusinessException('400:Tỉ lệ câu hỏi không hợp lệ');
+          throw new BusinessException(
+            `400:Tỉ lệ câu hỏi chuong ${chapter.id} không hợp lệ(${questions.length}/${questionQty}) câu ${LevelEnum[`${level.toUpperCase()}`]}`,
+          );
 
         return {
           id: chapter.id,
@@ -299,8 +309,8 @@ export class ExamService {
               answerIds: [...question.answerIds],
             };
           }),
-          create_by: uid,
-          update_by: uid,
+          create_by: data.createBy,
+          update_by: data.createBy,
         }),
       );
     }
@@ -325,11 +335,20 @@ export class ExamService {
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
+
+    if (isExisted.create_by !== data.updateBy)
+      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+
     if (data.lessonId) {
-      const newLesson = await this.lessonService.findOne(data.lessonId);
+      const newLesson = await this.lessonService.getAvailable(
+        data.lessonId,
+        data.updateBy,
+      );
+
       if (isExisted.lesson.lessonId !== newLesson.id) {
-        const oldLesson = await this.lessonService.findOne(
+        const oldLesson = await this.lessonService.getAvailable(
           isExisted.lesson.lessonId,
+          data.updateBy,
         );
 
         const oldNewExams = new Set(oldLesson.examIds);
@@ -380,9 +399,13 @@ export class ExamService {
     return await this.findOne(id);
   }
 
-  async delete(id: string): Promise<string> {
-    await this.findOne(id);
+  async delete(id: string, uid: string): Promise<string> {
+    const isExisted = await this.findOne(id);
+    if (isExisted.create_by !== uid) {
+      throw new BusinessException('400:Khong co quyen xoa ban ghi nay!');
+    }
+
     await this.examRepo.deleteOne({ id });
-    return 'Xóa thành công';
+    return '200:Xóa thành công';
   }
 }

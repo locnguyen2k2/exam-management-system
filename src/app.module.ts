@@ -11,7 +11,7 @@ import { AuthModule } from '~/modules/auth/auth.module';
 import { PermissionAuthGuard } from '~/modules/auth/guards/permission-auth.guard';
 import { ExamModule } from '~/modules/system/exam/exam.module';
 import { ChapterModule } from '~/modules/system/chapter/chapter.module';
-import { LessonModule } from '~/modules/system/lession/lesson.module';
+import { LessonModule } from '~/modules/system/lesson/lesson.module';
 import { seconds, ThrottlerModule } from '@nestjs/throttler';
 import { GqlThrottlerGuard } from '~/modules/auth/guards/gpl-throtle.guard';
 import { ClassModule } from '~/modules/system/class/class.module';

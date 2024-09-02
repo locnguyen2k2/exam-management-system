@@ -3,7 +3,7 @@ import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
-import { LessonEntity } from '~/modules/system/lession/entities/lesson.entity';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 
 @ObjectType('ChapterModel')

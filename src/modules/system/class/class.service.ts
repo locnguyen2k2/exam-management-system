@@ -19,7 +19,7 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-import { LessonService } from '~/modules/system/lession/lesson.service';
+import { LessonService } from '~/modules/system/lesson/lesson.service';
 
 @Injectable()
 export class ClassService {

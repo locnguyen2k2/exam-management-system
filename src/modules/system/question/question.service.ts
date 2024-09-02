@@ -194,6 +194,20 @@ export class QuestionService {
     if (isExisted) return isExisted;
   }
 
+  async getAvailable(id: string, uid: string): Promise<QuestionEntity> {
+    const isExisted = await this.findOne(id);
+
+    if (isExisted.create_by === uid) return isExisted;
+
+    if (
+      isExisted.status === StatusShareEnum.PUBLIC &&
+      isExisted.enable === true
+    )
+      return isExisted;
+
+    throw new BusinessException(`400:Bản ghi "${isExisted.id}" không có sẵn!`);
+  }
+
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: QuestionEntity[] = [];
     const answerIds: string[] = [];
@@ -366,12 +380,15 @@ export class QuestionService {
   async validateQuestions(
     lessonId: string,
     data: QuestionInfoDto,
+    uid: string,
   ): Promise<any> {
     const { chapterId, questionIds } = data;
     const questions: QuestionEntity[] = [];
 
     await Promise.all(
-      questionIds.map(async (id) => questions.push(await this.findOne(id))),
+      questionIds.map(async (id) =>
+        questions.push(await this.getAvailable(id, uid)),
+      ),
     );
 
     return await this.chapterService.validateQuestions(
@@ -393,6 +410,10 @@ export class QuestionService {
 
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
+
+    if (isExisted.create_by !== data.updateBy)
+      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+
     const listAnswers: string[] = [];
     const correctAnswers: CorrectAnswerIdsDto[] = [];
     let picture = '';
@@ -531,6 +552,7 @@ export class QuestionService {
     chapterId: string,
     level: LevelEnum,
     quantity: number,
+    uid: string,
   ): Promise<IDetailChapter> {
     const chapter = await this.chapterService.findAvailableById(chapterId);
     const questions = await this.questionRepo
@@ -539,6 +561,7 @@ export class QuestionService {
           $match: {
             chapterId: chapter.id,
             level: level,
+            create_by: uid,
           },
         },
         { $sample: { size: quantity } },
