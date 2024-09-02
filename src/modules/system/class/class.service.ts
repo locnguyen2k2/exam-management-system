@@ -1,0 +1,287 @@
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MongoRepository } from 'typeorm';
+import { ClassEntity } from '~/modules/system/class/entities/class.entity';
+import {
+  ClassPageOptions,
+  CreateClassDto,
+  UpdateClassDto,
+} from '~/modules/system/class/dtos/class-req.dto';
+import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
+import * as _ from 'lodash';
+import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { searchIndexes } from '~/utils/search';
+import { pipeLine } from '~/utils/pagination';
+import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
+import { BusinessException } from '~/common/exceptions/biz.exception';
+import { ErrorEnum } from '~/common/enums/error.enum';
+import {
+  regSpecialChars,
+  regWhiteSpace,
+} from '~/common/constants/regex.constant';
+import { LessonService } from '~/modules/system/lession/lesson.service';
+
+@Injectable()
+export class ClassService {
+  constructor(
+    @InjectRepository(ClassEntity)
+    private readonly classRepo: MongoRepository<ClassEntity>,
+    @Inject(forwardRef(() => LessonService))
+    private readonly lessonService: LessonService,
+  ) {}
+
+  async findAll(
+    uid: string = null,
+    pageOptions: ClassPageOptions = new ClassPageOptions(),
+  ): Promise<ClassPaginationDto> {
+    const filterOptions = {
+      ...(!_.isNil(pageOptions.enable) && {
+        enable: pageOptions.enable,
+      }),
+      ...(!_.isEmpty(pageOptions.classStatus) && {
+        status: { $in: pageOptions.classStatus },
+      }),
+      ...(uid && {
+        $or: [
+          { status: StatusShareEnum.PUBLIC },
+          { enable: true },
+          { enable: false, create_by: uid },
+          {
+            status: StatusShareEnum.PRIVATE,
+            create_by: uid,
+          },
+        ],
+      }),
+    };
+    const pipes = [
+      searchIndexes(pageOptions.keyword),
+      ...pipeLine(pageOptions, filterOptions),
+    ];
+
+    const [{ data, pageInfo }]: any[] = await this.classRepo
+      .aggregate(pipes)
+      .toArray();
+
+    const entities = data;
+    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
+    const pageMetaDto = new PageMetaDto({
+      pageOptions,
+      numberRecords,
+    });
+
+    return new ClassPaginationDto(entities, pageMetaDto);
+  }
+
+  async findOne(id: string): Promise<ClassEntity> {
+    const isExisted = await this.classRepo.findOneBy({ id });
+    if (isExisted) return isExisted;
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+  }
+
+  async findByName(name: string): Promise<ClassEntity> {
+    const handleContent = name
+      .replace(regSpecialChars, '\\$&')
+      .replace(regWhiteSpace, '\\s*');
+
+    const isExisted = await this.classRepo.findOneBy({
+      name: { $regex: handleContent, $options: 'i' },
+    });
+
+    if (isExisted) return isExisted;
+  }
+
+  async getAvaliable(id: string, uid: string): Promise<ClassEntity> {
+    const isExisted = await this.findOne(id);
+
+    if (isExisted.create_by === uid) return isExisted;
+
+    if (
+      isExisted.enable === true &&
+      isExisted.status === StatusShareEnum.PUBLIC
+    )
+      return isExisted;
+
+    throw new BusinessException(
+      `400:Bản khi "${isExisted.name} không có sẵn!"`,
+    );
+  }
+
+  async findByCode(code: string): Promise<ClassEntity> {
+    const handleContent = code
+      .replace(regSpecialChars, '\\$&')
+      .replace(regWhiteSpace, '\\s*');
+
+    const isExisted = await this.classRepo.findOneBy({
+      code: { $regex: handleContent, $options: 'i' },
+    });
+
+    if (isExisted) return isExisted;
+  }
+
+  async create(data: CreateClassDto): Promise<ClassEntity> {
+    const isExisted = await this.findByName(data.name);
+
+    if (isExisted) throw new BusinessException(ErrorEnum.RECORD_EXISTED);
+
+    const item = new ClassEntity({
+      ...data,
+      create_by: data.createBy,
+      update_by: data.createBy,
+    });
+
+    const newItem = this.classRepo.create(item);
+
+    if (data.lessonIds && data.lessonIds.length > 0) {
+      for (const lessonId of data.lessonIds) {
+        const isLesson = await this.lessonService.findOne(lessonId);
+
+        const newLessonClassIds = [...isLesson.classIds, newItem.id];
+
+        await this.lessonService.updateLessonClasses(
+          isLesson.id,
+          newLessonClassIds,
+        );
+      }
+    }
+
+    return await this.classRepo.save(newItem);
+  }
+
+  async update(id: string, data: UpdateClassDto): Promise<ClassEntity> {
+    const isExisted = await this.getAvaliable(id, data.updateBy);
+    const lessonIds: string[] = [];
+
+    if (!_.isEmpty(data.name)) {
+      const isReplaced = await this.findByName(data.name);
+
+      if (isReplaced && isExisted.id !== isReplaced.id)
+        throw new BusinessException(`400:Tên lớp "${data.name}" đã tồn tại!`);
+    }
+
+    if (!_.isEmpty(data.code)) {
+      const isReplaced = await this.findByCode(data.code);
+
+      if (isReplaced && isExisted.id !== isReplaced.id)
+        throw new BusinessException(`400:Mã lớp ${data.code} đã tồn tại!`);
+    }
+
+    if (data.lessonIds && data.lessonIds.length > 0) {
+      for (const lessonId of data.lessonIds) {
+        await this.lessonService.getAvailable(lessonId, data.updateBy);
+        const isReplaced = lessonIds.some((lesson) => lesson === lessonId);
+        !isReplaced && lessonIds.push(lessonId);
+      }
+    }
+
+    if (lessonIds.length > 0) {
+      const oldLessonIds: string[] = [];
+
+      for (const oldLessonId of isExisted.lessonIds) {
+        !lessonIds.includes(oldLessonId) && oldLessonIds.push(oldLessonId);
+      }
+
+      if (oldLessonIds.length > 0) {
+        for (const oldLessonId of oldLessonIds) {
+          const isLesson = await this.lessonService.findOne(oldLessonId);
+          const newClassIds = isLesson.classIds.filter(
+            (oldClassId) => oldClassId !== id,
+          );
+
+          await this.lessonService.updateLessonClasses(
+            isLesson.id,
+            newClassIds,
+          );
+        }
+      }
+
+      for (const newLessonId of lessonIds) {
+        const isLesson = await this.lessonService.findOne(newLessonId);
+
+        if (!isLesson.classIds.includes(id)) {
+          const classesInLesson = [...isLesson.classIds, id];
+          await this.lessonService.updateLessonClasses(
+            isLesson.id,
+            classesInLesson,
+          );
+        }
+      }
+    }
+
+    await this.classRepo.update(
+      { id },
+      {
+        ...(!_.isEmpty(data.name) && { name: data.name }),
+        ...(!_.isNil(data.description) && { description: data.description }),
+        ...(!_.isEmpty(data.code) && { code: data.code }),
+        ...(!_.isEmpty(data.startYear) && { startYear: data.startYear }),
+        ...(!_.isEmpty(data.endYear) && { endYear: data.endYear }),
+        ...(!_.isEmpty(lessonIds) && { lessonIds }),
+        ...(!_.isNil(data.status) && {
+          status: data.status,
+        }),
+        ...(!_.isNil(data.enable) && { enable: data.enable }),
+        update_by: data.updateBy,
+      },
+    );
+
+    return await this.findOne(id);
+  }
+
+  async updateClassLessons(
+    id: string,
+    lessonIds: string[],
+  ): Promise<ClassEntity> {
+    const isExisted = await this.findOne(id);
+
+    const { affected } = await this.classRepo.update(
+      { id },
+      {
+        ...{ lessonIds: lessonIds },
+      },
+    );
+
+    return affected === 0 ? isExisted : await this.findOne(id);
+  }
+
+  async deleteMany(ids: string[], uid: string): Promise<string> {
+    const classIds: string[] = [];
+
+    for (const id of ids) {
+      const isExisted = await this.findOne(id);
+
+      if (isExisted.create_by !== uid)
+        throw new BusinessException(
+          `400:Không thể xóa bản ghi "${isExisted.name}"!`,
+        );
+
+      if (isExisted.lessonIds.length > 0)
+        throw new BusinessException(
+          `400:Xóa thất bại, bản ghi "${isExisted.name}" đang được dùng!`,
+        );
+
+      const isReplaced = classIds.some((classId) => classId === id);
+
+      !isReplaced && classIds.push(id);
+    }
+
+    for (const id of classIds) {
+      const isExisted = await this.findOne(id);
+
+      if (isExisted.lessonIds.length > 0)
+        for (const lessonId of isExisted.lessonIds) {
+          const lesson = await this.lessonService.findOne(lessonId);
+          const newLessonClassIds: string[] = lesson.classIds.filter(
+            (classId) => classId !== id,
+          );
+
+          await this.lessonService.update(lessonId, {
+            classIds: newLessonClassIds,
+          });
+        }
+    }
+
+    await this.classRepo.deleteMany({ id: { $in: classIds } });
+
+    return '200:Xóa thành công!';
+  }
+}

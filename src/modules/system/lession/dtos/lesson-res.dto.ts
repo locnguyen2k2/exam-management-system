@@ -5,6 +5,7 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterDetailDto } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { ExamDetailDto } from '~/modules/system/exam/dtos/exam-res.dto';
+import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {
@@ -22,6 +23,9 @@ export class LessonDetailDto extends ExtendedEntity {
 
   @Field(() => [ChapterDetailDto], { nullable: true })
   chapters?: ChapterDetailDto[] = [];
+
+  @Field(() => [ClassEntity], { nullable: true })
+  classes?: ClassEntity[] = [];
 
   @Field(() => [ExamDetailDto], { nullable: true })
   exams?: ExamDetailDto[] = [];

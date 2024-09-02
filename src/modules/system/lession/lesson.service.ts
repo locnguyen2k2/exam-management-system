@@ -20,6 +20,8 @@ import { ExamService } from '~/modules/system/exam/exam.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { pipeLine } from '~/utils/pagination';
+import { ClassService } from '~/modules/system/class/class.service';
+import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 
 @Injectable()
 export class LessonService {
@@ -28,6 +30,8 @@ export class LessonService {
     private readonly examService: ExamService,
     @Inject(forwardRef(() => ChapterService))
     private readonly chapterService: ChapterService,
+    @Inject(forwardRef(() => ClassService))
+    private readonly classService: ClassService,
     @InjectRepository(LessonEntity)
     private readonly lessonRepo: MongoRepository<LessonEntity>,
   ) {}
@@ -113,6 +117,22 @@ export class LessonService {
     if (isExisted) return isExisted;
   }
 
+  async getAvailable(id: string, uid: string): Promise<LessonEntity> {
+    const isExisted = await this.findOne(id);
+
+    if (isExisted.create_by === uid) return isExisted;
+
+    if (
+      isExisted.status === StatusShareEnum.PUBLIC &&
+      isExisted.enable === true
+    )
+      return isExisted;
+
+    throw new BusinessException(
+      `400:Bản ghi "${isExisted.name}" không có sẵn!`,
+    );
+  }
+
   async detailLesson(id: string): Promise<any> {
     const isExisted = await this.findOne(id);
     const chapterIds = isExisted.chapterIds;
@@ -170,20 +190,65 @@ export class LessonService {
 
   async update(id: string, data: any): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
+    const newClassIds: string[] = [];
+
+    if (isExisted.create_by !== data.updateBy) {
+      throw new BusinessException('400:Không thể cập nhật học phần này!');
+    }
+
     if (!_.isNil(data.name)) {
       const isReplaced = await this.findByName(data.name);
 
-      if (
-        isReplaced &&
-        isReplaced.create_by === data.createBy &&
-        isReplaced.id !== id
-      ) {
+      if (isReplaced && isReplaced.id !== id) {
         throw new BusinessException('400:Tên học phần đã tồn tại!');
       }
-      if (!isReplaced || (isReplaced && isReplaced.id !== id)) {
-        await this.examService.updateExamsLessonName(id, data.name);
+
+      await this.examService.updateExamsLessonName(id, data.name);
+    }
+
+    if (!_.isNil(data.classIds) && data.classIds.length > 0) {
+      for (const classId of data.classIds) {
+        await this.classService.findOne(classId);
+        const isReplaced = newClassIds.some(
+          (newClassId) => newClassId === classId,
+        );
+
+        !isReplaced && newClassIds.push(classId);
       }
     }
+
+    // Cập nhật danh sách lớp của học phần
+    if (newClassIds.length > 0) {
+      const oldClassIds: string[] = [];
+
+      for (const oldClassId of isExisted.classIds) {
+        !newClassIds.includes(oldClassId) && oldClassIds.push(oldClassId);
+      }
+
+      if (oldClassIds.length > 0) {
+        for (const oldClassId of oldClassIds) {
+          const isClass = await this.classService.findOne(oldClassId);
+          const newLessonIds = isClass.lessonIds.filter(
+            (oldLessonId) => oldLessonId !== id,
+          );
+
+          await this.classService.updateClassLessons(isClass.id, newLessonIds);
+        }
+      }
+
+      for (const newClassId of newClassIds) {
+        const isClass = await this.classService.findOne(newClassId);
+
+        if (!isClass.lessonIds.includes(id)) {
+          const lessonsInClass = [...isClass.lessonIds, id];
+          await this.classService.updateClassLessons(
+            isClass.id,
+            lessonsInClass,
+          );
+        }
+      }
+    }
+
     const { affected } = await this.lessonRepo.update(
       { id },
       {
@@ -193,8 +258,25 @@ export class LessonService {
         ...(!_.isNil(data.enable) && { enable: data.enable }),
         ...(!_.isNil(data.status) && { status: data.status }),
         ...(!_.isNil(data.chapterIds) && { chapterIds: data.chapterIds }),
+        ...(!_.isEmpty(newClassIds) && { classIds: newClassIds }),
         ...(!_.isNil(data.examIds) && { examIds: data.examIds }),
         update_by: data.updateBy,
+      },
+    );
+
+    return affected === 0 ? isExisted : await this.findOne(id);
+  }
+
+  async updateLessonClasses(
+    id: string,
+    classIds: string[],
+  ): Promise<LessonEntity> {
+    const isExisted = await this.findOne(id);
+
+    const { affected } = await this.lessonRepo.update(
+      { id },
+      {
+        ...{ classIds: classIds },
       },
     );
 

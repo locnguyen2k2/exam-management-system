@@ -279,6 +279,7 @@ type LessonEntity {
   description: String!
   status: StatusShareEnum!
   chapterIds: [String!]!
+  classIds: [String!]!
   examIds: [String!]!
 }
 
@@ -390,6 +391,26 @@ type ExamPagination {
   meta: pagination!
 }
 
+type ClassModel {
+  id: String!
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  name: String!
+  code: String!
+  description: String
+  startYear: String
+  endYear: String
+  status: StatusShareEnum
+  lessonIds: [String!]
+}
+
 type LessonModel {
   id: String!
 
@@ -408,11 +429,17 @@ type LessonModel {
   description: String!
   status: StatusShareEnum!
   chapters: [ChapterModel!]
+  classes: [ClassModel!]
   exams: [ExamModel!]
 }
 
 type lessons {
   data: [LessonModel!]!
+  meta: pagination!
+}
+
+type ClassPagination {
+  data: [ClassModel!]!
   meta: pagination!
 }
 
@@ -453,6 +480,9 @@ type Query {
 
   """Lấy danh sách đáp án"""
   answers(answerPageOptions: AnswerPageOptions): answers!
+
+  """Lấy danh sách lớp"""
+  classes(classPageOptions: ClassPageOptions): ClassPagination!
 }
 
 input UserPageOptions {
@@ -585,6 +615,20 @@ input AnswerPageOptions {
   take: Int = 10
 }
 
+input ClassPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  classStatus: [StatusShareEnum!]
+}
+
 type Mutation {
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
@@ -630,6 +674,13 @@ type Mutation {
   createAnswers(createAnswersArgs: CreateAnswersArgs!): [String!]!
   updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
   deleteAnswers(answerIds: [String!]!): String!
+
+  """Tạo lớp"""
+  createClass(createClassArgs: CreateClassArgs!): ClassModel!
+
+  """Cập nhật lớp"""
+  updateClass(classId: String!, updateClassArgs: UpdateClassArgs!): ClassModel!
+  deleteClasses(classIds: [String!]!): String!
 }
 
 input CreateAdminArgs {
@@ -711,6 +762,11 @@ enum PermissionEnum {
   ADD_LESSON
   UPDATE_LESSON
   DELETE_LESSON
+  LIST_CLASS
+  DETAIL_CLASS
+  ADD_CLASS
+  UPDATE_CLASS
+  DELETE_CLASS
 }
 
 input updatePermissionArgs {
@@ -803,6 +859,7 @@ input LessonBaseDto {
   name: String!
   description: String
   enable: Boolean!
+  classIds: [String!] = []
   status: StatusShareEnum!
 }
 
@@ -811,6 +868,7 @@ input UpdateLessonArgs {
   name: String
   description: String
   enable: Boolean
+  classIds: [String!] = []
   status: StatusShareEnum
 }
 
@@ -961,4 +1019,26 @@ input AnswerBaseDto {
 input UpdateAnswerArgs {
   value: String
   remark: String
+}
+
+input CreateClassArgs {
+  name: String!
+  code: String!
+  description: String
+  startYear: String!
+  endYear: String!
+  enable: Boolean
+  status: StatusShareEnum
+  lessonIds: [String!]
+}
+
+input UpdateClassArgs {
+  name: String
+  code: String
+  description: String
+  startYear: String
+  endYear: String
+  enable: Boolean
+  status: StatusShareEnum
+  lessonIds: [String!]
 }

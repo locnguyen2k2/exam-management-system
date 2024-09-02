@@ -234,7 +234,10 @@ export class ExamService {
     });
   }
 
-  async generate(uid: string, data: GenerateExamPaperDto): Promise<ExamEntity[]> {
+  async generate(
+    uid: string,
+    data: GenerateExamPaperDto,
+  ): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
     const lesson = await this.lessonService.findOne(data.lessonId);

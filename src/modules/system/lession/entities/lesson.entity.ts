@@ -28,6 +28,10 @@ export class LessonEntity extends ExtendedEntity {
 
   @Field(() => [String])
   @Column('string', { array: true })
+  classIds: string[] = [];
+
+  @Field(() => [String])
+  @Column('string', { array: true })
   examIds: string[] = [];
 
   constructor(lessonEntity: Partial<LessonEntity>) {

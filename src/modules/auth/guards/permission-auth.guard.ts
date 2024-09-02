@@ -62,7 +62,12 @@ export class PermissionAuthGuard implements CanActivate {
     if (!requirePerVals) return true;
     const roles = await this.userService.getUserPermissions(user.id);
     // Thông qua với user có quyền quản trị
-    if (roles.includes((role: any) => role.value === RoleEnum.ADMIN))
+    if (
+      roles.some(
+        (role: any) =>
+          RoleEnum[`${role.value.toUpperCase()}`] === RoleEnum.ADMIN,
+      )
+    )
       return true;
     // Lấy danh sách phân quyền của người dùng vơi id
     const userPers = roles.map((role: any) => role.permissions).flat();

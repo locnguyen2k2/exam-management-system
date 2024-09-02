@@ -14,6 +14,7 @@ import { ChapterModule } from '~/modules/system/chapter/chapter.module';
 import { LessonModule } from '~/modules/system/lession/lesson.module';
 import { seconds, ThrottlerModule } from '@nestjs/throttler';
 import { GqlThrottlerGuard } from '~/modules/auth/guards/gpl-throtle.guard';
+import { ClassModule } from '~/modules/system/class/class.module';
 
 const modules = [
   UsersModule,
@@ -23,6 +24,7 @@ const modules = [
   ChapterModule,
   ExamModule,
   LessonModule,
+  ClassModule,
 ];
 
 @Module({

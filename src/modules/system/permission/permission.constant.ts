@@ -55,6 +55,12 @@ export enum PermissionEnum {
   ADD_LESSON = 'add_lesson',
   UPDATE_LESSON = 'update_lesson',
   DELETE_LESSON = 'delete_lesson',
+  //Classes
+  LIST_CLASS = 'list_class',
+  DETAIL_CLASS = 'detail_class',
+  ADD_CLASS = 'add_class',
+  UPDATE_CLASS = 'update_class',
+  DELETE_CLASS = 'delete_class',
 }
 
 registerEnumType(PermissionEnum, { name: 'PermissionEnum' });
