@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '~/modules/system/user/entities/user.entity';
 import { RoleModule } from '~/modules/system/role/role.module';
 import { PermissionModule } from '~/modules/system/permission/permission.module';
+import { ImageModule } from '~/modules/system/image/image.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PermissionModule } from '~/modules/system/permission/permission.module'
     forwardRef(() => RoleModule),
     RoleModule,
     PermissionModule,
+    ImageModule,
   ],
   providers: [UserResolver, UserService],
   exports: [UserService],

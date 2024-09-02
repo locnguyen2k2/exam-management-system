@@ -631,6 +631,7 @@ input ClassPageOptions {
 
 type Mutation {
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
+  updateUser(updateUserArgs: UpdateUserArgs!): UserProfile!
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
 
   """Cập nhật quền"""
@@ -686,10 +687,26 @@ type Mutation {
 input CreateAdminArgs {
   firstName: String!
   lastName: String!
+  gender: GenderEnum
+  photo: Upload
+  address: String
+  phone: String
   email: String!
   password: String!
   roleIds: [String!]!
   status: Boolean = false
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UpdateUserArgs {
+  firstName: String
+  lastName: String
+  gender: GenderEnum
+  photo: Upload
+  address: String
+  phone: String
 }
 
 input CreateRoleArgs {
@@ -975,9 +992,6 @@ input QuestionBaseDto {
   correctAnswers: [CorrectAnswerIdsDto!]!
   answerIds: [String!]!
 }
-
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload
 
 input CorrectAnswerIdsDto {
   correctAnswerId: String!

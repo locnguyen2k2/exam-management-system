@@ -1,10 +1,12 @@
-import { Field, HideField, InputType, Int, PartialType } from '@nestjs/graphql';
+import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { IsPassword } from '~/common/decorators/password.decorator';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IsEmail } from 'class-validator';
 import { Expose } from 'class-transformer';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { EmailEnum, GenderEnum } from '~/modules/system/user/user.constant';
+import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import { FileUpload } from '~/modules/system/image/image.interface';
 
 @InputType('UserPageOptions')
 export class UserPageOptions extends PageOptionDto {
@@ -32,6 +34,18 @@ class UserBaseDto extends BaseDto {
 
   @Field(() => String)
   lastName: string;
+
+  @Field(() => GenderEnum, { nullable: true })
+  gender: GenderEnum;
+
+  @Field(() => GraphQLUpload, { nullable: true })
+  photo: Promise<FileUpload>;
+
+  @Field(() => String, { nullable: true })
+  address: string;
+
+  @Field(() => String, { nullable: true })
+  phone: string;
 }
 
 @InputType('CreateUserArgs')
@@ -61,7 +75,10 @@ export class AdminCreateDto extends UserCreateDto {
 }
 
 @InputType('UpdateUserArgs')
-export class UserUpdateDto extends PartialType(UserBaseDto) {
+export class UpdateUserDto extends PartialType(UserBaseDto) {
   @HideField()
+  enable: boolean;
+  password: string;
+  email: string;
   updateBy: string;
 }

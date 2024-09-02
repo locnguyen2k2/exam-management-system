@@ -47,9 +47,8 @@ export class ImageService {
         data: formData,
       });
 
-      const fileName = data.data.uploadImage;
-      return fileName;
-    } catch {
+      return data.data.uploadImage;
+    } catch (error: any) {
       throw new BusinessException('400:Cập nhật hình ảnh thất bại!');
     }
   }
@@ -73,8 +72,7 @@ export class ImageService {
         },
       });
 
-      const fileName = data.data.deleteImage;
-      return fileName;
+      return data.data.deleteImage;
     } catch {
       throw new BusinessException('400:Xóa hình ảnh thất bại!');
     }

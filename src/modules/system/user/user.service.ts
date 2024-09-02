@@ -20,6 +20,7 @@ import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 import { pipeLine } from '~/utils/pagination';
+import { ImageService } from '~/modules/system/image/image.service';
 
 @Injectable()
 export class UserService {
@@ -28,6 +29,7 @@ export class UserService {
     private readonly userRepository: MongoRepository<UserEntity>,
     private readonly roleService: RoleService,
     private readonly mailService: MailerService,
+    private readonly imageService: ImageService,
   ) {}
 
   async findAll(
@@ -148,12 +150,18 @@ export class UserService {
   async update(id: string, args: any): Promise<UserProfile> {
     await this.findOne(id);
 
+    let photo = '';
+
+    if (!_.isNil(args.photo)) {
+      photo += await this.imageService.uploadImage(args.photo);
+    }
+
     const isUpdated = await this.userRepository.update(
       { id },
       {
         ...(args?.lastName && { lastName: args.lastName }),
         ...(args?.firstName && { firstName: args.firstName }),
-        ...(args?.photo && { photo: args.photo }),
+        ...(!_.isEmpty(photo) && { photo }),
         ...(args?.phone && { phone: args.phone }),
         ...(args?.address && { address: args.address }),
         ...(!_.isNil(args?.enable) && { enable: args.enable }),

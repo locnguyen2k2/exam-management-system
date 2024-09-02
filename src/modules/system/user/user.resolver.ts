@@ -4,6 +4,7 @@ import { UserService } from '~/modules/system/user/user.service';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import {
   AdminCreateDto,
+  UpdateUserDto,
   UserPageOptions,
 } from '~/modules/system/user/dtos/user-req.dto';
 import {
@@ -13,6 +14,7 @@ import {
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
+import { plainToClass } from 'class-transformer';
 
 @Resolver('User')
 export class UserResolver {
@@ -42,5 +44,16 @@ export class UserResolver {
     args.createBy = user?.id ? user.id : null;
     const data = AdminCreateDto.plainToClass(args);
     return await this.userService.create({ ...data, createBy: null });
+  }
+
+  @Permissions(PermissionEnum.UPDATE_USER)
+  @Mutation(() => UserProfile, { name: 'updateUser' })
+  async update(
+    @CurrentUser() user: IAuthPayload,
+    @Args('updateUserArgs') args: UpdateUserDto,
+  ): Promise<UserProfile> {
+    args.updateBy = user?.id ? user.id : null;
+    const data = plainToClass(UpdateUserDto, args);
+    return await this.userService.update(user.id, data);
   }
 }

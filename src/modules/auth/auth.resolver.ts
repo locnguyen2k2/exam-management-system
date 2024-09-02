@@ -9,7 +9,6 @@ import {
 import { ICredential } from '~/modules/auth/interfaces/ICredential.interface';
 import { Credential } from '~/modules/auth/dtos/auth-res.dto';
 import { Public } from '~/common/decorators/permission.decorator';
-import { UserProfile } from '~/modules/system/user/dtos/user-res.dto';
 
 @Public()
 @Resolver('Authentications')

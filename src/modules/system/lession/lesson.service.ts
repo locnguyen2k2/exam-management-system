@@ -21,7 +21,6 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { pipeLine } from '~/utils/pagination';
 import { ClassService } from '~/modules/system/class/class.service';
-import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 
 @Injectable()
 export class LessonService {
