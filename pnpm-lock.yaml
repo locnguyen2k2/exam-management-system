@@ -62,9 +62,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      deep-email-validator:
-        specifier: ^0.1.21
-        version: 0.1.21
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -1010,9 +1007,6 @@ packages:
   '@types/cookiejar@2.1.5':
     resolution: {integrity: sha512-he+DHOWReW0nghN24E1WUqM0efK4kI9oTqDm6XmK8ZPe2djZ90BSNdGnIyCLzCPw7/pogPlGbzI2wHGGmi4O/Q==}
 
-  '@types/disposable-email-domains@1.0.6':
-    resolution: {integrity: sha512-+jHw0Q4ERuVYIChlUaoSm/VEuuNFeW7JgUU8Rwa9V1ym6q+gkGmBK5sGTDKqlfmsSdI5bFMHKlEatirPFvd8Xw==}
-
   '@types/ejs@3.1.5':
     resolution: {integrity: sha512-nv+GSx77ZtXiJzwKdsASqi+YQ5Z7vwHsTP0JY2SiQgjGckkBRKZnk8nIM+7oUZ1VCtuTz0+By4qVR7fqzp/Dfg==}
 
@@ -1386,9 +1380,6 @@ packages:
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-
-  axios@0.24.0:
-    resolution: {integrity: sha512-Q6cWsys88HoPgAaFAVUb0WpPk0O8iTeisR9IMqy9G8AbO4NlpVknrnQS03zzF9PGAWgO3cgletO3VjV/P7VztA==}
 
   axios@1.7.6:
     resolution: {integrity: sha512-Ekur6XDwhnJ5RgOCaxFnXyqlPALI3rVeukZMwOdfghW7/wGz784BYKiQq+QD8NPcr91KRo30KfHOchyijwWw7g==}
@@ -1779,9 +1770,6 @@ packages:
       babel-plugin-macros:
         optional: true
 
-  deep-email-validator@0.1.21:
-    resolution: {integrity: sha512-DBAmMzbr+MAubXQ+TS9tZuPwLcdKscb8YzKZiwoLqF3NmaeEgXvSSHhZ0EXOFeKFE2FNWC4mNXCyiQ/JdFXUwg==}
-
   deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
     engines: {node: '>=4.0.0'}
@@ -1845,9 +1833,6 @@ packages:
   display-notification@2.0.0:
     resolution: {integrity: sha512-TdmtlAcdqy1NU+j7zlkDdMnCL878zriLaBmoD9quOoq1ySSSGv03l0hXK5CvIFZlIfFI/hizqdQuW+Num7xuhw==}
     engines: {node: '>=4'}
-
-  disposable-email-domains@1.0.62:
-    resolution: {integrity: sha512-LBQvhRw7mznQTPoyZbsmYeNOZt1pN5aCsx4BAU/3siVFuiM9f2oyKzUaB8v1jbxFjE3aYqYiMo63kAL4pHgfWQ==}
 
   doctrine@3.0.0:
     resolution: {integrity: sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==}
@@ -2955,9 +2940,6 @@ packages:
   magic-string@0.30.5:
     resolution: {integrity: sha512-7xlpfBaQaP/T6Vh8MO/EqXSW5En6INHEvEXQiuff7Gku0PWjU3uf6w/j9o7O+SpB5fOAkrI5HeoNgwjEO0pFsA==}
     engines: {node: '>=12'}
-
-  mailcheck@1.1.1:
-    resolution: {integrity: sha512-3WjL8+ZDouZwKlyJBMp/4LeziLFXgleOdsYu87piGcMLqhBzCsy2QFdbtAwv757TFC/rtqd738fgJw1tFQCSgA==}
 
   mailparser@3.7.1:
     resolution: {integrity: sha512-RCnBhy5q8XtB3mXzxcAfT1huNqN93HTYYyL6XawlIKycfxM/rXPg9tXoZ7D46+SgCS1zxKzw+BayDQSvncSTTw==}
@@ -5442,8 +5424,6 @@ snapshots:
 
   '@types/cookiejar@2.1.5': {}
 
-  '@types/disposable-email-domains@1.0.6': {}
-
   '@types/ejs@3.1.5':
     optional: true
 
@@ -5882,12 +5862,6 @@ snapshots:
     optional: true
 
   asynckit@0.4.0: {}
-
-  axios@0.24.0:
-    dependencies:
-      follow-redirects: 1.15.6
-    transitivePeerDependencies:
-      - debug
 
   axios@1.7.6:
     dependencies:
@@ -6348,15 +6322,6 @@ snapshots:
 
   dedent@1.5.3: {}
 
-  deep-email-validator@0.1.21:
-    dependencies:
-      '@types/disposable-email-domains': 1.0.6
-      axios: 0.24.0
-      disposable-email-domains: 1.0.62
-      mailcheck: 1.1.1
-    transitivePeerDependencies:
-      - debug
-
   deep-extend@0.6.0:
     optional: true
 
@@ -6410,8 +6375,6 @@ snapshots:
       escape-string-applescript: 1.0.0
       run-applescript: 3.2.0
     optional: true
-
-  disposable-email-domains@1.0.62: {}
 
   doctrine@3.0.0:
     dependencies:
@@ -7864,8 +7827,6 @@ snapshots:
   magic-string@0.30.5:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
-
-  mailcheck@1.1.1: {}
 
   mailparser@3.7.1:
     dependencies:

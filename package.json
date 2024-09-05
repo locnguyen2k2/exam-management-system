@@ -38,7 +38,6 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cross-env": "^7.0.3",
-    "deep-email-validator": "^0.1.21",
     "dotenv": "^16.4.5",
     "form-data": "^4.0.0",
     "google-auth-library": "^9.14.0",

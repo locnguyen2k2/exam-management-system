@@ -3,7 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { MailerService as NestedMailerService } from '@nestjs-modules/mailer';
-import * as emailValidator from 'deep-email-validator';
 
 @Injectable()
 export class MailerService {
@@ -38,14 +37,7 @@ export class MailerService {
     });
   }
 
-  async verifyEmail(email: string): Promise<boolean> {
-    const { valid } = await emailValidator.validate(email);
-    return valid;
-  }
-
   async isCtuetEmail(email: string): Promise<boolean | HttpException> {
-    const idValid = await this.verifyEmail(email);
-    if (!idValid) throw new BusinessException('400:Email không tồn tại!');
     const teacherEmail = await this.isTeacherCtutEmail(email);
     const studentEmail = await this.isStudentCtuetEmail(email);
     if (!teacherEmail && !studentEmail) {
