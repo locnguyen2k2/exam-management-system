@@ -12,14 +12,14 @@ import { BusinessException } from '~/common/exceptions/biz.exception';
 import { RoleService } from '~/modules/system/role/role.service';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
-import { MailerService } from '~/config/mailer/mailer.service';
+import { MailerService } from '~/shared/mailer/mailer.service';
 import { TokenEnum } from '~/modules/auth/auth.constant';
 import * as _ from 'lodash';
 import * as bcrypt from 'bcryptjs';
 import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { ImageService } from '~/modules/system/image/image.service';
 
 @Injectable()

@@ -18,7 +18,7 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { RoleService } from '~/modules/system/role/role.service';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 

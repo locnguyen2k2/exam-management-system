@@ -28,7 +28,7 @@ import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 
 @Injectable()

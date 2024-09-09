@@ -21,7 +21,7 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { UserService } from '~/modules/system/user/user.service';
 

@@ -19,7 +19,7 @@ import {
 import { ExamService } from '~/modules/system/exam/exam.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { ClassService } from '~/modules/system/class/class.service';
 
 @Injectable()

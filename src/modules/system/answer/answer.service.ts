@@ -18,7 +18,7 @@ import * as _ from 'lodash';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
 
 @Injectable()

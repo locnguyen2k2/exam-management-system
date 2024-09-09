@@ -25,7 +25,7 @@ import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ImageService } from '~/modules/system/image/image.service';
 import * as _ from 'lodash';

@@ -24,7 +24,7 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
 
 const defaultLookup = [

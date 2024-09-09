@@ -8,7 +8,7 @@ import { TokenService } from '~/modules/auth/services/token.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
 import { UsersModule } from '~/modules/system/user/user.module';
-import { JwtModule } from '~/config/jwt/jwt.module';
+import { JwtModule } from '~/shared/jwt/jwt.module';
 import { AccountResolver } from '~/modules/auth/resolvers/account.resolver';
 import { TokenResolver } from '~/modules/auth/resolvers/token.resolver';
 

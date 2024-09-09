@@ -12,7 +12,7 @@ import { BusinessException } from '~/common/exceptions/biz.exception';
 import { TokenEnum } from '~/modules/auth/auth.constant';
 import { TokenService } from '~/modules/auth/services/token.service';
 import { ICredential } from '~/modules/auth/interfaces/ICredential.interface';
-import { MailerService } from '~/config/mailer/mailer.service';
+import { MailerService } from '~/shared/mailer/mailer.service';
 import { ICredentialWithGG } from '~/modules/auth/interfaces/ICredentialWithGG.interface';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { plainToClass } from 'class-transformer';

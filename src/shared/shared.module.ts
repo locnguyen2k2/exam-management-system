@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
-import { MailerModule } from '~/config/mailer/mailer.module';
-import { GraphQLModule } from '~/config/graphql/graphql.module';
-import { DatabaseModule } from '~/config/database/database.module';
+import { MailerModule } from '~/shared/mailer/mailer.module';
+import { GraphQLModule } from '~/shared/graphql/graphql.module';
+import { DatabaseModule } from '~/shared/database/database.module';
 
 const modules = [GraphQLModule, DatabaseModule, MailerModule];
 

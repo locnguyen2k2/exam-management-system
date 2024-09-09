@@ -11,7 +11,7 @@ import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
 import * as _ from 'lodash';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pagination';
+import { pipeLine } from '~/utils/pipe-line';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
