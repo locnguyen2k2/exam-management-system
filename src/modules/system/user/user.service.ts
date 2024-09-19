@@ -173,6 +173,14 @@ export class UserService {
     return isUpdated && (await this.getProfile(id));
   }
 
+  async deleteUser(uid: string): Promise<string> {
+    await this.findOne(uid);
+
+    await this.userRepository.deleteOne({ id: uid });
+
+    return 'Xóa thành công!';
+  }
+
   async deleteUserToken(token: string): Promise<boolean> {
     const userToken = await this.userRepository.findOne({
       where: { 'tokens.value': token },

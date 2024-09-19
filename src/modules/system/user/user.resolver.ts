@@ -56,4 +56,12 @@ export class UserResolver {
     const data = plainToClass(UpdateUserDto, args);
     return await this.userService.update(user.id, data);
   }
+
+  @Permissions(PermissionEnum.DELETE_USER)
+  @Mutation(() => String, { name: 'deleteUser' })
+  async delete(
+    @Args('userId', { type: () => String }) uid: string,
+  ): Promise<string> {
+    return await this.userService.deleteUser(uid);
+  }
 }
