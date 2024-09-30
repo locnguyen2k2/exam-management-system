@@ -23,6 +23,6 @@ export class IsValidSku implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'Mã sku phải là chữ cái và có độ dài từ 3 - 6 chữ cái';
+    return 'Mã sku phải là chữ cái và có độ dài từ 3 - 6';
   }
 }

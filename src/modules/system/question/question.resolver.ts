@@ -3,6 +3,7 @@ import { QuestionService } from '~/modules/system/question/question.service';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import {
   CreateQuestionsDto,
+  EnableQuestionsDto,
   QuestionPageOptions,
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
@@ -66,6 +67,16 @@ export class QuestionResolver {
   ): Promise<QuestionEntity> {
     const data = plainToClass(UpdateQuestionDto, dto);
     return await this.questionService.update(id, data);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_QUESTION)
+  @Mutation(() => [QuestionEntity], { name: 'enableQuestions' })
+  async enableQuestions(
+    @CurrentUser() user: IAuthPayload,
+    @Args('enableQuestionsArgs') dto: EnableQuestionsDto,
+  ) {
+    const data = plainToClass(EnableQuestionsDto, dto);
+    return await this.questionService.enableQuestions(data);
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)

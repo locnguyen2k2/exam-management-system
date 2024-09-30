@@ -81,6 +81,23 @@ export class CreateQuestionsDto {
   createBy: string;
 }
 
+@InputType()
+class EnableQuestionDto {
+  @Field(() => String)
+  questionId: string;
+
+  @Field(() => Boolean)
+  enable: boolean;
+}
+
+@InputType('EnableQuestionsArgs')
+export class EnableQuestionsDto {
+  @Field(() => [EnableQuestionDto])
+  questionsEnable: EnableQuestionDto[];
+  @HideField()
+  updateBy: string;
+}
+
 @InputType('UpdateQuestionArgs')
 export class UpdateQuestionDto extends PartialType(QuestionBaseDto) {
   @HideField()

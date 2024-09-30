@@ -632,6 +632,7 @@ input ClassPageOptions {
 type Mutation {
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
   updateUser(updateUserArgs: UpdateUserArgs!): UserProfile!
+  deleteUser(userId: String!): String!
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
 
   """Cập nhật quền"""
@@ -670,6 +671,7 @@ type Mutation {
   deleteExamPaper(examPaperId: String!): String!
   createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
   updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionEntity!
+  enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionEntity!]!
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
   deleteQuestions(questionIds: [String!]!): String!
   createAnswers(createAnswersArgs: CreateAnswersArgs!): [String!]!
@@ -1010,6 +1012,15 @@ input UpdateQuestionArgs {
   category: CategoryEnum
   correctAnswers: [CorrectAnswerIdsDto!]
   answerIds: [String!]
+}
+
+input EnableQuestionsArgs {
+  questionsEnable: [EnableQuestionDto!]!
+}
+
+input EnableQuestionDto {
+  questionId: String!
+  enable: Boolean!
 }
 
 input UpdateQuestionStatusArgs {

@@ -5,6 +5,7 @@ import { MongoRepository } from 'typeorm';
 import {
   CorrectAnswerIdsDto,
   CreateQuestionsDto,
+  EnableQuestionsDto,
   QuestionPageOptions,
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
@@ -499,6 +500,30 @@ export class QuestionService {
       },
     );
     return affected ? await this.findOne(id) : isExisted;
+  }
+
+  async enableQuestions(data: EnableQuestionsDto): Promise<QuestionEntity[]> {
+    const listQuestions: QuestionEntity[] = [];
+    await Promise.all(
+      data.questionsEnable.map(async (questionEnable: any) => {
+        const isExisted = await this.findOne(questionEnable.questionId);
+        if (isExisted) {
+          isExisted.enable = questionEnable.enable;
+          listQuestions.push(isExisted);
+        }
+      }),
+    );
+
+    await Promise.all(
+      data.questionsEnable.map(async ({ questionId, enable }) => {
+        await this.questionRepo.update(
+          { id: questionId },
+          { enable, update_by: data.updateBy },
+        );
+      }),
+    );
+
+    return listQuestions;
   }
 
   async updateStatus(data: UpdateQuestionStatusDto): Promise<string> {
