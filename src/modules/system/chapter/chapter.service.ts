@@ -233,8 +233,11 @@ export class ChapterService {
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by !== data.updateBy)
-      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+    if (isExisted.create_by !== data.updateBy) {
+      throw new BusinessException(
+        '400:Không có quyền thao tác trên bản ghi này!',
+      );
+    }
 
     if (!_.isNil(data.lessonId)) {
       const newLesson = await this.lessonService.getAvailable(
@@ -282,7 +285,12 @@ export class ChapterService {
   async enable(data: EnableChaptersDto): Promise<string> {
     await Promise.all(
       data.chaptersEnable.map(async ({ chapterId }) => {
-        await this.findOne(chapterId);
+        const isExisted = await this.findOne(chapterId);
+        if (isExisted.create_by !== data.updateBy) {
+          throw new BusinessException(
+            '400:Không có quyền thao tác trên bản ghi này!',
+          );
+        }
       }),
     );
 
@@ -301,7 +309,12 @@ export class ChapterService {
   async updateStatus(data: UpdateChaptersStatusDto): Promise<string> {
     await Promise.all(
       data.chaptersStatus.map(async ({ chapterId }) => {
-        await this.findOne(chapterId);
+        const isExisted = await this.findOne(chapterId);
+        if (isExisted.create_by !== data.updateBy) {
+          throw new BusinessException(
+            '400:Không có quyền thao tác trên bản ghi này!',
+          );
+        }
       }),
     );
 

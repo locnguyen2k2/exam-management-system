@@ -76,6 +76,7 @@ export class QuestionResolver {
     @Args('enableQuestionsArgs') dto: EnableQuestionsDto,
   ) {
     const data = plainToClass(EnableQuestionsDto, dto);
+    data.updateBy = user.id;
     return await this.questionService.enableQuestions(data);
   }
 

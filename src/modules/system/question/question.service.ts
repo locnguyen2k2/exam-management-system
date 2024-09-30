@@ -412,8 +412,11 @@ export class QuestionService {
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by !== data.updateBy)
-      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+    if (isExisted.create_by !== data.updateBy) {
+      throw new BusinessException(
+        '400:Không có quyền thao tác trên bản ghi này!',
+      );
+    }
 
     const listAnswers: string[] = [];
     const correctAnswers: CorrectAnswerIdsDto[] = [];
@@ -508,6 +511,11 @@ export class QuestionService {
       data.questionsEnable.map(async (questionEnable: any) => {
         const isExisted = await this.findOne(questionEnable.questionId);
         if (isExisted) {
+          if (isExisted.create_by !== data.updateBy) {
+            throw new BusinessException(
+              '400:Không có quyền thao tác trên bản ghi này!',
+            );
+          }
           isExisted.enable = questionEnable.enable;
           listQuestions.push(isExisted);
         }
@@ -529,7 +537,12 @@ export class QuestionService {
   async updateStatus(data: UpdateQuestionStatusDto): Promise<string> {
     await Promise.all(
       data.questionsStatus.map(async ({ questionId }) => {
-        await this.findOne(questionId);
+        const isExisted = await this.findOne(questionId);
+        if (isExisted.create_by !== data.updateBy) {
+          throw new BusinessException(
+            '400:Không có quyền thao tác trên bản ghi này!',
+          );
+        }
       }),
     );
 

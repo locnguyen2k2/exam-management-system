@@ -4,6 +4,7 @@ import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { MongoRepository } from 'typeorm';
 import {
   CreateLessonDto,
+  EnableLessonsDto,
   LessonPageOptions,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
 import { LessonPaginationDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
@@ -264,6 +265,35 @@ export class LessonService {
     );
 
     return affected === 0 ? isExisted : await this.findOne(id);
+  }
+
+  async enableLessons(data: EnableLessonsDto): Promise<LessonEntity[]> {
+    const listLessons: LessonEntity[] = [];
+    await Promise.all(
+      data.lessonsEnable.map(async (lessonEnable: any) => {
+        const isExisted = await this.findOne(lessonEnable.lessonId);
+        if (isExisted) {
+          if (isExisted.create_by !== data.updateBy) {
+            throw new BusinessException(
+              '400:Không có quyền thao tác trên bản ghi này!',
+            );
+          }
+          isExisted.enable = lessonEnable.enable;
+          listLessons.push(isExisted);
+        }
+      }),
+    );
+
+    await Promise.all(
+      data.lessonsEnable.map(async ({ lessonId, enable }) => {
+        await this.lessonRepo.update(
+          { id: lessonId },
+          { enable, update_by: data.updateBy },
+        );
+      }),
+    );
+
+    return listLessons;
   }
 
   async updateLessonClasses(

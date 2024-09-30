@@ -7,6 +7,7 @@ import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { AnswerService } from '~/modules/system/answer/answer.service';
 import {
   CreateExamPaperDto,
+  EnableExamsDto,
   ExamPaperPageOptions,
   GenerateExamPaperDto,
   UpdateExamPaperDto,
@@ -336,8 +337,11 @@ export class ExamService {
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by !== data.updateBy)
-      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
+    if (isExisted.create_by !== data.updateBy) {
+      throw new BusinessException(
+        '400:Không có quyền thao tác trên bản ghi này!',
+      );
+    }
 
     if (data.lessonId) {
       const newLesson = await this.lessonService.getAvailable(
@@ -397,6 +401,35 @@ export class ExamService {
     );
 
     return await this.findOne(id);
+  }
+
+  async enableExams(data: EnableExamsDto): Promise<ExamEntity[]> {
+    const listExams: ExamEntity[] = [];
+    await Promise.all(
+      data.examsEnable.map(async (examEnable: any) => {
+        const isExisted = await this.findOne(examEnable.examId);
+        if (isExisted) {
+          if (isExisted.create_by !== data.updateBy) {
+            throw new BusinessException(
+              '400:Không có quyền thao tác trên bản ghi này!',
+            );
+          }
+          isExisted.enable = examEnable.enable;
+          listExams.push(isExisted);
+        }
+      }),
+    );
+
+    await Promise.all(
+      data.examsEnable.map(async ({ examId, enable }) => {
+        await this.examRepo.update(
+          { id: examId },
+          { enable, update_by: data.updateBy },
+        );
+      }),
+    );
+
+    return listExams;
   }
 
   async delete(id: string, uid: string): Promise<string> {

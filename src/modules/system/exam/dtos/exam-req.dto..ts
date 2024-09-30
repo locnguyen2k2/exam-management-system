@@ -125,3 +125,20 @@ export class UpdateExamPaperDto extends PartialType(BaseExamDto) {
   @HideField()
   updateBy: string;
 }
+
+@InputType('EnableExamArgs')
+class EnableExamDto {
+  @Field(() => String)
+  examId: string;
+
+  @Field(() => Boolean)
+  enable: boolean;
+}
+
+@InputType('EnableExamsArgs')
+export class EnableExamsDto {
+  @Field(() => [EnableExamDto])
+  examsEnable: EnableExamDto[];
+  @HideField()
+  updateBy: string;
+}

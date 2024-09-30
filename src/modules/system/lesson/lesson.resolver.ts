@@ -2,6 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import {
   CreateLessonDto,
+  EnableLessonsDto,
   LessonPageOptions,
   UpdateLessonDto,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
@@ -65,5 +66,16 @@ export class LessonResolver {
     const data = plainToClass(UpdateLessonDto, dto);
     data.updateBy = user.id;
     return await this.lessonService.update(id, data);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_LESSON)
+  @Mutation(() => [LessonEntity], { name: 'enableLessons' })
+  async enable(
+    @CurrentUser() user: IAuthPayload,
+    @Args('enableLessonsArgs') dto: EnableLessonsDto,
+  ): Promise<LessonEntity[]> {
+    const data = plainToClass(EnableLessonsDto, dto);
+    data.updateBy = user.id;
+    return await this.lessonService.enableLessons(data);
   }
 }

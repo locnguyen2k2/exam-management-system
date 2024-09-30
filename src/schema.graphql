@@ -659,12 +659,14 @@ type Mutation {
   deleteChapters(chapterIds: [String!]!): [String!]!
   createLessons(createLessonArgs: CreateLessonArgs!): [LessonEntity!]!
   updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonEntity!
+  enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonEntity!]!
 
   """Tạo đề thi"""
   createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamEntity!]!
 
   """Khởi tạo đề thi từ ngân hàng câu hỏi"""
   generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamEntity!]!
+  enableExams(enableExamsArgs: EnableExamsArgs!): [ExamEntity!]!
 
   """Cập nhật đề thi"""
   updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
@@ -891,6 +893,15 @@ input UpdateLessonArgs {
   status: StatusShareEnum
 }
 
+input EnableLessonsArgs {
+  lessonsEnable: [EnableLessonArgs!]!
+}
+
+input EnableLessonArgs {
+  lessonId: String!
+  enable: Boolean!
+}
+
 input CreateExamPaperArgs {
   label: String!
 
@@ -956,6 +967,15 @@ input ScaleArgs {
   chapterId: String!
   percent: Float!
   level: LevelEnum!
+}
+
+input EnableExamsArgs {
+  examsEnable: [EnableExamArgs!]!
+}
+
+input EnableExamArgs {
+  examId: String!
+  enable: Boolean!
 }
 
 input UpdateExamPaperArgs {

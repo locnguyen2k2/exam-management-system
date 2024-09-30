@@ -39,6 +39,23 @@ export class CreateLessonDto {
   createBy: string;
 }
 
+@InputType('EnableLessonArgs')
+class EnableLessonDto {
+  @Field(() => String)
+  lessonId: string;
+
+  @Field(() => Boolean)
+  enable: boolean;
+}
+
+@InputType('EnableLessonsArgs')
+export class EnableLessonsDto {
+  @Field(() => [EnableLessonDto])
+  lessonsEnable: EnableLessonDto[];
+  @HideField()
+  updateBy: string;
+}
+
 @InputType('UpdateLessonArgs')
 export class UpdateLessonDto extends PartialType(LessonBaseDto) {
   @HideField()

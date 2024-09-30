@@ -106,9 +106,11 @@ export class AnswerService {
   async update(id: string, data: UpdateAnswerDto): Promise<AnswerEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by !== data.updateBy)
-      throw new BusinessException('400:Khong co quyen cap nhat ban ghi nay!');
-
+    if (isExisted.create_by !== data.updateBy) {
+      throw new BusinessException(
+        '400:Không có quyền thao tác trên bản ghi này!',
+      );
+    }
     const { affected } = await this.answerRepo.update(
       { id },
       {

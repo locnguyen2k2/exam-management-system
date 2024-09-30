@@ -3,6 +3,7 @@ import { Permissions } from '~/common/decorators/permission.decorator';
 import { ExamService } from '~/modules/system/exam/exam.service';
 import {
   CreateExamPaperDto,
+  EnableExamsDto,
   ExamPaperPageOptions,
   GenerateExamPaperDto,
   UpdateExamPaperDto,
@@ -74,6 +75,17 @@ export class ExamResolver {
     const data = GenerateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.generate(data);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_EXAM)
+  @Mutation(() => [ExamEntity], { name: 'enableExams' })
+  async enableExams(
+    @CurrentUser() user: IAuthPayload,
+    @Args('enableExamsArgs') dto: EnableExamsDto,
+  ) {
+    const data = plainToClass(EnableExamsDto, dto);
+    data.updateBy = user.id;
+    return await this.examService.enableExams(data);
   }
 
   @Permissions(PermissionEnum.UPDATE_EXAM)
