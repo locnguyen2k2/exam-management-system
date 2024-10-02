@@ -4,35 +4,8 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
-
-@ObjectType()
-class AnswerDto {
-  @Field(() => String)
-  label: string;
-  @Field(() => String)
-  answerId: string;
-}
-
-@ObjectType()
-class QuestionDto {
-  @Field(() => String)
-  questionId: string;
-  @Field(() => String)
-  label: string;
-  @Field(() => [AnswerDto])
-  answerIds: AnswerDto[];
-}
-
-@ObjectType()
-export class LessonDto {
-  @Field(() => String)
-  @Column({ type: 'string' })
-  lessonId: string;
-
-  @Field(() => String)
-  @Column({ type: 'string' })
-  name: string;
-}
+import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
+import { LessonBaseDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 
 @ObjectType()
 export class ScaleDto {
@@ -51,9 +24,9 @@ export class ExamEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   label: string;
 
-  @Field(() => LessonDto)
-  @Column({ type: 'json' })
-  lesson: LessonDto;
+  @Field(() => String)
+  @Column({ type: 'string' })
+  lessonId: string;
 
   @Field(() => String)
   @Column({ type: 'string' })
@@ -72,9 +45,9 @@ export class ExamEntity extends ExtendedEntity {
   @Column('json', { array: true })
   scales: IScale[];
 
-  @Field(() => [QuestionDto])
+  @Field(() => [ExamQuestionDto])
   @Column('json', { array: true })
-  questions: QuestionDto[] = [];
+  questions: ExamQuestionDto[] = [];
 
   @Field(() => Boolean, { nullable: true })
   @Column('boolean')

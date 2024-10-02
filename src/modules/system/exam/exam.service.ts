@@ -20,7 +20,10 @@ import { randomNumbs } from '~/utils/random';
 import * as _ from 'lodash';
 import { searchAtlas } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import { ExamPaginationDto } from '~/modules/system/exam/dtos/exam-res.dto';
+import {
+  ExamDetailDto,
+  ExamPaginationDto,
+} from '~/modules/system/exam/dtos/exam-res.dto';
 import {
   AnswerLabelEnum,
   QuestionLabelEnum,
@@ -31,6 +34,8 @@ import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pipe-line';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
+import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
 @Injectable()
 export class ExamService {
@@ -87,16 +92,22 @@ export class ExamService {
     return new ExamPaginationDto(entities, pageMetaDto);
   }
 
-  async getExamDetail(id: string) {
+  async getExamDetail(id: string): Promise<ExamDetailDto> {
     const questions = [];
-    const exam = await this.findOne(id);
+    const exam: any = await this.findOne(id);
     const questionIds = exam.questions.flat();
-    const answerIds = questionIds.flatMap((question) => question.answerIds);
-    const answers = await Promise.all(
-      answerIds.map(async (answer) => {
-        const isAnswer = await this.answerService.findOne(answer.answerId);
-        isAnswer['label'] = answer.label;
-        return isAnswer;
+    const lesson = await this.lessonService.findOne(exam.lessonId);
+
+    await Promise.all(
+      questionIds.map(async (question: any) => {
+        const answers = question.answers;
+        for (let i = 0; i < answers.length; i++) {
+          const isAnswer = await this.answerService.findOne(
+            answers[i].answerId,
+          );
+          isAnswer['label'] = answers[i].label;
+          question.answers[i] = isAnswer;
+        }
       }),
     );
 
@@ -110,12 +121,12 @@ export class ExamService {
 
       isQuestion['label'] = question.label;
 
-      for (const answer of answers) {
+      for (const answer of question.answers) {
         const index = isQuestion.correctAnswerIds.findIndex(
           (value) => value.correctAnswerId === answer.id,
         );
 
-        if (index > -1) {
+        if (index !== -1) {
           isQuestion.correctAnswers.push({
             ...answer,
             score: isQuestion.correctAnswerIds[index].score,
@@ -123,7 +134,7 @@ export class ExamService {
         }
       }
 
-      isQuestion.answers = answers.filter((answer) =>
+      isQuestion.answers = question.answers.filter((answer: AnswerEntity) =>
         isQuestion.answerIds.includes(answer.id),
       );
 
@@ -133,6 +144,7 @@ export class ExamService {
       questions.push(isQuestion);
     }
 
+    exam.lesson = lesson;
     exam.questions = questions;
 
     return exam;
@@ -177,7 +189,7 @@ export class ExamService {
     );
   }
 
-  async create(data: CreateExamPaperDto): Promise<ExamEntity[]> {
+  async create(data: CreateExamPaperDto): Promise<ExamDetailDto[]> {
     const exams: ExamEntity[] = [];
     const lesson = await this.lessonService.findOne(data.lessonId);
     const questionInfo: IDetailChapter[] = await Promise.all(
@@ -204,7 +216,7 @@ export class ExamService {
       const newExam = new ExamEntity({
         label: data.label,
         time: data.time,
-        lesson: { lessonId: lesson.id, name: lesson.name },
+        lessonId: lesson.id,
         sku: data.sku + randomNumbs(3),
         status: data.status,
         enable: data.enable,
@@ -214,7 +226,8 @@ export class ExamService {
           return {
             questionId: question.id,
             label: question.label,
-            answerIds: [...question.answerIds],
+            correctAnswers: question.correctAnswerIds,
+            answers: [...question.answerIds],
           };
         }),
         create_by: data.createBy,
@@ -230,7 +243,11 @@ export class ExamService {
       examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
       updateBy: data.createBy,
     });
-    return await this.examRepo.save(newExams);
+    await this.examRepo.save(newExams);
+
+    return await Promise.all(
+      newExams.map(async (exam) => await this.getExamDetail(exam.id)),
+    );
   }
 
   // async countQuestionInExams(questionId: string): Promise<number> {
@@ -240,7 +257,7 @@ export class ExamService {
   //   });
   // }
 
-  async generate(data: GenerateExamPaperDto): Promise<ExamEntity[]> {
+  async generate(data: GenerateExamPaperDto): Promise<ExamDetailDto[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
     const lesson = await this.lessonService.findOne(data.lessonId);
@@ -252,8 +269,23 @@ export class ExamService {
 
     delete data.numberExams;
 
+    const listScales: IScale[] = [];
+
+    for (const scale of scales) {
+      const index = listScales.findIndex(
+        (item: IScale) =>
+          item.chapterId === scale.chapterId && item.level === scale.level,
+      );
+
+      if (index !== -1) {
+        listScales[index].percent += scale.percent;
+      } else {
+        listScales.push(scale);
+      }
+    }
+
     const handledChapters = await Promise.all(
-      scales.map(async (scale) => {
+      listScales.map(async (scale) => {
         const { chapterId, percent, level } = scale;
         const questionQty = (percent * totalQuestions) / 100;
         // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
@@ -297,17 +329,18 @@ export class ExamService {
         new ExamEntity({
           label: data.label,
           time: data.time,
-          lesson: { lessonId: lesson.id, name: lesson.name },
+          lessonId: lesson.id,
           sku: data.sku + randomNumbs(3),
           status: data.status,
           enable: data.enable,
           maxScore: data.maxScore,
-          scales: data.scales,
+          scales: listScales,
           questions: questionLabel.map((question) => {
             return {
               questionId: question.id,
               label: question.label,
-              answerIds: [...question.answerIds],
+              correctAnswers: question.correctAnswerIds,
+              answers: [...question.answerIds],
             };
           }),
           create_by: data.createBy,
@@ -322,17 +355,20 @@ export class ExamService {
       examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
       updateBy: data.createBy,
     });
+    await this.examRepo.save(newExams);
 
-    return await this.examRepo.save(newExams);
-  }
-
-  async updateExamsLessonName(lessonId: string, name: string) {
-    await this.examRepo.updateMany(
-      { 'lesson.lessonId': lessonId },
-      { $set: { 'lesson.name': name } },
-      { upsert: false },
+    return await Promise.all(
+      newExams.map(async (exam) => await this.getExamDetail(exam.id)),
     );
   }
+
+  // async updateExamsLessonName(lessonId: string, name: string) {
+  //   await this.examRepo.updateMany(
+  //     { 'lesson.lessonId': lessonId },
+  //     { $set: { 'lesson.name': name } },
+  //     { upsert: false },
+  //   );
+  // }
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
@@ -349,9 +385,9 @@ export class ExamService {
         data.updateBy,
       );
 
-      if (isExisted.lesson.lessonId !== newLesson.id) {
+      if (isExisted.lessonId !== newLesson.id) {
         const oldLesson = await this.lessonService.getAvailable(
-          isExisted.lesson.lessonId,
+          isExisted.lessonId,
           data.updateBy,
         );
 
@@ -359,7 +395,7 @@ export class ExamService {
 
         oldNewExams.delete(id);
 
-        await this.lessonService.update(isExisted.lesson.lessonId, {
+        await this.lessonService.update(isExisted.lessonId, {
           ...oldLesson,
           examIds: [...oldNewExams],
         });
@@ -373,8 +409,7 @@ export class ExamService {
           { id: id },
           {
             $set: {
-              'lesson.name': newLesson.name,
-              'lesson.lessonId': newLesson.id,
+              lessonId: newLesson.id,
             },
           },
           { upsert: false },

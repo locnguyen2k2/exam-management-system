@@ -6,6 +6,18 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterDetailDto } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { ExamDetailDto } from '~/modules/system/exam/dtos/exam-res.dto';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
+import { Column } from 'typeorm';
+
+@ObjectType('LessonSimpleFields')
+export class LessonBaseDto {
+  @Field(() => String)
+  @Column({ type: 'string' })
+  lessonId: string;
+
+  @Field(() => String)
+  @Column({ type: 'string' })
+  name: string;
+}
 
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {

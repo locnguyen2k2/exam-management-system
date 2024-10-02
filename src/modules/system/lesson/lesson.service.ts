@@ -203,7 +203,7 @@ export class LessonService {
         throw new BusinessException('400:Tên học phần đã tồn tại!');
       }
 
-      await this.examService.updateExamsLessonName(id, data.name);
+      // await this.examService.updateExamsLessonName(id, data.name);
     }
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {

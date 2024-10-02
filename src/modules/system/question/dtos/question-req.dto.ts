@@ -34,7 +34,7 @@ export class QuestionPageOptions extends PageOptionDto {
   questionCategory: CategoryEnum[];
 }
 
-@InputType()
+@InputType('QuestionArgs')
 class QuestionBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
   sku: string;

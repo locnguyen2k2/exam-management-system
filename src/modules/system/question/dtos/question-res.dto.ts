@@ -1,4 +1,4 @@
-import { Field, Float, ObjectType } from '@nestjs/graphql';
+import { Field, ObjectType } from '@nestjs/graphql';
 import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
@@ -6,11 +6,22 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import {
+  CorrectAnswerDto,
+  QuestionAnswerDto,
+  QuestionCorrectAnswerDto,
+} from '~/modules/system/answer/dtos/answer-res.dto';
 
-@ObjectType()
-export class CorrectAnswer extends AnswerEntity {
-  @Field(() => Float, { nullable: true })
-  score: number;
+@ObjectType('QuestionSimpleFields')
+export class ExamQuestionDto {
+  @Field(() => String)
+  questionId: string;
+  @Field(() => String)
+  label: string;
+  @Field(() => [QuestionCorrectAnswerDto])
+  correctAnswers: QuestionCorrectAnswerDto[];
+  @Field(() => [QuestionAnswerDto])
+  answers: QuestionAnswerDto[];
 }
 
 @ObjectType('QuestionModel')
@@ -41,8 +52,8 @@ export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => [CorrectAnswer])
-  correctAnswers: CorrectAnswer[];
+  @Field(() => [CorrectAnswerDto])
+  correctAnswers: CorrectAnswerDto[];
 
   @Field(() => [AnswerEntity!]!)
   answers: AnswerEntity[];

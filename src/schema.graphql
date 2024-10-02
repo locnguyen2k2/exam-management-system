@@ -118,26 +118,89 @@ type Credential {
   refresh_token: String!
 }
 
-type AnswerDto {
+type AnswerModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  value: String!
+  remark: String
+}
+
+type CorrectAnswerModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  value: String!
+  remark: String
+  score: Float
+}
+
+type CorrectAnswerSimpleFields {
+  correctAnswerId: String!
+  score: Float
+}
+
+type AnswerSimpleFields {
   label: String!
   answerId: String!
 }
 
-type QuestionDto {
+type answers {
+  data: [AnswerModel!]!
+  meta: pagination!
+}
+
+type QuestionSimpleFields {
   questionId: String!
   label: String!
-  answerIds: [AnswerDto!]!
+  correctAnswers: [CorrectAnswerSimpleFields!]!
+  answers: [AnswerSimpleFields!]!
 }
 
-type LessonDto {
-  lessonId: String!
-  name: String!
-}
+type QuestionModel {
+  id: String!
 
-type ScaleDto {
-  percent: Float
-  chapterId: String
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String
+  content: String!
+  picture: String
+  remark: String
+  chapterId: String!
   level: LevelEnum!
+  status: StatusShareEnum
+  category: CategoryEnum!
+  correctAnswers: [CorrectAnswerModel!]!
+  answers: [AnswerModel!]!
+  sku: String
 }
 
 enum LevelEnum {
@@ -147,6 +210,33 @@ enum LevelEnum {
   ANALYZING
   EVALUATING
   CREATING
+}
+
+enum StatusShareEnum {
+  PUBLIC
+  PRIVATE
+}
+
+enum CategoryEnum {
+  EASSAY
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  FILL_IN
+  MATCHING
+  ORDERING
+  IMAGE_BASED
+}
+
+type QuestionPagination {
+  data: [QuestionModel!]!
+  meta: pagination!
+}
+
+type ScaleDto {
+  percent: Float
+  chapterId: String
+  level: LevelEnum!
 }
 
 type ExamEntity {
@@ -161,25 +251,15 @@ type ExamEntity {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
-  lesson: LessonDto!
+  lessonId: String!
   time: String!
   sku: String!
 
   """10 được đặt mặc định"""
   maxScore: Float
   scales: [ScaleDto!]!
-  questions: [QuestionDto!]!
+  questions: [QuestionSimpleFields!]!
   status: StatusShareEnum
-}
-
-enum StatusShareEnum {
-  PUBLIC
-  PRIVATE
-}
-
-type CorrectAnswerIds {
-  correctAnswerId: String!
-  score: Float
 }
 
 type QuestionEntity {
@@ -200,42 +280,8 @@ type QuestionEntity {
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswerIds: [CorrectAnswerIds!]!
+  correctAnswerIds: [CorrectAnswerSimpleFields!]!
   answerIds: [String!]!
-}
-
-enum CategoryEnum {
-  EASSAY
-  SINGLE_CHOICE
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-  FILL_IN
-  MATCHING
-  ORDERING
-  IMAGE_BASED
-}
-
-type AnswerModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String!
-  value: String!
-  remark: String
-}
-
-type answers {
-  data: [AnswerModel!]!
-  meta: pagination!
 }
 
 type ChapterEntity {
@@ -261,7 +307,7 @@ type ChapterEntity {
   questionIds: [String!]!
 }
 
-type LessonEntity {
+type LessonDefaultFields {
   id: String!
 
   """Trạng thái quản lý"""
@@ -299,7 +345,7 @@ type ChapterModel {
   label: String!
   name: String!
   description: String
-  lesson: LessonEntity!
+  lesson: LessonDefaultFields!
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum
@@ -308,56 +354,6 @@ type ChapterModel {
 
 type ChapterPagination {
   data: [ChapterModel!]!
-  meta: pagination!
-}
-
-type CorrectAnswer {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String!
-  value: String!
-  remark: String
-  score: Float
-}
-
-type QuestionModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String
-  content: String!
-  picture: String
-  remark: String
-  chapterId: String!
-  level: LevelEnum!
-  status: StatusShareEnum
-  category: CategoryEnum!
-  correctAnswers: [CorrectAnswer!]!
-  answers: [AnswerModel!]!
-  sku: String
-}
-
-type QuestionPagination {
-  data: [QuestionModel!]!
   meta: pagination!
 }
 
@@ -375,7 +371,7 @@ type ExamModel {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
-  lesson: LessonDto!
+  lesson: LessonDefaultFields!
   time: String!
   sku: String!
 
@@ -657,15 +653,15 @@ type Mutation {
   enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
   updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
   deleteChapters(chapterIds: [String!]!): [String!]!
-  createLessons(createLessonArgs: CreateLessonArgs!): [LessonEntity!]!
-  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonEntity!
-  enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonEntity!]!
+  createLessons(createLessonArgs: CreateLessonArgs!): [LessonDefaultFields!]!
+  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonDefaultFields!
+  enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonDefaultFields!]!
 
   """Tạo đề thi"""
-  createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamEntity!]!
+  createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamModel!]!
 
   """Khởi tạo đề thi từ ngân hàng câu hỏi"""
-  generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamEntity!]!
+  generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamModel!]!
   enableExams(enableExamsArgs: EnableExamsArgs!): [ExamEntity!]!
 
   """Cập nhật đề thi"""
@@ -998,10 +994,10 @@ input UpdateExamPaperArgs {
 }
 
 input CreateQuestionsArgs {
-  questions: [QuestionBaseDto!]!
+  questions: [QuestionArgs!]!
 }
 
-input QuestionBaseDto {
+input QuestionArgs {
   sku: String
   content: String!
   picture: Upload

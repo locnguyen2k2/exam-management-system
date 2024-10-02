@@ -50,28 +50,28 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamEntity], {
+  @Mutation(() => [ExamDetailDto], {
     name: 'createExamPapers',
     description: 'Tạo đề thi',
   })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createExamPaperArgs') dto: CreateExamPaperDto,
-  ): Promise<ExamEntity[]> {
+  ): Promise<ExamDetailDto[]> {
     const data = CreateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.create(data);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamEntity], {
+  @Mutation(() => [ExamDetailDto], {
     name: 'generateExamPapers',
     description: 'Khởi tạo đề thi từ ngân hàng câu hỏi',
   })
   async generate(
     @CurrentUser() user: IAuthPayload,
     @Args('generateExamPaperArgs') dto: GenerateExamPaperDto,
-  ): Promise<ExamEntity[]> {
+  ): Promise<ExamDetailDto[]> {
     const data = GenerateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.generate(data);
