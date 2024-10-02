@@ -586,6 +586,37 @@ export class QuestionService {
     throw new BusinessException('200:Xoá thành công!');
   }
 
+  async randQuestsByScales(
+    scales: IScale[],
+    totalQuestions: number,
+    uid: string,
+  ) {
+    return await Promise.all(
+      scales.map(async (scale) => {
+        const { chapterId, percent, level } = scale;
+        const questionQty = (percent * totalQuestions) / 100;
+        // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
+        const { questions, chapter } = await this.randQuestsByChap(
+          chapterId,
+          level,
+          questionQty,
+          uid,
+        );
+
+        if (questions.length - questionQty < 0)
+          throw new BusinessException(
+            `400:Tỉ lệ câu hỏi chuong ${chapter.id} không hợp lệ(${questions.length}/${questionQty}) câu ${LevelEnum[`${level.toUpperCase()}`]}`,
+          );
+
+        return {
+          id: chapter.id,
+          name: chapter.name,
+          questions,
+        };
+      }),
+    );
+  }
+
   async randQuestsByChap(
     chapterId: string,
     level: LevelEnum,

@@ -33,7 +33,6 @@ import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pipe-line';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
@@ -192,7 +191,7 @@ export class ExamService {
   async create(data: CreateExamPaperDto): Promise<ExamDetailDto[]> {
     const exams: ExamEntity[] = [];
     const lesson = await this.lessonService.findOne(data.lessonId);
-    const questionInfo: IDetailChapter[] = await Promise.all(
+    const questsInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
           await this.questionService.validateQuestions(
@@ -202,14 +201,15 @@ export class ExamService {
           ),
       ),
     );
-    const questions = questionInfo.map((info) => info.questions).flat();
-    const scales = await this.questionService.questionPercentages(questions);
+    const listQuestions = questsInfo.map((info) => info.questions).flat();
+    const scales =
+      await this.questionService.questionPercentages(listQuestions);
 
     for (let i = 0; i < data.numberExams; i++) {
-      const randomQuestion =
-        await this.questionService.randomQuestions(questions);
-      const questionLabel = await this.handleQuestionLabel(
-        randomQuestion,
+      const mixedQuestions =
+        await this.questionService.randomQuestions(listQuestions);
+      const questions = await this.handleQuestionLabel(
+        mixedQuestions,
         data.questionLabel,
         data.answerLabel,
       );
@@ -222,7 +222,7 @@ export class ExamService {
         enable: data.enable,
         maxScore: data.maxScore,
         scales,
-        questions: questionLabel.map((question) => {
+        questions: questions.map((question) => {
           return {
             questionId: question.id,
             label: question.label,
@@ -257,18 +257,7 @@ export class ExamService {
   //   });
   // }
 
-  async generate(data: GenerateExamPaperDto): Promise<ExamDetailDto[]> {
-    const listExams: ExamEntity[] = [];
-    const { scales, totalQuestions, numberExams } = data;
-    const lesson = await this.lessonService.findOne(data.lessonId);
-
-    if (lesson.create_by !== data.createBy)
-      throw new BusinessException(
-        `400:Khong the truy cap hoc phan "${lesson.name}"!`,
-      );
-
-    delete data.numberExams;
-
+  handleScale(scales: IScale[]): IScale[] {
     const listScales: IScale[] = [];
 
     for (const scale of scales) {
@@ -284,41 +273,38 @@ export class ExamService {
       }
     }
 
-    const handledChapters = await Promise.all(
-      listScales.map(async (scale) => {
-        const { chapterId, percent, level } = scale;
-        const questionQty = (percent * totalQuestions) / 100;
-        // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
-        const { questions, chapter } =
-          await this.questionService.randQuestsByChap(
-            chapterId,
-            level,
-            questionQty,
-            data.createBy,
-          );
+    return listScales;
+  }
 
-        if (questions.length - questionQty < 0)
-          throw new BusinessException(
-            `400:Tỉ lệ câu hỏi chuong ${chapter.id} không hợp lệ(${questions.length}/${questionQty}) câu ${LevelEnum[`${level.toUpperCase()}`]}`,
-          );
+  async generate(data: GenerateExamPaperDto): Promise<ExamDetailDto[]> {
+    const listExams: ExamEntity[] = [];
+    const { scales, totalQuestions, numberExams } = data;
+    const lesson = await this.lessonService.findOne(data.lessonId);
 
-        return {
-          id: chapter.id,
-          name: chapter.name,
-          questions,
-        };
-      }),
+    if (lesson.create_by !== data.createBy)
+      throw new BusinessException(
+        `400:Khong the truy cap hoc phan "${lesson.name}"!`,
+      );
+
+    delete data.numberExams;
+
+    const listScales: IScale[] = this.handleScale(scales);
+
+    const questsChapter: any[] = await this.questionService.randQuestsByScales(
+      listScales,
+      totalQuestions,
+      data.createBy,
     );
 
-    const questions = handledChapters.map((item) => item.questions).flat();
+    const listQuestions = questsChapter.map((item) => item.questions).flat();
 
     for (let i = 0; i < numberExams; i++) {
       // Trộn câu hỏi và đáp án của từng câu
-      const randomQuestion =
-        await this.questionService.randomQuestions(questions);
+      const mixedQuestions =
+        await this.questionService.randomQuestions(listQuestions);
 
-      const questionLabel = await this.handleQuestionLabel(
-        randomQuestion,
+      const questions = await this.handleQuestionLabel(
+        mixedQuestions,
         data.questionLabel,
         data.answerLabel,
       );
@@ -335,7 +321,7 @@ export class ExamService {
           enable: data.enable,
           maxScore: data.maxScore,
           scales: listScales,
-          questions: questionLabel.map((question) => {
+          questions: questions.map((question) => {
             return {
               questionId: question.id,
               label: question.label,
