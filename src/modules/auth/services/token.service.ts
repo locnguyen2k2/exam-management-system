@@ -153,12 +153,10 @@ export class TokenService {
    * */
   async verifyGGToken(token: string): Promise<ICredentialWithGG> {
     const client = new OAuth2Client(env('GG_CLIENT_ID'));
-    const clientId = env('GG_CLIENT_ID');
     let ggCredential = null;
     try {
       const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: clientId,
+        idToken: token, // audience: clientId,
       });
       ggCredential = ticket.getPayload();
     } catch (err) {
