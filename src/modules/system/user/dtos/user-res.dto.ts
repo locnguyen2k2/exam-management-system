@@ -44,4 +44,7 @@ export class UserProfile {
 
   @Field(() => Boolean)
   enable: boolean;
+
+  @Field(() => [String])
+  roles: string[] = [];
 }

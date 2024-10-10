@@ -240,6 +240,7 @@ export class UserService {
 
   async getProfile(uid: string): Promise<UserProfile> {
     const user = await this.findOne(uid);
+    const roles = await this.getUserPermissions(user.id);
 
     return {
       name: `${user.firstName} ${user.lastName}`,
@@ -250,6 +251,7 @@ export class UserService {
       gender: user.gender,
       status: user.status,
       enable: user.enable,
+      roles: roles.map((role: any) => role.permissions.flat()).flat(),
     };
   }
 

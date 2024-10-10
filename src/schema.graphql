@@ -61,6 +61,7 @@ type UserProfile {
   gender: GenderEnum
   status: Boolean!
   enable: Boolean!
+  roles: [String!]!
 }
 
 """Role model"""
