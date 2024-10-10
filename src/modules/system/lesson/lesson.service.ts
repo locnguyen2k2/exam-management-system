@@ -12,7 +12,6 @@ import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
-import { ErrorEnum } from '~/common/enums/error.enum';
 import {
   regSpecialChars,
   regWhiteSpace,
@@ -160,7 +159,7 @@ export class LessonService {
   async findOne(id: string): Promise<LessonEntity> {
     const isExisted = await this.lessonRepo.findOne({ where: { id } });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(`400:Học phần ${id} không tồn tại!`);
   }
 
   async create(data: CreateLessonDto): Promise<LessonEntity[]> {

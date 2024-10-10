@@ -217,6 +217,8 @@ export class ChapterService {
   }
 
   async create(data: CreateChapterDto): Promise<ChapterEntity> {
+    await this.lessonService.findOne(data.lessonId);
+
     const isExisted = await this.findByName(data.name);
     if (isExisted) throw new BusinessException('400:Tên chương đã tồn tại');
 

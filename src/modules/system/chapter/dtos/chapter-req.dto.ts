@@ -24,6 +24,9 @@ export class ChapterBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
   description: string = '';
 
+  @Field(() => Boolean, { nullable: true })
+  enable: boolean;
+
   @Field(() => StatusShareEnum, {
     nullable: true,
     defaultValue: StatusShareEnum.PRIVATE,

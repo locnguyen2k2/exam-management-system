@@ -7,8 +7,8 @@ export class AnswerPageOptions extends PageOptionDto {}
 
 @InputType()
 class AnswerBaseDto extends BaseDto {
-  // @HideField()
-  // label: string = '';
+  @Field(() => Boolean, { nullable: true })
+  enable: boolean;
 
   @Field(() => String)
   value: string;

@@ -835,6 +835,7 @@ input CreateChapterArgs {
   name: String!
   lessonId: String!
   description: String = ""
+  enable: Boolean
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum = PRIVATE
@@ -845,6 +846,7 @@ input UpdateChapterArgs {
   name: String
   lessonId: String
   description: String = ""
+  enable: Boolean
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum = PRIVATE
@@ -1054,11 +1056,13 @@ input CreateAnswersArgs {
 }
 
 input AnswerBaseDto {
+  enable: Boolean
   value: String!
   remark: String
 }
 
 input UpdateAnswerArgs {
+  enable: Boolean
   value: String
   remark: String
 }
