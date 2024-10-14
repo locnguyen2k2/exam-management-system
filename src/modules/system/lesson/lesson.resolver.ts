@@ -41,8 +41,11 @@ export class LessonResolver {
 
   @Permissions(PermissionEnum.DETAIL_LESSON)
   @Query(() => LessonDetailDto, { name: 'lesson' })
-  async lesson(@Args('lessonId') id: string): Promise<LessonDetailDto> {
-    return await this.lessonService.detailLesson(id);
+  async lesson(
+    @Args('lessonId') id: string,
+    @CurrentUser() user: IAuthPayload,
+  ): Promise<LessonDetailDto> {
+    return await this.lessonService.detailLesson(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_LESSON)

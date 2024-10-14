@@ -139,12 +139,12 @@ export class QuestionService {
     return new QuestionPagination(entities, pageMetaDto);
   }
 
-  async detailQuestion(id: string): Promise<any> {
+  async detailQuestion(id: string, uid: string): Promise<any> {
     const isExisted = await this.questionRepo
       .aggregate([...defaultLookup, { $match: { id } }])
       .toArray();
 
-    if (isExisted.length > 0) {
+    if (isExisted.length > 0 && isExisted[0].create_by === uid) {
       const correctAnswerList = [];
       if (isExisted[0].correctAnswerIds.length > 0) {
         for (const correctAnswer of isExisted[0].correctAnswerIds) {
@@ -195,16 +195,16 @@ export class QuestionService {
     if (isExisted) return isExisted;
   }
 
-  async getAvailable(id: string, uid: string): Promise<QuestionEntity> {
+  async findAvailable(id: string, uid: string): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
 
     if (isExisted.create_by === uid) return isExisted;
 
-    if (
-      isExisted.status === StatusShareEnum.PUBLIC &&
-      isExisted.enable === true
-    )
-      return isExisted;
+    // if (
+    //   isExisted.status === StatusShareEnum.PUBLIC &&
+    //   isExisted.enable === true
+    // )
+    //   return isExisted;
 
     throw new BusinessException(`400:Bản ghi "${isExisted.id}" không có sẵn!`);
   }
@@ -214,23 +214,19 @@ export class QuestionService {
     const answerIds: string[] = [];
     const correctAnswers: CorrectAnswerIdsDto[] = [];
 
+    // Kiểm tra chương, nội dung câu hỏi
     await Promise.all(
       data.questions.map(async (questionData) => {
-        // Kiểm tra chương
-        await this.chapterService.findOne(questionData.chapterId);
-        // Kiểm tra nội dung đã tồn tại
-        if (await this.findByContent(questionData.content))
+        await this.chapterService.findAvailableById(
+          questionData.chapterId,
+          data.createBy,
+        );
+
+        const isExisted = await this.findByContent(questionData.content);
+        if (isExisted && isExisted.create_by === data.createBy)
           throw new BusinessException(
             `400:Nội dung câu hỏi "${questionData.content}" đã tồn tại`,
           );
-
-        for (const answerId of questionData.answerIds) {
-          const index = answerIds.findIndex((value) => value === answerId);
-          if (index === -1) {
-            await this.answerService.findOne(answerId);
-            answerIds.push(answerId);
-          }
-        }
 
         if (
           questionData.category !== CategoryEnum.MULTIPLE_CHOICE &&
@@ -239,6 +235,18 @@ export class QuestionService {
           throw new BusinessException(
             '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án!',
           );
+        }
+      }),
+    );
+
+    await Promise.all(
+      data.questions.map(async (questionData) => {
+        for (const answerId of questionData.answerIds) {
+          const index = answerIds.findIndex((value) => value === answerId);
+          if (index === -1) {
+            await this.answerService.findOne(answerId);
+            answerIds.push(answerId);
+          }
         }
 
         for (const correctAnswer of questionData.correctAnswers) {
@@ -388,7 +396,7 @@ export class QuestionService {
 
     await Promise.all(
       questionIds.map(async (id) =>
-        questions.push(await this.getAvailable(id, uid)),
+        questions.push(await this.findAvailable(id, uid)),
       ),
     );
 
@@ -424,11 +432,15 @@ export class QuestionService {
 
     if (data.content) {
       const isContent = await this.findByContent(data.content);
-      if (isContent.id !== id)
+      if (isContent.id !== id && isContent.create_by === data.updateBy)
         throw new BusinessException('400:Nội dung câu hỏi đã tồn tại');
     }
 
-    data.chapterId && (await this.chapterService.findOne(data.chapterId));
+    data.chapterId &&
+      (await this.chapterService.findAvailableById(
+        data.chapterId,
+        data.updateBy,
+      ));
 
     const category = data.category ? data.category : isExisted.category;
 
@@ -623,7 +635,7 @@ export class QuestionService {
     quantity: number,
     uid: string,
   ): Promise<IDetailChapter> {
-    const chapter = await this.chapterService.findAvailableById(chapterId);
+    const chapter = await this.chapterService.findAvailableById(chapterId, uid);
     const questions = await this.questionRepo
       .aggregate([
         {

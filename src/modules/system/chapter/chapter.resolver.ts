@@ -3,8 +3,8 @@ import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import {
   ChapterPageOptions,
   CreateChapterDto,
-  UpdateChapterDto,
   EnableChaptersDto,
+  UpdateChapterDto,
   UpdateChaptersStatusDto,
 } from '~/modules/system/chapter/dtos/chapter-req.dto';
 import { Permissions } from '~/common/decorators/permission.decorator';
@@ -73,8 +73,11 @@ export class ChapterResolver {
 
   @Permissions(PermissionEnum.DETAIL_CHAPTER)
   @Query(() => ChapterDetailDto, { name: 'chapter' })
-  async chapter(@Args('chapterId') id: string): Promise<ChapterDetailDto> {
-    return this.chapterService.detailChapter(id);
+  async chapter(
+    @Args('chapterId') id: string,
+    @CurrentUser() user: IAuthPayload,
+  ): Promise<ChapterDetailDto> {
+    return this.chapterService.findAvailableChapterById(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)

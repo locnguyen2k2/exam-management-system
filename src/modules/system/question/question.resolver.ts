@@ -45,8 +45,11 @@ export class QuestionResolver {
 
   @Permissions(PermissionEnum.DETAIL_QUESTION)
   @Query(() => QuestionDetailDto, { name: 'questionDetail' })
-  async question(@Args('questionId') id: string): Promise<QuestionDetailDto> {
-    return this.questionService.detailQuestion(id);
+  async question(
+    @Args('questionId') id: string,
+    @CurrentUser() user: IAuthPayload,
+  ): Promise<QuestionDetailDto> {
+    return this.questionService.detailQuestion(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)

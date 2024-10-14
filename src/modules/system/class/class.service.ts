@@ -118,10 +118,18 @@ export class ClassService {
     if (isExisted) return isExisted;
   }
 
+  async findAvailableById(id: string, uid: string): Promise<ClassEntity> {
+    const isExisted = await this.findOne(id);
+
+    if (isExisted && isExisted.create_by === uid) return isExisted;
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+  }
+
   async create(data: CreateClassDto): Promise<ClassEntity> {
     const isExisted = await this.findByName(data.name);
 
-    if (isExisted) throw new BusinessException(ErrorEnum.RECORD_EXISTED);
+    if (isExisted && isExisted.create_by === data.createBy)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED);
 
     const item = new ClassEntity({
       ...data,
@@ -133,7 +141,10 @@ export class ClassService {
 
     if (data.lessonIds && data.lessonIds.length > 0) {
       for (const lessonId of data.lessonIds) {
-        const isLesson = await this.lessonService.findOne(lessonId);
+        const isLesson = await this.lessonService.findAvailable(
+          lessonId,
+          data.createBy,
+        );
 
         const newLessonClassIds = [...isLesson.classIds, newItem.id];
 
@@ -154,7 +165,11 @@ export class ClassService {
     if (!_.isEmpty(data.name)) {
       const isReplaced = await this.findByName(data.name);
 
-      if (isReplaced && isExisted.id !== isReplaced.id)
+      if (
+        isReplaced &&
+        isExisted.id !== isReplaced.id &&
+        isExisted.create_by === data.updateBy
+      )
         throw new BusinessException(`400:Tên lớp "${data.name}" đã tồn tại!`);
     }
 
@@ -167,7 +182,7 @@ export class ClassService {
 
     if (data.lessonIds && data.lessonIds.length > 0) {
       for (const lessonId of data.lessonIds) {
-        await this.lessonService.getAvailable(lessonId, data.updateBy);
+        await this.lessonService.findAvailable(lessonId, data.updateBy);
         const isReplaced = lessonIds.some((lesson) => lesson === lessonId);
         !isReplaced && lessonIds.push(lessonId);
       }

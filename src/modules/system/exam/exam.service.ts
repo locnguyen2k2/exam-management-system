@@ -190,7 +190,10 @@ export class ExamService {
 
   async create(data: CreateExamPaperDto): Promise<ExamDetailDto[]> {
     const exams: ExamEntity[] = [];
-    const lesson = await this.lessonService.findOne(data.lessonId);
+    const lesson = await this.lessonService.findAvailable(
+      data.lessonId,
+      data.createBy,
+    );
     const questsInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
@@ -279,12 +282,10 @@ export class ExamService {
   async generate(data: GenerateExamPaperDto): Promise<ExamDetailDto[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
-    const lesson = await this.lessonService.findOne(data.lessonId);
-
-    if (lesson.create_by !== data.createBy)
-      throw new BusinessException(
-        `400:Khong the truy cap hoc phan "${lesson.name}"!`,
-      );
+    const lesson = await this.lessonService.findAvailable(
+      data.lessonId,
+      data.createBy,
+    );
 
     delete data.numberExams;
 
@@ -366,13 +367,13 @@ export class ExamService {
     }
 
     if (data.lessonId) {
-      const newLesson = await this.lessonService.getAvailable(
+      const newLesson = await this.lessonService.findAvailable(
         data.lessonId,
         data.updateBy,
       );
 
       if (isExisted.lessonId !== newLesson.id) {
-        const oldLesson = await this.lessonService.getAvailable(
+        const oldLesson = await this.lessonService.findAvailable(
           isExisted.lessonId,
           data.updateBy,
         );

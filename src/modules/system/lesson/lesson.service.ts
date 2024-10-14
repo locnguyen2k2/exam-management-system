@@ -81,7 +81,7 @@ export class LessonService {
       entities[i]['chapters'] = await Promise.all(
         chapterIds.map(
           async (chapterId: string) =>
-            await this.chapterService.detailChapter(chapterId),
+            await this.chapterService.findAvailableChapterById(chapterId, uid),
         ),
       );
 
@@ -116,23 +116,23 @@ export class LessonService {
     if (isExisted) return isExisted;
   }
 
-  async getAvailable(id: string, uid: string): Promise<LessonEntity> {
+  async findAvailable(id: string, uid: string): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
 
     if (isExisted.create_by === uid) return isExisted;
 
-    if (
-      isExisted.status === StatusShareEnum.PUBLIC &&
-      isExisted.enable === true
-    )
-      return isExisted;
+    // if (
+    //   isExisted.status === StatusShareEnum.PUBLIC &&
+    //   isExisted.enable === true
+    // )
+    //   return isExisted;
 
     throw new BusinessException(
       `400:Bản ghi "${isExisted.name}" không có sẵn!`,
     );
   }
 
-  async detailLesson(id: string): Promise<any> {
+  async detailLesson(id: string, uid: string): Promise<any> {
     const isExisted = await this.findOne(id);
     const chapterIds = isExisted.chapterIds;
     const examsIds = isExisted.examIds;
@@ -143,7 +143,7 @@ export class LessonService {
     isExisted['chapters'] = await Promise.all(
       chapterIds.map(
         async (chapterId: string) =>
-          await this.chapterService.detailChapter(chapterId),
+          await this.chapterService.findAvailableChapterById(chapterId, uid),
       ),
     );
 
@@ -198,7 +198,11 @@ export class LessonService {
     if (!_.isNil(data.name)) {
       const isReplaced = await this.findByName(data.name);
 
-      if (isReplaced && isReplaced.id !== id) {
+      if (
+        isReplaced &&
+        isReplaced.id !== id &&
+        isReplaced.create_by === data.updateBy
+      ) {
         throw new BusinessException('400:Tên học phần đã tồn tại!');
       }
 
@@ -207,7 +211,7 @@ export class LessonService {
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
       for (const classId of data.classIds) {
-        await this.classService.findOne(classId);
+        await this.classService.findAvailableById(classId, data.updateBy);
         const isReplaced = newClassIds.some(
           (newClassId) => newClassId === classId,
         );

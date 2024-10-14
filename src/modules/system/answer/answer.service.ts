@@ -72,6 +72,13 @@ export class AnswerService {
     return await this.answerRepo.findBy({ enable: true });
   }
 
+  async findAvailableById(id: string, uid: string): Promise<AnswerEntity> {
+    const isExisted = await this.findOne(id);
+
+    if (isExisted && isExisted.create_by === uid) return isExisted;
+    throw new BusinessException(`400:Bản ghi ${id} không khả dụng!`);
+  }
+
   async findOne(id: string): Promise<AnswerEntity> {
     const isExisted = await this.answerRepo.findOneBy({ id });
     if (isExisted) return isExisted;
@@ -82,13 +89,6 @@ export class AnswerService {
     const answers: AnswerEntity[] = new Array(data.items.length);
     await Promise.all(
       data.items.map(async (item, index) => {
-        // const isExisted = await this.findByValue(item.value);
-
-        // if (isExisted.length > 0) {
-        //   answers[index] = isExisted[0];
-        // } else
-        // {
-        // }
         const answer = new AnswerEntity({
           ...item,
           create_by: data.createBy,
@@ -110,6 +110,7 @@ export class AnswerService {
         '400:Không có quyền thao tác trên bản ghi này!',
       );
     }
+
     const { affected } = await this.answerRepo.update(
       { id },
       {

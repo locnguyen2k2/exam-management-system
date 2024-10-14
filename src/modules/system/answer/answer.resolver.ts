@@ -19,8 +19,11 @@ export class AnswerResolver {
 
   @Permissions(PermissionEnum.DETAIL_ANSWER)
   @Query(() => AnswerEntity, { name: 'answer' })
-  async answer(@Args('answerId') id: string): Promise<AnswerEntity> {
-    return this.answerService.findOne(id);
+  async answer(
+    @Args('answerId') id: string,
+    @CurrentUser() user: IAuthPayload,
+  ): Promise<AnswerEntity> {
+    return this.answerService.findAvailableById(id, user.id);
   }
 
   @Permissions(PermissionEnum.LIST_ANSWER)
