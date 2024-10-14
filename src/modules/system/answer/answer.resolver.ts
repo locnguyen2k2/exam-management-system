@@ -34,8 +34,9 @@ export class AnswerResolver {
   async answers(
     @Args('answerPageOptions', { nullable: true })
     chapterPageOptions: AnswerPageOptions = new AnswerPageOptions(),
+    @CurrentUser() user: IAuthPayload,
   ): Promise<AnswerPagination> {
-    return this.answerService.findAll(chapterPageOptions);
+    return this.answerService.findAll(user.id, chapterPageOptions);
   }
 
   @Permissions(PermissionEnum.ADD_ANSWER)

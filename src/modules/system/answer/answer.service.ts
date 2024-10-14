@@ -31,11 +31,19 @@ export class AnswerService {
   ) {}
 
   async findAll(
+    uid: string = null,
     pageOptions: AnswerPageOptions = new AnswerPageOptions(),
   ): Promise<AnswerPagination> {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
+      }),
+      ...(uid && {
+        $or: [
+          {
+            create_by: uid,
+          },
+        ],
       }),
     };
 
