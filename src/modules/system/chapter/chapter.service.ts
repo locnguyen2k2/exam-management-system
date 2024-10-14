@@ -180,7 +180,7 @@ export class ChapterService {
   }
 
   async findAvailableById(id: string, uid: string): Promise<ChapterEntity> {
-    const isExisted = await this.chapterRepo.findOneBy({ id });
+    const isExisted = await this.findOne(id);
     if (isExisted && isExisted.enable && isExisted.create_by === uid)
       return isExisted;
 
