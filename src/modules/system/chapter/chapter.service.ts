@@ -250,9 +250,7 @@ export class ChapterService {
 
     const listChapter = this.chapterRepo.create(newChapters);
 
-    await this.chapterRepo.save(listChapter);
-
-    return listChapter;
+    return this.chapterRepo.save(listChapter);
   }
 
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {

@@ -209,14 +209,10 @@ export class QuestionService {
     throw new BusinessException(`400:Bản ghi "${isExisted.id}" không có sẵn!`);
   }
 
-  async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
-    const questionsInfo: QuestionEntity[] = [];
-    const answerIds: string[] = [];
-    const correctAnswers: CorrectAnswerIdsDto[] = [];
-
-    // Kiểm tra chương, nội dung câu hỏi
+  async beforeAddQuestion(data: any) {
+    const listQuestion: any[] = [];
     await Promise.all(
-      data.questions.map(async (questionData) => {
+      data.questions.map(async (questionData: any) => {
         await this.chapterService.findAvailableById(
           questionData.chapterId,
           data.createBy,
@@ -236,42 +232,78 @@ export class QuestionService {
             '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án!',
           );
         }
+
+        if (
+          listQuestion.find(
+            (quest: any) =>
+              quest.content.toLowerCase().replace(/\s/g, '') ===
+              questionData.content.toLowerCase().replace(/\s/g, ''),
+          )
+        ) {
+          throw new BusinessException(
+            `400:Nội dung câu hỏi ${questionData.content} bị trùng!`,
+          );
+        }
+
+        listQuestion.push(questionData);
+      }),
+    );
+  }
+
+  async handleAnswers(data: any): Promise<any> {
+    const questionData = data.questionData;
+    const answerIds: string[] = [];
+    const correctAnswers: CorrectAnswerIdsDto[] = [];
+
+    for (const answerId of questionData.answerIds) {
+      const index = answerIds.findIndex((value) => value === answerId);
+      if (index === -1) {
+        await this.answerService.findAvailableById(answerId, data.createBy);
+        answerIds.push(answerId);
+      }
+    }
+
+    for (const correctAnswer of questionData.correctAnswers) {
+      const index = correctAnswers.findIndex(
+        (value) => value.correctAnswerId === correctAnswer.correctAnswerId,
+      );
+      const hasInAnswerIds = answerIds.find(
+        (value) => value === correctAnswer.correctAnswerId,
+      );
+
+      if (!hasInAnswerIds)
+        throw new BusinessException(
+          '400:Đáp án phải đúng có trong câu trả lời',
+        );
+      if (index === -1) {
+        // await this.answerService.findOne(correctAnswer.correctAnswerId);
+        correctAnswers.push(correctAnswer);
+      }
+    }
+
+    return { answerIds, correctAnswers };
+  }
+
+  async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
+    const questionsInfo: QuestionEntity[] = [];
+
+    // Kiểm tra chương, nội dung câu hỏi
+    await this.beforeAddQuestion(data);
+
+    await Promise.all(
+      data.questions.map(async (questionData, index) => {
+        const { answerIds, correctAnswers } = await this.handleAnswers({
+          createBy: data.createBy,
+          questionData,
+        });
+        data.questions[index].answerIds = answerIds;
+        data.questions[index].correctAnswers = correctAnswers;
       }),
     );
 
     await Promise.all(
       data.questions.map(async (questionData) => {
-        for (const answerId of questionData.answerIds) {
-          const index = answerIds.findIndex((value) => value === answerId);
-          if (index === -1) {
-            await this.answerService.findAvailableById(answerId, data.createBy);
-            answerIds.push(answerId);
-          }
-        }
-
-        for (const correctAnswer of questionData.correctAnswers) {
-          const index = correctAnswers.findIndex(
-            (value) => value.correctAnswerId === correctAnswer.correctAnswerId,
-          );
-          const hasInAnswerIds = answerIds.find(
-            (value) => value === correctAnswer.correctAnswerId,
-          );
-
-          if (!hasInAnswerIds)
-            throw new BusinessException(
-              '400:Đáp án phải đúng có trong câu trả lời',
-            );
-          if (index === -1) {
-            // await this.answerService.findOne(correctAnswer.correctAnswerId);
-            correctAnswers.push(correctAnswer);
-          }
-        }
-      }),
-    );
-
-    await Promise.all(
-      data.questions.map(async (questionData) => {
-        const { answerIds, chapterId } = questionData;
+        const { answerIds, chapterId, correctAnswers } = questionData;
         let picture = '';
         delete questionData.answerIds;
         delete questionData.correctAnswers;
