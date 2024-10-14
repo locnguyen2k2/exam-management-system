@@ -244,7 +244,7 @@ export class QuestionService {
         for (const answerId of questionData.answerIds) {
           const index = answerIds.findIndex((value) => value === answerId);
           if (index === -1) {
-            await this.answerService.findOne(answerId);
+            await this.answerService.findAvailableById(answerId, data.createBy);
             answerIds.push(answerId);
           }
         }
@@ -262,7 +262,7 @@ export class QuestionService {
               '400:Đáp án phải đúng có trong câu trả lời',
             );
           if (index === -1) {
-            await this.answerService.findOne(correctAnswer.correctAnswerId);
+            // await this.answerService.findOne(correctAnswer.correctAnswerId);
             correctAnswers.push(correctAnswer);
           }
         }
