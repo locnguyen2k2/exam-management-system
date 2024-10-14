@@ -36,8 +36,11 @@ export class ChapterBaseDto extends BaseDto {
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 }
 
-@InputType('CreateChapterArgs')
-export class CreateChapterDto extends ChapterBaseDto {
+@InputType('CreateChaptersArgs')
+export class CreateChaptersDto {
+  @Field(() => [ChapterBaseDto])
+  chapters: ChapterBaseDto[];
+
   @HideField()
   createBy: string;
 }

@@ -2,7 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import {
   ChapterPageOptions,
-  CreateChapterDto,
+  CreateChaptersDto,
   EnableChaptersDto,
   UpdateChapterDto,
   UpdateChaptersStatusDto,
@@ -81,12 +81,12 @@ export class ChapterResolver {
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)
-  @Mutation(() => ChapterEntity, { name: 'createChapter' })
+  @Mutation(() => [ChapterEntity], { name: 'createChapters' })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createChapterArgs') dto: CreateChapterDto,
-  ): Promise<ChapterEntity> {
-    const data = CreateChapterDto.plainToClass(dto);
+    @Args('createChaptersArgs') dto: CreateChaptersDto,
+  ): Promise<ChapterEntity[]> {
+    const data = plainToClass(CreateChaptersDto, dto);
     data.createBy = user.id;
     return await this.chapterService.create(data);
   }

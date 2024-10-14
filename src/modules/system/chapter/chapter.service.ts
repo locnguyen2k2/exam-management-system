@@ -4,7 +4,7 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { MongoRepository } from 'typeorm';
 import {
   ChapterPageOptions,
-  CreateChapterDto,
+  CreateChaptersDto,
   EnableChaptersDto,
   UpdateChapterDto,
   UpdateChaptersStatusDto,
@@ -211,22 +211,48 @@ export class ChapterService {
     return { chapter, questions };
   }
 
-  async create(data: CreateChapterDto): Promise<ChapterEntity> {
-    await this.lessonService.findOne(data.lessonId);
+  async create(data: CreateChaptersDto): Promise<ChapterEntity[]> {
+    const newChapters: ChapterEntity[] = [];
+    await Promise.all(
+      data.chapters.map(async (chapData: any) => {
+        await this.lessonService.findAvailable(
+          chapData.lessonId,
+          data.createBy,
+        );
+        const isExisted = await this.findByName(chapData.name);
 
-    const isExisted = await this.findByName(data.name);
+        if (isExisted && isExisted.create_by === data.createBy)
+          throw new BusinessException(
+            `400:Tên chương ${chapData.name} đã tồn tại`,
+          );
 
-    if (isExisted && isExisted.create_by === data.createBy)
-      throw new BusinessException('400:Tên chương đã tồn tại');
+        const isReplaced = newChapters.find(
+          (chap: ChapterEntity) =>
+            chap.name.toLowerCase().replace(/\s/g, '') ===
+            chapData.name.toLowerCase().replace(/\s/g, ''),
+        );
 
-    const chapter = new ChapterEntity({
-      ...data,
-      create_by: data.createBy,
-      update_by: data.createBy,
-    });
-    const newChapter = this.chapterRepo.create(chapter);
+        if (isReplaced) {
+          throw new BusinessException(
+            `400:Tên chương bị trùng! ${isReplaced.name}`,
+          );
+        }
 
-    return await this.chapterRepo.save(newChapter);
+        newChapters.push(
+          new ChapterEntity({
+            ...chapData,
+            create_by: data.createBy,
+            update_by: data.createBy,
+          }),
+        );
+      }),
+    );
+
+    const listChapter = this.chapterRepo.create(newChapters);
+
+    await this.chapterRepo.save(listChapter);
+
+    return listChapter;
   }
 
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {

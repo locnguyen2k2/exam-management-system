@@ -647,7 +647,7 @@ type Mutation {
   registerUser(registerUserArgs: RegisterArgs!): String!
   refreshToken(token: String!): String!
   updateInfo(updateAccountArgs: UpdateAccountArgs!): UserProfile!
-  createChapter(createChapterArgs: CreateChapterArgs!): ChapterEntity!
+  createChapters(createChaptersArgs: CreateChaptersArgs!): [ChapterEntity!]!
   updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterEntity!
 
   """Kích hoạt chương"""
@@ -831,7 +831,11 @@ input UpdateAccountArgs {
   address: String
 }
 
-input CreateChapterArgs {
+input CreateChaptersArgs {
+  chapters: [ChapterBaseDto!]!
+}
+
+input ChapterBaseDto {
   label: String!
   name: String!
   lessonId: String!
