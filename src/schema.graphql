@@ -628,7 +628,7 @@ input ClassPageOptions {
 
 type Mutation {
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
-  updateUser(updateUserArgs: UpdateUserArgs!): UserProfile!
+  updateUser(userId: String!, updateUserArgs: UpdateUserArgs!): UserProfile!
   deleteUser(userId: String!): String!
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
 
@@ -708,6 +708,7 @@ input UpdateUserArgs {
   photo: Upload
   address: String
   phone: String
+  roleIds: [String!]
 }
 
 input CreateRoleArgs {

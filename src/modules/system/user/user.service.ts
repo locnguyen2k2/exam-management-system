@@ -156,6 +156,14 @@ export class UserService {
       photo += await this.imageService.uploadImage(args.photo);
     }
 
+    if (args.roleIds) {
+      await Promise.all(
+        args.roleIds.map(
+          async (roleId: string) => await this.roleService.findOne(roleId),
+        ),
+      );
+    }
+
     const isUpdated = await this.userRepository.update(
       { id },
       {
@@ -166,6 +174,7 @@ export class UserService {
         ...(args?.address && { address: args.address }),
         ...(!_.isNil(args?.enable) && { enable: args.enable }),
         ...(!_.isNil(args?.status) && { status: args.status }),
+        ...(!_.isNil(args?.roleIds) && { roleIds: args.roleIds }),
         ...(args?.updateBy && { update_by: args.updateBy }),
       },
     );

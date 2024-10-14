@@ -50,11 +50,12 @@ export class UserResolver {
   @Mutation(() => UserProfile, { name: 'updateUser' })
   async update(
     @CurrentUser() user: IAuthPayload,
+    @Args('userId', { type: () => String! }) userId: string,
     @Args('updateUserArgs') args: UpdateUserDto,
   ): Promise<UserProfile> {
     args.updateBy = user?.id ? user.id : null;
     const data = plainToClass(UpdateUserDto, args);
-    return await this.userService.update(user.id, data);
+    return await this.userService.update(userId, data);
   }
 
   @Permissions(PermissionEnum.DELETE_USER)

@@ -74,8 +74,20 @@ export class AdminCreateDto extends UserCreateDto {
   status: boolean = false;
 }
 
+@InputType('UpdateInfoArgs')
+export class UpdateInfoDto extends PartialType(UserBaseDto) {
+  @HideField()
+  enable: boolean;
+  password: string;
+  email: string;
+  updateBy: string;
+}
+
 @InputType('UpdateUserArgs')
 export class UpdateUserDto extends PartialType(UserBaseDto) {
+  @Field(() => [String], { nullable: true })
+  roleIds: string[];
+
   @HideField()
   enable: boolean;
   password: string;
