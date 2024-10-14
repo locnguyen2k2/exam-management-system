@@ -36,11 +36,11 @@ export class AnswerResolver {
   }
 
   @Permissions(PermissionEnum.ADD_ANSWER)
-  @Mutation(() => [String], { name: 'createAnswers' })
+  @Mutation(() => [AnswerEntity], { name: 'createAnswers' })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createAnswersArgs') dto: CreateAnswersDto,
-  ): Promise<string[]> {
+  ): Promise<AnswerEntity[]> {
     dto.createBy = user.id;
     const data = CreateAnswersDto.plainToClass(dto);
     return await this.answerService.create(data);

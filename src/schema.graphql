@@ -673,7 +673,7 @@ type Mutation {
   enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionEntity!]!
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
   deleteQuestions(questionIds: [String!]!): String!
-  createAnswers(createAnswersArgs: CreateAnswersArgs!): [String!]!
+  createAnswers(createAnswersArgs: CreateAnswersArgs!): [AnswerModel!]!
   updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
   deleteAnswers(answerIds: [String!]!): String!
 

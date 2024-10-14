@@ -78,26 +78,25 @@ export class AnswerService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
   }
 
-  async create(data: CreateAnswersDto): Promise<string[]> {
-    const answers: string[] = new Array(data.items.length);
+  async create(data: CreateAnswersDto): Promise<AnswerEntity[]> {
+    const answers: AnswerEntity[] = new Array(data.items.length);
     await Promise.all(
       data.items.map(async (item, index) => {
-        const isExisted = await this.findByValue(item.value);
+        // const isExisted = await this.findByValue(item.value);
 
-        if (isExisted.length > 0) {
-          answers[index] = isExisted[0].id;
-        } else {
-          const answer = new AnswerEntity({
-            ...item,
-            create_by: data.createBy,
-            update_by: data.createBy,
-          });
-          const newAnswer = this.answerRepo.create(answer);
+        // if (isExisted.length > 0) {
+        //   answers[index] = isExisted[0];
+        // } else
+        // {
+        // }
+        const answer = new AnswerEntity({
+          ...item,
+          create_by: data.createBy,
+          update_by: data.createBy,
+        });
+        const newAnswer = this.answerRepo.create(answer);
 
-          await this.answerRepo.save(newAnswer);
-
-          answers[index] = newAnswer.id;
-        }
+        answers[index] = await this.answerRepo.save(newAnswer);
       }),
     );
     return answers;
