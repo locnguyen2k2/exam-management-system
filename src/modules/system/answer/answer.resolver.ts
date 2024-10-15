@@ -12,6 +12,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
+import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver()
 export class AnswerResolver {
@@ -36,7 +37,13 @@ export class AnswerResolver {
     chapterPageOptions: AnswerPageOptions = new AnswerPageOptions(),
     @CurrentUser() user: IAuthPayload,
   ): Promise<AnswerPagination> {
-    return this.answerService.findAll(user.id, chapterPageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+    return this.answerService.findAll(
+      isAdmin ? null : user.id,
+      chapterPageOptions,
+    );
   }
 
   @Permissions(PermissionEnum.ADD_ANSWER)

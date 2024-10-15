@@ -33,7 +33,14 @@ export class ChapterResolver {
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ): Promise<ChapterPagination> {
-    return this.chapterService.findAll(user.id, null, chapterPageOptions);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+    return this.chapterService.findAll(
+      isAdmin ? null : user.id,
+      null,
+      chapterPageOptions,
+    );
   }
 
   @Permissions(PermissionEnum.LIST_CHAPTER)

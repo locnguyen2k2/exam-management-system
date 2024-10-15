@@ -36,7 +36,6 @@ export class ExamResolver {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
-
     return this.examService.findAll(isAdmin ? null : user.id, examPageOptions);
   }
 

@@ -48,9 +48,8 @@ export class LessonService {
       }),
       ...(uid && {
         $or: [
+          { create_by: uid },
           { status: StatusShareEnum.PUBLIC },
-          { enable: true },
-          { enable: false, create_by: uid },
           {
             status: StatusShareEnum.PRIVATE,
             create_by: uid,

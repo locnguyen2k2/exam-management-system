@@ -84,9 +84,8 @@ export class ChapterService {
 
       ...(uid && {
         $or: [
+          { create_by: uid },
           { status: StatusShareEnum.PUBLIC },
-          { status: true },
-          { enable: false, create_by: uid },
           {
             status: StatusShareEnum.PRIVATE,
             create_by: uid,
