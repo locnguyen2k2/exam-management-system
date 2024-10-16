@@ -44,8 +44,8 @@ export class ExamResolver {
     name: 'examDetail',
     description: 'Chi tiết đề thi',
   })
-  async detail(@Args('id') id: string) {
-    return await this.examService.getExamDetail(id);
+  async detail(@Args('id') id: string, @CurrentUser() user: IAuthPayload) {
+    return await this.examService.getExamDetail(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)

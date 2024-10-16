@@ -60,14 +60,7 @@ export class ExamService {
         status: { $in: pageOptions.examStatus },
       }),
       ...(uid && {
-        $or: [
-          { create_by: uid },
-          { status: StatusShareEnum.PUBLIC },
-          {
-            status: StatusShareEnum.PRIVATE,
-            create_by: uid,
-          },
-        ],
+        $or: [{ status: StatusShareEnum.PUBLIC }, { create_by: uid }],
       }),
     };
 
@@ -90,11 +83,14 @@ export class ExamService {
     return new ExamPaginationDto(entities, pageMetaDto);
   }
 
-  async getExamDetail(id: string): Promise<ExamDetailDto> {
+  async getExamDetail(id: string, uid?: string): Promise<ExamDetailDto> {
     const questions = [];
     const exam: any = await this.findOne(id);
     const questionIds = exam.questions.flat();
     const lesson = await this.lessonService.findOne(exam.lessonId);
+
+    if (uid && exam.create_by !== uid)
+      throw new BusinessException(`400:Đề thi không có sẵn!`);
 
     await Promise.all(
       questionIds.map(async (question: any) => {

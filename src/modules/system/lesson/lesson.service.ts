@@ -50,14 +50,7 @@ export class LessonService {
         status: { $in: pageOptions.lessonStatus },
       }),
       ...(uid && {
-        $or: [
-          { create_by: uid },
-          { status: StatusShareEnum.PUBLIC },
-          {
-            status: StatusShareEnum.PRIVATE,
-            create_by: uid,
-          },
-        ],
+        $or: [{ create_by: uid }, { status: StatusShareEnum.PUBLIC }],
       }),
     };
 
@@ -70,48 +63,48 @@ export class LessonService {
       .aggregate(pipes)
       .toArray();
 
-    const entities = data;
-    const lessonModels = new Array(entities.length);
+    // const entities = data;
+    // const lessonModels = new Array(entities.length);
+    //
+    // for (let i = 0; i < entities.length; i++) {
+    //   const chapterIds = entities[i].chapterIds;
+    //   const classIds = entities[i].classIds;
+    //   const examsIds = entities[i].examIds;
+    //
+    //   delete entities[i].chapterIds;
+    //   delete entities[i].examIds;
+    //
+    //   entities[i]['chapters'] = await Promise.all(
+    //     chapterIds.map(
+    //       async (chapterId: string) =>
+    //         await this.chapterService.findAvailableChapterById(chapterId, uid),
+    //     ),
+    //   );
+    //
+    //   entities[i]['classes'] = await Promise.all(
+    //     classIds.map(
+    //       async (classId: string) =>
+    //         await this.classService.findAvailableById(classId, uid),
+    //     ),
+    //   );
+    //
+    //   entities[i]['exams'] = await Promise.all(
+    //     examsIds.map(
+    //       async (examId: string) =>
+    //         await this.examService.getExamDetail(examId),
+    //     ),
+    //   );
+    //
+    //   lessonModels[i] = entities[i];
+    // }
 
-    for (let i = 0; i < entities.length; i++) {
-      const chapterIds = entities[i].chapterIds;
-      const classIds = entities[i].classIds;
-      const examsIds = entities[i].examIds;
-
-      delete entities[i].chapterIds;
-      delete entities[i].examIds;
-
-      entities[i]['chapters'] = await Promise.all(
-        chapterIds.map(
-          async (chapterId: string) =>
-            await this.chapterService.findAvailableChapterById(chapterId, uid),
-        ),
-      );
-
-      entities[i]['classes'] = await Promise.all(
-        classIds.map(
-          async (classId: string) =>
-            await this.classService.findAvailableById(classId, uid),
-        ),
-      );
-
-      entities[i]['exams'] = await Promise.all(
-        examsIds.map(
-          async (examId: string) =>
-            await this.examService.getExamDetail(examId),
-        ),
-      );
-
-      lessonModels[i] = entities[i];
-    }
-
-    const numberRecords = lessonModels.length > 0 && pageInfo[0].numberRecords;
+    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
     const pageMetaDto = new PageMetaDto({
       pageOptions,
       numberRecords,
     });
 
-    return new LessonPaginationDto(lessonModels, pageMetaDto);
+    return new LessonPaginationDto(data, pageMetaDto);
   }
 
   async findByName(name: string): Promise<LessonEntity> {

@@ -431,7 +431,7 @@ type LessonModel {
 }
 
 type lessons {
-  data: [LessonModel!]!
+  data: [LessonDefaultFields!]!
   meta: pagination!
 }
 
