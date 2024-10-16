@@ -211,6 +211,11 @@ enum LevelEnum {
   ANALYZING
   EVALUATING
   CREATING
+  VERYEASY
+  EASY
+  STANDARD
+  HARD
+  VERYHARD
 }
 
 enum StatusShareEnum {

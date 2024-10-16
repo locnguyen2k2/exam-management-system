@@ -1,12 +1,11 @@
 import { registerEnumType } from '@nestjs/graphql';
 
 export enum LevelEnum {
-  REMEMBERING = 'remembering',
-  UNDERSTANDING = 'understanding',
-  APPLYING = 'applying',
-  ANALYZING = 'analyzing',
-  EVALUATING = 'evaluating',
-  CREATING = 'creating',
+  VERYEASY = 'very_easy',
+  EASY = 'easy',
+  STANDARD = 'standard',
+  HARD = 'hard',
+  VERYHARD = 'very_hard',
 }
 
 registerEnumType(LevelEnum, { name: 'LevelEnum' });
