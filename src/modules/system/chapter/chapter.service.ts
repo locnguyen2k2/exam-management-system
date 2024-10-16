@@ -113,13 +113,14 @@ export class ChapterService {
     return new ChapterPagination(entities, pageMetaDto);
   }
 
-  async findAvailableChapterById(id: string, uid: string): Promise<any> {
+  async findAvailableChapterById(id: string, uid?: string): Promise<any> {
     const chapter = await this.chapterRepo
       .aggregate([...defaultLookup, { $match: { id } }])
       .toArray();
 
-    if (chapter.length > 0 && chapter[0].create_by === uid) return chapter[0];
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    if (chapter.length > 0 && (!uid || (uid && chapter[0].create_by === uid)))
+      return chapter[0];
+    throw new BusinessException(`400:Chapter không có sẵn!`);
   }
 
   async findOne(id: string): Promise<ChapterEntity> {

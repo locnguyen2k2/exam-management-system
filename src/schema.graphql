@@ -567,6 +567,7 @@ input LessonPageOptions {
   page: Int = 1
   take: Int = 10
   lessonStatus: [StatusShareEnum!]
+  classIds: [String!]
 }
 
 input ExamPaperPageOptions {

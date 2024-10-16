@@ -117,10 +117,11 @@ export class ClassService {
     if (isExisted) return isExisted;
   }
 
-  async findAvailableById(id: string, uid: string): Promise<ClassEntity> {
+  async findAvailableById(id: string, uid?: string): Promise<ClassEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted && isExisted.create_by === uid) return isExisted;
+    if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
+      return isExisted;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
   }
 

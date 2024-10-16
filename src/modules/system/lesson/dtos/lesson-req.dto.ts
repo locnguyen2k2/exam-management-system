@@ -7,6 +7,9 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 export class LessonPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], { nullable: true })
   lessonStatus: StatusShareEnum[];
+
+  @Field(() => [String], { nullable: true })
+  classIds: string[];
 }
 
 @InputType()

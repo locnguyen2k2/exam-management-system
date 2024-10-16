@@ -17,10 +17,10 @@ import {
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
 import { ExamService } from '~/modules/system/exam/exam.service';
-import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { pipeLine } from '~/utils/pipe-line';
 import { ClassService } from '~/modules/system/class/class.service';
+import { StatusShareEnum } from '~/common/enums/status-share.enum';
 
 @Injectable()
 export class LessonService {
@@ -42,6 +42,9 @@ export class LessonService {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
+      }),
+      ...(!_.isEmpty(pageOptions.classIds) && {
+        classIds: { $in: pageOptions.classIds },
       }),
       ...(!_.isEmpty(pageOptions.lessonStatus) && {
         status: { $in: pageOptions.lessonStatus },
@@ -72,6 +75,7 @@ export class LessonService {
 
     for (let i = 0; i < entities.length; i++) {
       const chapterIds = entities[i].chapterIds;
+      const classIds = entities[i].classIds;
       const examsIds = entities[i].examIds;
 
       delete entities[i].chapterIds;
@@ -81,6 +85,13 @@ export class LessonService {
         chapterIds.map(
           async (chapterId: string) =>
             await this.chapterService.findAvailableChapterById(chapterId, uid),
+        ),
+      );
+
+      entities[i]['classes'] = await Promise.all(
+        classIds.map(
+          async (classId: string) =>
+            await this.classService.findAvailableById(classId, uid),
         ),
       );
 
