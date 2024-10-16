@@ -263,7 +263,7 @@ type ExamEntity {
   status: StatusShareEnum
 }
 
-type QuestionEntity {
+type QuestionDefaultFields {
   id: String!
   enable: Boolean
   createdAt: String!
@@ -350,7 +350,7 @@ type ChapterModel {
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum
-  questions: [QuestionEntity!]!
+  questions: [QuestionDefaultFields!]!
 }
 
 type ChapterPagination {
@@ -669,9 +669,9 @@ type Mutation {
   """Cập nhật đề thi"""
   updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
   deleteExamPaper(examPaperId: String!): String!
-  createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionEntity!]!
-  updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionEntity!
-  enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionEntity!]!
+  createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionDefaultFields!]!
+  updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionDefaultFields!
+  enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionDefaultFields!]!
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
   deleteQuestions(questionIds: [String!]!): String!
   createAnswers(createAnswersArgs: CreateAnswersArgs!): [AnswerModel!]!

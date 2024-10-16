@@ -83,14 +83,7 @@ export class ChapterService {
       }),
 
       ...(uid && {
-        $or: [
-          { create_by: uid },
-          { status: StatusShareEnum.PUBLIC },
-          {
-            status: StatusShareEnum.PRIVATE,
-            create_by: uid,
-          },
-        ],
+        $or: [{ create_by: uid }],
       }),
     };
 

@@ -39,11 +39,7 @@ export class AnswerService {
         enable: pageOptions.enable,
       }),
       ...(uid && {
-        $or: [
-          {
-            create_by: uid,
-          },
-        ],
+        $or: [{ create_by: uid }],
       }),
     };
 

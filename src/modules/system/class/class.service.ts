@@ -42,14 +42,7 @@ export class ClassService {
         status: { $in: pageOptions.classStatus },
       }),
       ...(uid && {
-        $or: [
-          { create_by: uid },
-          { status: StatusShareEnum.PUBLIC },
-          {
-            status: StatusShareEnum.PRIVATE,
-            create_by: uid,
-          },
-        ],
+        $or: [{ create_by: uid }],
       }),
     };
     const pipes = [

@@ -6,7 +6,7 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { QuestionCorrectAnswerDto } from '~/modules/system/answer/dtos/answer-res.dto';
 
-@ObjectType()
+@ObjectType('QuestionDefaultFields')
 @Entity('question_entity')
 export class QuestionEntity extends ExtendedEntity {
   @Field(() => String)

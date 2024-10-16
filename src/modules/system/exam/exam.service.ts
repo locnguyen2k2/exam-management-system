@@ -31,7 +31,6 @@ import {
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
-import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { pipeLine } from '~/utils/pipe-line';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
@@ -60,7 +59,7 @@ export class ExamService {
         status: { $in: pageOptions.examStatus },
       }),
       ...(uid && {
-        $or: [{ status: StatusShareEnum.PUBLIC }, { create_by: uid }],
+        $or: [{ create_by: uid }],
       }),
     };
 
