@@ -581,6 +581,7 @@ input ExamPaperPageOptions {
   page: Int = 1
   take: Int = 10
   examStatus: [StatusShareEnum!]
+  lessonIds: [String!]
 }
 
 input QuestionPageOptions {
@@ -1091,4 +1092,5 @@ input UpdateClassArgs {
   endYear: String
   enable: Boolean
   status: StatusShareEnum
-  lessonIds: [Stri
+  lessonIds: [String!]
+}

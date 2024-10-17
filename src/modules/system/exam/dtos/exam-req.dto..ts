@@ -20,6 +20,9 @@ export class ExamPaperPageOptions extends PageOptionDto {
     nullable: true,
   })
   readonly examStatus?: StatusShareEnum[];
+
+  @Field(() => [String], { nullable: true })
+  readonly lessonIds?: string[];
 }
 
 @InputType('QuestionInfoArgs')

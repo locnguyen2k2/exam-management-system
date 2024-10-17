@@ -58,6 +58,9 @@ export class ExamService {
       ...(!_.isEmpty(pageOptions.examStatus) && {
         status: { $in: pageOptions.examStatus },
       }),
+      ...(!_.isEmpty(pageOptions.lessonIds) && {
+        lessonId: { $in: pageOptions.lessonIds },
+      }),
       ...(uid && {
         $or: [{ create_by: uid }],
       }),
