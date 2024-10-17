@@ -205,11 +205,11 @@ type QuestionModel {
 }
 
 enum LevelEnum {
-  VERYEASY
+  VERY_EASY
   EASY
   STANDARD
   HARD
-  VERYHARD
+  VERY_HARD
 }
 
 enum StatusShareEnum {
@@ -1091,5 +1091,4 @@ input UpdateClassArgs {
   endYear: String
   enable: Boolean
   status: StatusShareEnum
-  lessonIds: [String!]
-}
+  lessonIds: [Stri
