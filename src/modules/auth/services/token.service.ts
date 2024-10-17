@@ -7,7 +7,7 @@ import { MongoRepository } from 'typeorm';
 import { UserService } from '~/modules/system/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { TokenEnum } from '~/modules/auth/auth.constant';
-import { env, envNumber } from '~/utils/env';
+import { env } from '~/utils/env';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import {
@@ -102,13 +102,12 @@ export class TokenService {
    * Tạo UUid Tokens (Confirm, refresh, repass)
    * */
   async createUuidToken(data: IToken): Promise<TokenEntity> {
-    const time =
+    const currentTime = new Date();
+    const expire =
       data.type === TokenEnum.CONFIRM_TOKEN ||
       data.type === TokenEnum.RESET_PASSWORD
-        ? envNumber('MAILER_EXPIRE')
-        : envNumber('REFRESH_TOKEN_EXPIRE');
-
-    const expire = new Date().valueOf() + time;
+        ? currentTime.setDate(currentTime.getDate() + 1)
+        : currentTime.setFullYear(currentTime.getFullYear() + 1);
 
     const token = new TokenEntity({
       id: uuid(),
