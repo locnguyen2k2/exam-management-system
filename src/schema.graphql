@@ -132,7 +132,7 @@ type AnswerModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   value: String!
   remark: String
 }
@@ -150,7 +150,7 @@ type CorrectAnswerModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   value: String!
   remark: String
   score: Float

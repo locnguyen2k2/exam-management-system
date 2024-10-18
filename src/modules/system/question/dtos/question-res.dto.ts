@@ -55,7 +55,7 @@ export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => [CorrectAnswerDto])
   correctAnswers: CorrectAnswerDto[];
 
-  @Field(() => [AnswerEntity!]!)
+  @Field(() => [AnswerEntity])
   answers: AnswerEntity[];
 
   @Field(() => String, { nullable: true })

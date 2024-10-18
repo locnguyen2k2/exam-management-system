@@ -5,7 +5,7 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 @ObjectType('AnswerModel')
 @Entity('answer_entity')
 export class AnswerEntity extends ExtendedEntity {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column({ type: 'string' })
   label: string;
 
