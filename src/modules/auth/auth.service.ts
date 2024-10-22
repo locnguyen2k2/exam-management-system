@@ -124,11 +124,12 @@ export class AuthService {
       await this.userService.updatePassword(user.id, data.password);
     } else {
       // Khởi tạo
-      const role = await this.roleService.findByValue(RoleEnum.USER);
+      const roleUser = await this.roleService.findByValue(RoleEnum.USER);
+      const roleTeacher = await this.roleService.findByValue(RoleEnum.TEACHER);
       user = await this.userService.create({
         ...data,
         enable: true,
-        roleIds: [role.id],
+        roleIds: [roleUser.id, roleTeacher.id],
       });
     }
 
