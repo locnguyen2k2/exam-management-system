@@ -19,8 +19,8 @@ export class ExamDetailDto extends ExtendedEntity {
   @Field(() => String)
   label: string;
 
-  @Field(() => LessonEntity)
-  lesson: LessonEntity;
+  // @Field(() => LessonEntity)
+  // lesson: LessonEntity;
 
   @Field(() => String)
   time: string;

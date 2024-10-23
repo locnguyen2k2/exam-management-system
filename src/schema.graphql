@@ -171,6 +171,32 @@ type answers {
   meta: pagination!
 }
 
+type ChapterEntity {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+}
+
+enum StatusShareEnum {
+  PUBLIC
+  PRIVATE
+}
+
 type QuestionSimpleFields {
   questionId: String!
   label: String!
@@ -195,7 +221,7 @@ type QuestionModel {
   content: String!
   picture: String
   remark: String
-  chapterId: String!
+  chapter: ChapterEntity!
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
@@ -210,11 +236,6 @@ enum LevelEnum {
   STANDARD
   HARD
   VERY_HARD
-}
-
-enum StatusShareEnum {
-  PUBLIC
-  PRIVATE
 }
 
 enum CategoryEnum {
@@ -251,7 +272,6 @@ type ExamEntity {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
-  lessonId: String!
   time: String!
   sku: String!
 
@@ -276,35 +296,12 @@ type QuestionDefaultFields {
   content: String!
   picture: String
   remark: String
-  chapterId: String!
+  chapter: ChapterEntity!
   level: LevelEnum!
   status: StatusShareEnum
   category: CategoryEnum!
   correctAnswerIds: [CorrectAnswerSimpleFields!]!
   answerIds: [String!]!
-}
-
-type ChapterEntity {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String!
-  name: String!
-  description: String
-  lessonId: String!
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questionIds: [String!]!
 }
 
 type LessonDefaultFields {
@@ -324,9 +321,8 @@ type LessonDefaultFields {
   name: String!
   description: String!
   status: StatusShareEnum!
-  chapterIds: [String!]!
-  classIds: [String!]!
-  examIds: [String!]!
+  chapters: [ChapterEntity!]!
+  exams: [ExamEntity!]!
 }
 
 type ChapterModel {
@@ -371,7 +367,6 @@ type ExamModel {
   """Cập nhật bởi"""
   updateBy: String
   label: String!
-  lesson: LessonDefaultFields!
   time: String!
   sku: String!
 
@@ -404,7 +399,7 @@ type ClassModel {
   startYear: String
   endYear: String
   status: StatusShareEnum
-  lessonIds: [String!]
+  lessons: [LessonDefaultFields!]
 }
 
 type LessonModel {
@@ -424,7 +419,7 @@ type LessonModel {
   name: String!
   description: String!
   status: StatusShareEnum!
-  chapters: [ChapterModel!]
+  chapters: [ChapterEntity!]
   classes: [ClassModel!]
   exams: [ExamModel!]
 }
@@ -886,6 +881,7 @@ input LessonBaseDto {
   description: String
   enable: Boolean!
   classIds: [String!] = []
+  chapterIds: [String!] = []
   status: StatusShareEnum!
 }
 
@@ -895,6 +891,7 @@ input UpdateLessonArgs {
   description: String
   enable: Boolean
   classIds: [String!] = []
+  chapterIds: [String!] = []
   status: StatusShareEnum
 }
 

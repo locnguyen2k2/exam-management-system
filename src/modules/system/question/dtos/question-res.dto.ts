@@ -11,6 +11,7 @@ import {
   QuestionAnswerDto,
   QuestionCorrectAnswerDto,
 } from '~/modules/system/answer/dtos/answer-res.dto';
+import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 
 @ObjectType('QuestionSimpleFields')
 export class ExamQuestionDto {
@@ -38,8 +39,8 @@ export class QuestionDetailDto extends ExtendedEntity {
   @Field(() => String, { nullable: true })
   remark: string;
 
-  @Field(() => String)
-  chapterId: string;
+  @Field(() => ChapterEntity)
+  chapter: ChapterEntity;
 
   @Field(() => LevelEnum)
   level: LevelEnum;

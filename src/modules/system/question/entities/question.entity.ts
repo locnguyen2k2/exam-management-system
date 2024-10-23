@@ -5,6 +5,7 @@ import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { QuestionCorrectAnswerDto } from '~/modules/system/answer/dtos/answer-res.dto';
+import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 
 @ObjectType('QuestionDefaultFields')
 @Entity('question_entity')
@@ -20,10 +21,14 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => String, { nullable: true })
   @Column({ type: 'string' })
   remark: string = '';
+  //
+  // @Field(() => String)
+  // @Column('string')
+  // chapterId: string;
 
-  @Field(() => String)
-  @Column('string')
-  chapterId: string;
+  @Field(() => ChapterEntity)
+  @Column('json')
+  chapter: ChapterEntity;
 
   @Field(() => LevelEnum)
   @Column({ type: 'enum', enum: LevelEnum })

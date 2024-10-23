@@ -2,6 +2,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 
 @ObjectType('ClassModel')
 @Entity('class_entity')
@@ -38,9 +39,9 @@ export class ClassEntity extends ExtendedEntity {
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [String], { nullable: true })
-  @Column({ type: 'string', array: true, default: [] })
-  lessonIds: string[] = [];
+  @Field(() => [LessonEntity], { nullable: true })
+  @Column({ type: 'json', array: true, default: [] })
+  lessons: LessonEntity[] = [];
 
   constructor(classEntity: Partial<ClassEntity>) {
     super();

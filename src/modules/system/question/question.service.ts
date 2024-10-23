@@ -30,6 +30,7 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ImageService } from '~/modules/system/image/image.service';
 import * as _ from 'lodash';
 import { ExamService } from '~/modules/system/exam/exam.service';
+import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 
 export interface IClassifyChapter {
   chapterId: string;
@@ -48,11 +49,6 @@ const defaultLookup = [
       localField: 'answerIds',
       foreignField: 'id',
       as: 'answers',
-    },
-  },
-  {
-    $addFields: {
-      chapter: { $arrayElemAt: ['$chapter', 0] }, // Ensure only one item in array
     },
   },
 ];
@@ -159,14 +155,8 @@ export class QuestionService {
   }
 
   async findByChapter(chapterId: string): Promise<QuestionEntity[]> {
-    const isExisted = await this.chapterService.findOne(chapterId);
-    const { questionIds } = isExisted;
     return await this.questionRepo.find({
-      where: {
-        id: {
-          $in: questionIds,
-        },
-      },
+      where: { 'chapter.id': chapterId },
     });
   }
 
@@ -188,14 +178,7 @@ export class QuestionService {
 
   async findAvailable(id: string, uid: string): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id);
-
     if (isExisted.create_by === uid) return isExisted;
-
-    // if (
-    //   isExisted.status === StatusShareEnum.PUBLIC &&
-    //   isExisted.enable === true
-    // )
-    //   return isExisted;
 
     throw new BusinessException(`400:Bản ghi "${isExisted.id}" không có sẵn!`);
   }
@@ -267,7 +250,6 @@ export class QuestionService {
           '400:Đáp án phải đúng có trong câu trả lời',
         );
       if (index === -1) {
-        // await this.answerService.findOne(correctAnswer.correctAnswerId);
         correctAnswers.push(correctAnswer);
       }
     }
@@ -296,7 +278,12 @@ export class QuestionService {
       data.questions.map(async (questionData) => {
         const { answerIds, chapterId, correctAnswers } = questionData;
         let picture = '';
+        const chapter = await this.chapterService.findAvailableChapterById(
+          chapterId,
+          data.createBy,
+        );
         delete questionData.answerIds;
+        delete questionData.chapterId;
         delete questionData.correctAnswers;
 
         if (questionData.picture) {
@@ -305,19 +292,13 @@ export class QuestionService {
 
         const question = new QuestionEntity({
           ...questionData,
+          chapter,
           correctAnswerIds: [...new Set(correctAnswers)],
           answerIds: [...new Set(answerIds)],
           picture,
           create_by: data.createBy,
           update_by: data.createBy,
         });
-        // Cập nhật danh sách câu hỏi của chương
-        const chapHasQuest = await this.chapterService.detailByLesson(
-          chapterId,
-          question.id,
-        );
-        !chapHasQuest &&
-          (await this.chapterService.addQuestion(chapterId, question.id));
 
         questionsInfo.push(question);
       }),
@@ -336,14 +317,14 @@ export class QuestionService {
 
     questions.map((question) => {
       const indexChapter = detailChapters.findIndex(
-        (detailChapter) => detailChapter.chapterId === question.chapterId,
+        (detailChapter) => detailChapter.chapterId === question.chapter.id,
       );
 
       if (indexChapter > -1) {
         detailChapters[indexChapter].questions.push(question);
       } else {
         detailChapters.push({
-          chapterId: question.chapterId,
+          chapterId: question.chapter.id,
           questions: [question],
         });
       }
@@ -358,7 +339,7 @@ export class QuestionService {
     for (let i = 0; i < data.length; i++) {
       data[i].questions.map((question) => {
         const indexChapter = levelClassification.findIndex(
-          (classifyLevel) => classifyLevel.chapterId === question.chapterId,
+          (classifyLevel) => classifyLevel.chapterId === question.chapter.id,
         );
 
         if (indexChapter > -1) {
@@ -378,7 +359,7 @@ export class QuestionService {
           }
         } else {
           levelClassification.push({
-            chapterId: question.chapterId,
+            chapterId: question.chapter.id,
             info: [{ level: question.level, questions: [question] }],
           });
         }
@@ -416,18 +397,31 @@ export class QuestionService {
   ): Promise<any> {
     const { chapterId, questionIds } = data;
     const questions: QuestionEntity[] = [];
+    let chapter = null;
 
     await Promise.all(
-      questionIds.map(async (id) =>
-        questions.push(await this.findAvailable(id, uid)),
-      ),
+      questionIds.map(async (id) => {
+        const question = await this.findAvailable(id, uid);
+        if (question.chapter.id !== chapterId)
+          throw new BusinessException(
+            `400:Câu hỏi ${id} không có trong chương ${chapterId}`,
+          );
+
+        chapter = await this.chapterService.findAvailableChapterById(
+          chapterId,
+          uid,
+        );
+
+        if (!(await this.chapterService.lessonHasChapter(lessonId, chapterId)))
+          throw new BusinessException(
+            `400:Học phần ${lessonId} không có ${chapterId}`,
+          );
+
+        questions.push(question);
+      }),
     );
 
-    return await this.chapterService.validateQuestions(
-      lessonId,
-      questions,
-      chapterId,
-    );
+    return { chapter, questions };
   }
 
   async findByAnswerId(answerId: string): Promise<QuestionEntity[]> {
@@ -441,29 +435,25 @@ export class QuestionService {
   }
 
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
-    const isExisted = await this.findOne(id);
-
-    if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException(
-        '400:Không có quyền thao tác trên bản ghi này!',
-      );
-    }
+    const isExisted = await this.findAvailable(id, data.updateBy);
+    let chapter = null;
 
     const listAnswers: string[] = [];
     const correctAnswers: CorrectAnswerIdsDto[] = [];
     let picture = '';
 
     if (data.content) {
-      const isContent = await this.findByContent(data.content);
-      if (isContent.id !== id && isContent.create_by === data.updateBy)
+      const isReplaced = await this.findByContent(data.content);
+      if (isReplaced.id !== id && isReplaced.create_by === data.updateBy)
         throw new BusinessException('400:Nội dung câu hỏi đã tồn tại');
     }
 
-    data.chapterId &&
-      (await this.chapterService.findAvailableById(
+    if (data.chapterId) {
+      chapter = await this.chapterService.findAvailableById(
         data.chapterId,
         data.updateBy,
-      ));
+      );
+    }
 
     const category = data.category ? data.category : isExisted.category;
 
@@ -526,7 +516,7 @@ export class QuestionService {
       {
         // ...(data.label && { label: data.label }),
         ...(data.content && { content: data.content }),
-        ...(data.chapterId && { chapterId: data.chapterId }),
+        ...(data.chapterId && { chapter }),
         ...(data.level && { level: data.level }),
         ...(data.status && { status: data.status }),
         ...(data.category && { category: data.category }),
@@ -608,9 +598,7 @@ export class QuestionService {
     await Promise.all(
       ids.map(async (id) => {
         const isExisted = await this.examService.findByQuestionId(id);
-        const questInChapters =
-          await this.chapterService.isQuestionInChapters(id);
-        if (isExisted.length === 0 && !questInChapters) listQuestion.push(id);
+        if (isExisted.length === 0) listQuestion.push(id);
       }),
     );
 
@@ -663,7 +651,7 @@ export class QuestionService {
       .aggregate([
         {
           $match: {
-            chapterId: chapter.id,
+            'chapter.id': chapter.id,
             level: level,
             create_by: uid,
           },

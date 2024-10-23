@@ -24,9 +24,9 @@ export class ExamEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   label: string;
 
-  @Field(() => String)
-  @Column({ type: 'string' })
-  lessonId: string;
+  // @Field(() => String)
+  // @Column({ type: 'string' })
+  // lessonId: string;
 
   @Field(() => String)
   @Column({ type: 'string' })

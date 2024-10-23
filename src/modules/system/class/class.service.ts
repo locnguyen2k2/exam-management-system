@@ -20,6 +20,7 @@ import {
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 
 @Injectable()
 export class ClassService {
@@ -53,6 +54,15 @@ export class ClassService {
     const [{ data, pageInfo }]: any[] = await this.classRepo
       .aggregate(pipes)
       .toArray();
+
+    if (data.length > 0) {
+      for (const item of data) {
+        await this.classRepo.updateOne(
+          { id: item.id },
+          { $unset: { lessonIds: '' } },
+        );
+      }
+    }
 
     const entities = data;
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
@@ -119,6 +129,7 @@ export class ClassService {
   }
 
   async create(data: CreateClassDto): Promise<ClassEntity> {
+    const lessons: LessonEntity[] = [];
     const isExisted = await this.findByName(data.name);
 
     if (isExisted && isExisted.create_by === data.createBy)
@@ -130,30 +141,29 @@ export class ClassService {
       update_by: data.createBy,
     });
 
-    const newItem = this.classRepo.create(item);
-
     if (data.lessonIds && data.lessonIds.length > 0) {
       for (const lessonId of data.lessonIds) {
-        const isLesson = await this.lessonService.findAvailable(
-          lessonId,
-          data.createBy,
+        lessons.push(
+          await this.lessonService.findAvailable(lessonId, data.createBy),
         );
 
-        const newLessonClassIds = [...isLesson.classIds, newItem.id];
+        // const newLessonClassIds = [...isLesson.classIds, newItem.id];
 
-        await this.lessonService.updateLessonClasses(
-          isLesson.id,
-          newLessonClassIds,
-        );
+        // await this.lessonService.updateLessonClasses(
+        //   isLesson.id,
+        //   newLessonClassIds,
+        // );
       }
     }
+
+    const newItem = this.classRepo.create({ ...item, lessons });
 
     return await this.classRepo.save(newItem);
   }
 
   async update(id: string, data: UpdateClassDto): Promise<ClassEntity> {
     const isExisted = await this.getAvaliable(id, data.updateBy);
-    const lessonIds: string[] = [];
+    const lessons: LessonEntity[] = [];
 
     if (!_.isEmpty(data.name)) {
       const isReplaced = await this.findByName(data.name);
@@ -175,45 +185,48 @@ export class ClassService {
 
     if (data.lessonIds && data.lessonIds.length > 0) {
       for (const lessonId of data.lessonIds) {
-        await this.lessonService.findAvailable(lessonId, data.updateBy);
-        const isReplaced = lessonIds.some((lesson) => lesson === lessonId);
-        !isReplaced && lessonIds.push(lessonId);
+        const isLesson = await this.lessonService.findAvailable(
+          lessonId,
+          data.updateBy,
+        );
+        const isReplaced = lessons.some((lesson) => lesson.id === lessonId);
+        !isReplaced && lessons.push(isLesson);
       }
     }
 
-    if (lessonIds.length > 0) {
-      const oldLessonIds: string[] = [];
+    // if (lessonIds.length > 0) {
+    //   const oldLessonIds: string[] = [];
+    //
+    //   for (const oldLessonId of isExisted.lessonIds) {
+    //     !lessonIds.includes(oldLessonId) && oldLessonIds.push(oldLessonId);
+    //   }
 
-      for (const oldLessonId of isExisted.lessonIds) {
-        !lessonIds.includes(oldLessonId) && oldLessonIds.push(oldLessonId);
-      }
-
-      if (oldLessonIds.length > 0) {
-        for (const oldLessonId of oldLessonIds) {
-          const isLesson = await this.lessonService.findOne(oldLessonId);
-          const newClassIds = isLesson.classIds.filter(
-            (oldClassId) => oldClassId !== id,
-          );
-
-          await this.lessonService.updateLessonClasses(
-            isLesson.id,
-            newClassIds,
-          );
-        }
-      }
-
-      for (const newLessonId of lessonIds) {
-        const isLesson = await this.lessonService.findOne(newLessonId);
-
-        if (!isLesson.classIds.includes(id)) {
-          const classesInLesson = [...isLesson.classIds, id];
-          await this.lessonService.updateLessonClasses(
-            isLesson.id,
-            classesInLesson,
-          );
-        }
-      }
-    }
+    //   if (oldLessonIds.length > 0) {
+    //     for (const oldLessonId of oldLessonIds) {
+    //       const isLesson = await this.lessonService.findOne(oldLessonId);
+    //       const newClassIds = isLesson.classIds.filter(
+    //         (oldClassId) => oldClassId !== id,
+    //       );
+    //
+    //       await this.lessonService.updateLessonClasses(
+    //         isLesson.id,
+    //         newClassIds,
+    //       );
+    //     }
+    //   }
+    //
+    //   for (const newLessonId of lessonIds) {
+    //     const isLesson = await this.lessonService.findOne(newLessonId);
+    //
+    //     if (!isLesson.classIds.includes(id)) {
+    //       const classesInLesson = [...isLesson.classIds, id];
+    //       await this.lessonService.updateLessonClasses(
+    //         isLesson.id,
+    //         classesInLesson,
+    //       );
+    //     }
+    //   }
+    // }
 
     await this.classRepo.update(
       { id },
@@ -223,7 +236,7 @@ export class ClassService {
         ...(!_.isEmpty(data.code) && { code: data.code }),
         ...(!_.isEmpty(data.startYear) && { startYear: data.startYear }),
         ...(!_.isEmpty(data.endYear) && { endYear: data.endYear }),
-        ...(!_.isEmpty(lessonIds) && { lessonIds }),
+        ...(!_.isEmpty(lessons) && { lessons }),
         ...(!_.isNil(data.status) && {
           status: data.status,
         }),
@@ -239,16 +252,23 @@ export class ClassService {
     id: string,
     lessonIds: string[],
   ): Promise<ClassEntity> {
-    const isExisted = await this.findOne(id);
+    const lessons: LessonEntity[] = [];
 
-    const { affected } = await this.classRepo.update(
-      { id },
-      {
-        ...{ lessonIds: lessonIds },
-      },
+    await Promise.all(
+      lessonIds.map(async (id) => {
+        lessons.push(await this.lessonService.findOne(id));
+      }),
     );
 
-    return affected === 0 ? isExisted : await this.findOne(id);
+    for (const lesson of lessons) {
+      await this.classRepo.findOneAndUpdate(
+        { id },
+        { $push: { lessons: { ...lesson } } },
+        { returnDocument: 'after', upsert: true },
+      );
+    }
+
+    return await this.findOne(id);
   }
 
   async deleteMany(ids: string[], uid: string): Promise<string> {
@@ -262,7 +282,7 @@ export class ClassService {
           `400:Không thể xóa bản ghi "${isExisted.name}"!`,
         );
 
-      if (isExisted.lessonIds.length > 0)
+      if (isExisted.lessons.length > 0)
         throw new BusinessException(
           `400:Xóa thất bại, bản ghi "${isExisted.name}" đang được dùng!`,
         );
@@ -272,21 +292,21 @@ export class ClassService {
       !isReplaced && classIds.push(id);
     }
 
-    for (const id of classIds) {
-      const isExisted = await this.findOne(id);
-
-      if (isExisted.lessonIds.length > 0)
-        for (const lessonId of isExisted.lessonIds) {
-          const lesson = await this.lessonService.findOne(lessonId);
-          const newLessonClassIds: string[] = lesson.classIds.filter(
-            (classId) => classId !== id,
-          );
-
-          await this.lessonService.update(lessonId, {
-            classIds: newLessonClassIds,
-          });
-        }
-    }
+    // for (const id of classIds) {
+    //   const isExisted = await this.findOne(id);
+    //
+    //   if (isExisted.lessonIds.length > 0)
+    //     for (const lessonId of isExisted.lessonIds) {
+    //       const lesson = await this.lessonService.findOne(lessonId);
+    //       const newLessonClassIds: string[] = lesson.classIds.filter(
+    //         (classId) => classId !== id,
+    //       );
+    //
+    //       await this.lessonService.update(lessonId, {
+    //         classIds: newLessonClassIds,
+    //       });
+    //     }
+    // }
 
     await this.classRepo.deleteMany({ id: { $in: classIds } });
 

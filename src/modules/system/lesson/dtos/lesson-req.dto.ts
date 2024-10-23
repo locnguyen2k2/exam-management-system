@@ -29,6 +29,9 @@ class LessonBaseDto extends BaseDto {
   @Field(() => [String], { nullable: true })
   classIds?: string[] = [];
 
+  @Field(() => [String], { nullable: true })
+  chapterIds?: string[] = [];
+
   @Field(() => StatusShareEnum)
   status: StatusShareEnum;
 }

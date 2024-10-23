@@ -18,10 +18,6 @@ export class ChapterEntity extends ExtendedEntity {
   @Column('string', { nullable: true })
   description: string;
 
-  @Field(() => String)
-  @Column('string')
-  lessonId: string;
-
   @Field(() => StatusShareEnum, {
     nullable: true,
     defaultValue: StatusShareEnum.PRIVATE,
@@ -33,10 +29,6 @@ export class ChapterEntity extends ExtendedEntity {
     default: StatusShareEnum.PRIVATE,
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
-
-  @Field(() => [String], {})
-  @Column('string', { array: true })
-  questionIds: string[] = [];
 
   constructor(chapterEntity: Partial<ChapterEntity>) {
     super();

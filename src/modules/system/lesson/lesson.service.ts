@@ -20,6 +20,8 @@ import { ExamService } from '~/modules/system/exam/exam.service';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { pipeLine } from '~/utils/pipe-line';
 import { ClassService } from '~/modules/system/class/class.service';
+import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
+import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 
 @Injectable()
 export class LessonService {
@@ -62,41 +64,6 @@ export class LessonService {
       .aggregate(pipes)
       .toArray();
 
-    // const entities = data;
-    // const lessonModels = new Array(entities.length);
-    //
-    // for (let i = 0; i < entities.length; i++) {
-    //   const chapterIds = entities[i].chapterIds;
-    //   const classIds = entities[i].classIds;
-    //   const examsIds = entities[i].examIds;
-    //
-    //   delete entities[i].chapterIds;
-    //   delete entities[i].examIds;
-    //
-    //   entities[i]['chapters'] = await Promise.all(
-    //     chapterIds.map(
-    //       async (chapterId: string) =>
-    //         await this.chapterService.findAvailableChapterById(chapterId, uid),
-    //     ),
-    //   );
-    //
-    //   entities[i]['classes'] = await Promise.all(
-    //     classIds.map(
-    //       async (classId: string) =>
-    //         await this.classService.findAvailableById(classId, uid),
-    //     ),
-    //   );
-    //
-    //   entities[i]['exams'] = await Promise.all(
-    //     examsIds.map(
-    //       async (examId: string) =>
-    //         await this.examService.getExamDetail(examId),
-    //     ),
-    //   );
-    //
-    //   lessonModels[i] = entities[i];
-    // }
-
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
     const pageMetaDto = new PageMetaDto({
       pageOptions,
@@ -129,32 +96,11 @@ export class LessonService {
     // )
     //   return isExisted;
 
-    throw new BusinessException(
-      `400:Bản ghi "${isExisted.name}" không có sẵn!`,
-    );
+    throw new BusinessException(`400:Bản ghi "${id}" không có sẵn!`);
   }
 
   async detailLesson(id: string, uid: string): Promise<any> {
-    const isExisted = await this.findOne(id);
-    const chapterIds = isExisted.chapterIds;
-    const examsIds = isExisted.examIds;
-
-    delete isExisted.chapterIds;
-    delete isExisted.examIds;
-
-    isExisted['chapters'] = await Promise.all(
-      chapterIds.map(
-        async (chapterId: string) =>
-          await this.chapterService.findAvailableChapterById(chapterId, uid),
-      ),
-    );
-
-    isExisted['exams'] = await Promise.all(
-      examsIds.map(
-        async (examId: string) => await this.examService.getExamDetail(examId),
-      ),
-    );
-
+    const isExisted = await this.findAvailable(id, uid);
     return isExisted;
   }
 
@@ -164,8 +110,20 @@ export class LessonService {
     throw new BusinessException(`400:Học phần ${id} không tồn tại!`);
   }
 
+  async findByChapter(chapterId: string): Promise<LessonEntity[]> {
+    return await this.lessonRepo.find({
+      where: {
+        'chapters.id': {
+          $all: [chapterId],
+        },
+      },
+    });
+  }
+
   async create(data: CreateLessonDto): Promise<LessonEntity[]> {
-    const listLessons = [];
+    let listLessons: LessonEntity[] = [];
+    const classLessons: { classId: string; lessonIds: string[] }[] = [];
+
     await Promise.all(
       data.items.map(async (lesson) => {
         const isExisted = await this.findByName(lesson.name);
@@ -175,18 +133,86 @@ export class LessonService {
             `400:Tên học phần ${lesson.name} đã tồn tại!`,
           );
 
-        listLessons.push(
-          new LessonEntity({
-            ...lesson,
-            create_by: data.createBy,
-            update_by: data.createBy,
-          }),
+        const chapters: ChapterEntity[] = [];
+
+        if (!_.isEmpty(lesson.chapterIds)) {
+          await Promise.all(
+            lesson.chapterIds.map(async (chapterId) => {
+              const chapter =
+                await this.chapterService.findAvailableChapterById(
+                  chapterId,
+                  data.createBy,
+                );
+
+              const index = chapters.findIndex(({ id }) => id === chapterId);
+              if (index === -1) chapters.push(chapter);
+            }),
+          );
+        }
+
+        const newLesson = new LessonEntity({
+          ...lesson,
+          chapters,
+          create_by: data.createBy,
+          update_by: data.createBy,
+        });
+
+        if (!_.isEmpty(lesson.classIds)) {
+          for (const classId of lesson.classIds) {
+            await this.classService.findAvailableById(classId, data.createBy);
+            const index = classLessons.findIndex(
+              (classLesson) => classLesson.classId === classId,
+            );
+            if (index !== -1) {
+              classLessons[index].lessonIds.push(newLesson.id);
+            } else {
+              classLessons.push({
+                classId: classId,
+                lessonIds: [newLesson.id],
+              });
+            }
+          }
+        }
+
+        listLessons.push(newLesson);
+      }),
+    );
+
+    const newLessons = this.lessonRepo.create(listLessons);
+
+    listLessons = await this.lessonRepo.save(newLessons);
+
+    for (const classLesson of classLessons) {
+      await this.classService.updateClassLessons(
+        classLesson.classId,
+        classLesson.lessonIds,
+      );
+    }
+
+    return listLessons;
+  }
+
+  async updateExams(id: string, exams: ExamEntity[]): Promise<LessonEntity> {
+    await this.findOne(id);
+    await Promise.all(
+      exams.map(async (exam) => {
+        await this.lessonRepo.findOneAndUpdate(
+          {
+            id,
+          },
+          {
+            $push: {
+              exams: exam,
+            },
+            $set: {
+              update_by: exams[0].create_by,
+            },
+          },
         );
       }),
     );
-    const newLessons = this.lessonRepo.create(listLessons);
 
-    return await this.lessonRepo.save(newLessons);
+    return await this.findOne(id);
   }
 
   async update(id: string, data: any): Promise<LessonEntity> {
@@ -213,45 +239,35 @@ export class LessonService {
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
       for (const classId of data.classIds) {
-        await this.classService.findAvailableById(classId, data.updateBy);
-        const isReplaced = newClassIds.some(
-          (newClassId) => newClassId === classId,
+        const newClass = await this.classService.findAvailableById(
+          classId,
+          data.updateBy,
         );
-
-        !isReplaced && newClassIds.push(classId);
+        if (!newClass.lessons.find((lesson) => lesson.id === id)) {
+          const isReplaced = newClassIds.some((itemId) => itemId === classId);
+          !isReplaced && newClassIds.push(classId);
+        }
       }
     }
 
-    // Cập nhật danh sách lớp của học phần
-    if (newClassIds.length > 0) {
-      const oldClassIds: string[] = [];
+    const chapters: ChapterEntity[] = [];
 
-      for (const oldClassId of isExisted.classIds) {
-        !newClassIds.includes(oldClassId) && oldClassIds.push(oldClassId);
-      }
-
-      if (oldClassIds.length > 0) {
-        for (const oldClassId of oldClassIds) {
-          const isClass = await this.classService.findOne(oldClassId);
-          const newLessonIds = isClass.lessonIds.filter(
-            (oldLessonId) => oldLessonId !== id,
+    if (!_.isEmpty(data.chapterIds)) {
+      await Promise.all(
+        data.chapterIds.map(async (chapterId) => {
+          const chapter = await this.chapterService.findAvailableChapterById(
+            chapterId,
+            data.createBy,
           );
 
-          await this.classService.updateClassLessons(isClass.id, newLessonIds);
-        }
-      }
+          const index = chapters.findIndex(({ id }) => id === chapterId);
+          if (index === -1) chapters.push(chapter);
+        }),
+      );
+    }
 
-      for (const newClassId of newClassIds) {
-        const isClass = await this.classService.findOne(newClassId);
-
-        if (!isClass.lessonIds.includes(id)) {
-          const lessonsInClass = [...isClass.lessonIds, id];
-          await this.classService.updateClassLessons(
-            isClass.id,
-            lessonsInClass,
-          );
-        }
-      }
+    for (const classId of newClassIds) {
+      await this.classService.updateClassLessons(classId, [id]);
     }
 
     const { affected } = await this.lessonRepo.update(
@@ -262,9 +278,9 @@ export class LessonService {
         ...(!_.isNil(data.description) && { description: data.description }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),
         ...(!_.isNil(data.status) && { status: data.status }),
-        ...(!_.isNil(data.chapterIds) && { chapterIds: data.chapterIds }),
-        ...(!_.isEmpty(newClassIds) && { classIds: newClassIds }),
-        ...(!_.isNil(data.examIds) && { examIds: data.examIds }),
+        // ...(!_.isNil(data.chapterIds) && { chapterIds: data.chapterIds }),
+        ...(!_.isEmpty(data.chapterIds) && { chapters }),
+        // ...(!_.isNil(data.examIds) && { examIds: data.examIds }),
         update_by: data.updateBy,
       },
     );
@@ -301,19 +317,33 @@ export class LessonService {
     return listLessons;
   }
 
-  async updateLessonClasses(
+  async updateChapters(
     id: string,
-    classIds: string[],
-  ): Promise<LessonEntity> {
-    const isExisted = await this.findOne(id);
-
-    const { affected } = await this.lessonRepo.update(
+    chapters: ChapterEntity[],
+  ): Promise<boolean> {
+    await this.lessonRepo.update(
       { id },
       {
-        ...{ classIds: classIds },
+        chapters: chapters,
       },
     );
 
-    return affected === 0 ? isExisted : await this.findOne(id);
+    return true;
   }
+
+  // async updateLessonClasses(
+  //   id: string,
+  //   classIds: string[],
+  // ): Promise<LessonEntity> {
+  //   const isExisted = await this.findOne(id);
+  //
+  //   const { affected } = await this.lessonRepo.update(
+  //     { id },
+  //     {
+  //       ...{ classIds: classIds },
+  //     },
+  //   );
+  //
+  //   return affected === 0 ? isExisted : await this.findOne(id);
+  // }
 }

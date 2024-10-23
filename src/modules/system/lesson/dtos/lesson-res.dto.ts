@@ -8,6 +8,7 @@ import { ExamDetailDto } from '~/modules/system/exam/dtos/exam-res.dto';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import { Column } from 'typeorm';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
+import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 
 @ObjectType('LessonSimpleFields')
 export class LessonBaseDto {
@@ -34,8 +35,8 @@ export class LessonDetailDto extends ExtendedEntity {
   @Field(() => StatusShareEnum)
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [ChapterDetailDto], { nullable: true })
-  chapters?: ChapterDetailDto[] = [];
+  @Field(() => [ChapterEntity], { nullable: true })
+  chapters?: ChapterEntity[] = [];
 
   @Field(() => [ClassEntity], { nullable: true })
   classes?: ClassEntity[] = [];

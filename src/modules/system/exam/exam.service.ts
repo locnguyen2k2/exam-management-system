@@ -58,9 +58,9 @@ export class ExamService {
       ...(!_.isEmpty(pageOptions.examStatus) && {
         status: { $in: pageOptions.examStatus },
       }),
-      ...(!_.isEmpty(pageOptions.lessonIds) && {
-        lessonId: { $in: pageOptions.lessonIds },
-      }),
+      // ...(!_.isEmpty(pageOptions.lessonIds) && {
+      //   lessonId: { $in: pageOptions.lessonIds },
+      // }),
       ...(uid && {
         $or: [{ create_by: uid }],
       }),
@@ -89,7 +89,6 @@ export class ExamService {
     const questions = [];
     const exam: any = await this.findOne(id);
     const questionIds = exam.questions.flat();
-    const lesson = await this.lessonService.findOne(exam.lessonId);
 
     if (uid && exam.create_by !== uid)
       throw new BusinessException(`400:Đề thi không có sẵn!`);
@@ -140,7 +139,6 @@ export class ExamService {
       questions.push(isQuestion);
     }
 
-    exam.lesson = lesson;
     exam.questions = questions;
 
     return exam;
@@ -216,7 +214,7 @@ export class ExamService {
       const newExam = new ExamEntity({
         label: data.label,
         time: data.time,
-        lessonId: lesson.id,
+        // lessonId: lesson.id,
         sku: data.sku + randomNumbs(3),
         status: data.status,
         enable: data.enable,
@@ -240,7 +238,10 @@ export class ExamService {
     const newExams = this.examRepo.create(exams);
     await this.lessonService.update(data.lessonId, {
       ...lesson,
-      examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
+      examIds: [
+        ...lesson.exams.map((exam) => exam.id),
+        ...newExams.map((exam) => exam.id),
+      ],
       updateBy: data.createBy,
     });
     await this.examRepo.save(newExams);
@@ -288,6 +289,18 @@ export class ExamService {
 
     const listScales: IScale[] = this.handleScale(scales);
 
+    await Promise.all(
+      listScales.map(async (scale) => {
+        if (
+          !lesson.chapters.find((chapter) => chapter.id === scale.chapterId)
+        ) {
+          throw new BusinessException(
+            `400:Không có chương ${scale.chapterId} trong học phần này!`,
+          );
+        }
+      }),
+    );
+
     const questsChapter: any[] = await this.questionService.randQuestsByScales(
       listScales,
       totalQuestions,
@@ -313,7 +326,6 @@ export class ExamService {
         new ExamEntity({
           label: data.label,
           time: data.time,
-          lessonId: lesson.id,
           sku: data.sku + randomNumbs(3),
           status: data.status,
           enable: data.enable,
@@ -334,11 +346,7 @@ export class ExamService {
     }
 
     const newExams = this.examRepo.create(listExams);
-    await this.lessonService.update(data.lessonId, {
-      ...lesson,
-      examIds: [...lesson.examIds, ...newExams.map((exam) => exam.id)],
-      updateBy: data.createBy,
-    });
+    await this.lessonService.updateExams(data.lessonId, newExams);
     await this.examRepo.save(newExams);
 
     return await Promise.all(
@@ -364,41 +372,40 @@ export class ExamService {
     }
 
     if (data.lessonId) {
-      const newLesson = await this.lessonService.findAvailable(
-        data.lessonId,
-        data.updateBy,
-      );
-
-      if (isExisted.lessonId !== newLesson.id) {
-        const oldLesson = await this.lessonService.findAvailable(
-          isExisted.lessonId,
-          data.updateBy,
-        );
-
-        const oldNewExams = new Set(oldLesson.examIds);
-
-        oldNewExams.delete(id);
-
-        await this.lessonService.update(isExisted.lessonId, {
-          ...oldLesson,
-          examIds: [...oldNewExams],
-        });
-
-        await this.lessonService.update(newLesson.id, {
-          ...newLesson,
-          examIds: [...newLesson.examIds, id],
-        });
-
-        await this.examRepo.updateMany(
-          { id: id },
-          {
-            $set: {
-              lessonId: newLesson.id,
-            },
-          },
-          { upsert: false },
-        );
-      }
+      // const newLesson = await this.lessonService.findAvailable(
+      //   data.lessonId,
+      //   data.updateBy,
+      // );
+      // if (isExisted.lessonId !== newLesson.id) {
+      //   const oldLesson = await this.lessonService.findAvailable(
+      //     isExisted.lessonId,
+      //     data.updateBy,
+      //   );
+      //
+      //   const oldNewExams = new Set(oldLesson.exams.map(({ id }) => id));
+      //
+      //   oldNewExams.delete(id);
+      //
+      //   await this.lessonService.update(isExisted.lessonId, {
+      //     ...oldLesson,
+      //     examIds: [...oldNewExams],
+      //   });
+      //
+      //   await this.lessonService.update(newLesson.id, {
+      //     ...newLesson,
+      //     examIds: [...newLesson.exams.map(({ id }) => id), id],
+      //   });
+      //
+      //   await this.examRepo.updateMany(
+      //     { id: id },
+      //     {
+      //       $set: {
+      //         lessonId: newLesson.id,
+      //       },
+      //     },
+      //     { upsert: false },
+      //   );
+      // }
     }
 
     await this.examRepo.update(

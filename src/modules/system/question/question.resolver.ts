@@ -66,9 +66,11 @@ export class QuestionResolver {
   @Mutation(() => QuestionEntity, { name: 'updateQuestion' })
   async update(
     @Args('id') id: string,
+    @CurrentUser() user: IAuthPayload,
     @Args('updateQuestionArgs') dto: UpdateQuestionDto,
   ): Promise<QuestionEntity> {
     const data = plainToClass(UpdateQuestionDto, dto);
+    data.updateBy = user.id;
     return await this.questionService.update(id, data);
   }
 
