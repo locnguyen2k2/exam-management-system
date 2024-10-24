@@ -64,6 +64,17 @@ export class LessonService {
       .aggregate(pipes)
       .toArray();
 
+    await Promise.all(
+      data.map(async (lesson) => {
+        const listClass = await this.classService.findByLesson(lesson.id);
+        listClass.forEach((isClass) => {
+          delete isClass.lessons;
+        });
+
+        lesson['classes'] = listClass;
+      }),
+    );
+
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
     const pageMetaDto = new PageMetaDto({
       pageOptions,

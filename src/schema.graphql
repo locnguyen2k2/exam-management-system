@@ -404,6 +404,30 @@ type ClassModel {
   lessons: [LessonDefaultFields!]
 }
 
+type ClassSimpleFields {
+  id: String!
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  name: String!
+  code: String!
+  description: String
+  startYear: String
+  endYear: String
+  status: StatusShareEnum
+}
+
+type ClassPagination {
+  data: [ClassModel!]!
+  meta: pagination!
+}
+
 type LessonModel {
   id: String!
 
@@ -422,17 +446,12 @@ type LessonModel {
   description: String!
   status: StatusShareEnum!
   chapters: [ChapterEntity!]
-  classes: [ClassModel!]
+  classes: [ClassSimpleFields!]
   exams: [ExamModel!]
 }
 
 type lessons {
-  data: [LessonDefaultFields!]!
-  meta: pagination!
-}
-
-type ClassPagination {
-  data: [ClassModel!]!
+  data: [LessonModel!]!
   meta: pagination!
 }
 

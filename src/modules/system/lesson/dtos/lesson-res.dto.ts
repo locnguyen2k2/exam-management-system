@@ -9,6 +9,7 @@ import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import { Column } from 'typeorm';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
+import { ClassSimpleDto } from '~/modules/system/class/dtos/class-res.dto';
 
 @ObjectType('LessonSimpleFields')
 export class LessonBaseDto {
@@ -38,8 +39,8 @@ export class LessonDetailDto extends ExtendedEntity {
   @Field(() => [ChapterEntity], { nullable: true })
   chapters?: ChapterEntity[] = [];
 
-  @Field(() => [ClassEntity], { nullable: true })
-  classes?: ClassEntity[] = [];
+  @Field(() => [ClassSimpleDto], { nullable: true })
+  classes?: ClassSimpleDto[] = [];
 
   @Field(() => [ExamDetailDto], { nullable: true })
   exams?: ExamDetailDto[] = [];
@@ -47,14 +48,14 @@ export class LessonDetailDto extends ExtendedEntity {
 
 @ObjectType('lessons')
 export class LessonPaginationDto {
-  @Field(() => [LessonEntity])
+  @Field(() => [LessonDetailDto])
   @IsArray()
-  readonly data: LessonEntity[];
+  readonly data: LessonDetailDto[];
 
   @Field(() => PageMetaDto)
   readonly meta: PageMetaDto;
 
-  constructor(data: LessonEntity[], meta: PageMetaDto) {
+  constructor(data: LessonDetailDto[], meta: PageMetaDto) {
     this.data = data;
     this.meta = meta;
   }

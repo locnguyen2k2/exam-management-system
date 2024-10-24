@@ -92,6 +92,10 @@ export class ClassService {
     if (isExisted) return isExisted;
   }
 
+  async findByLesson(lessonId: string): Promise<ClassEntity[]> {
+    return await this.classRepo.find({ 'lessons.id': { $in: [lessonId] } });
+  }
+
   async getAvaliable(id: string, uid: string): Promise<ClassEntity> {
     const isExisted = await this.findOne(id);
 
