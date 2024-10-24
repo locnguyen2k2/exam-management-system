@@ -5,7 +5,6 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
-import { LessonBaseDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 
 @ObjectType()
 export class ScaleDto {

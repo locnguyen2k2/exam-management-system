@@ -29,7 +29,7 @@ export class LessonEntity extends ExtendedEntity {
   chapters: ChapterEntity[] = [];
 
   @Field(() => [ExamEntity])
-  @Column('json', { array: true })
+  @Column('json', { array: true, default: [] })
   exams: ExamEntity[] = [];
 
   constructor(lessonEntity: Partial<LessonEntity>) {

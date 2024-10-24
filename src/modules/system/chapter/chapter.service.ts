@@ -24,7 +24,6 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
-import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 
 @Injectable()
 export class ChapterService {
@@ -175,14 +174,14 @@ export class ChapterService {
 
         delete chapData.questionIds;
 
-        const newChapter: ChapterEntity = new ChapterEntity({
+        const newChapter = new ChapterEntity({
           ...chapData,
           create_by: data.createBy,
           update_by: data.createBy,
         });
 
         if (!_.isEmpty(chapData.lessonId)) {
-          const lesson: LessonEntity = await this.lessonService.findAvailable(
+          const lesson = await this.lessonService.findAvailable(
             chapData.lessonId,
             data.createBy,
           );
@@ -199,13 +198,9 @@ export class ChapterService {
               chapters: [newChapter],
             });
           } else {
-            if (
-              !lessonChapters[index].chapters.find(
-                ({ id }) => id === newChapter.id,
-              )
-            ) {
-              lessonChapters[index].chapters.push(newChapter);
-            }
+            !lessonChapters[index].chapters.find(
+              ({ id }) => id === newChapter.id,
+            ) && lessonChapters[index].chapters.push(newChapter);
           }
         }
 
@@ -213,17 +208,22 @@ export class ChapterService {
       }),
     );
 
+    const createChapters = this.chapterRepo.create(newChapters);
+
+    const result = await this.chapterRepo.save(createChapters);
+
     lessonChapters.map(async ({ lessonId, chapters }) => {
+      const listChapter = chapters.map((chapter) =>
+        result.find(({ id }) => chapter.id === id),
+      );
       const lesson = await this.lessonService.findOne(lessonId);
       await this.lessonService.updateChapters(lessonId, [
         ...lesson.chapters,
-        ...chapters,
+        ...listChapter,
       ]);
     });
 
-    const listChapter = this.chapterRepo.create(newChapters);
-
-    return this.chapterRepo.save(listChapter);
+    return result;
   }
 
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {
