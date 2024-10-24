@@ -343,7 +343,7 @@ type ChapterModel {
   label: String!
   name: String!
   description: String
-  lesson: LessonDefaultFields!
+  lesson: LessonDefaultFields
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum

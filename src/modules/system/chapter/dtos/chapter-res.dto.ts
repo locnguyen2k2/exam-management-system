@@ -17,7 +17,7 @@ export class ChapterDetailDto extends ExtendedEntity {
   @Field(() => String, { nullable: true })
   description: string;
 
-  @Field(() => LessonEntity)
+  @Field(() => LessonEntity, { nullable: true })
   lesson: LessonEntity;
 
   @Field(() => StatusShareEnum, {

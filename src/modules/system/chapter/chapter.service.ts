@@ -46,10 +46,6 @@ export class ChapterService {
         enable: pageOptions.enable,
       }),
 
-      ...(!_.isNil(lessonId) && {
-        lessonId,
-      }),
-
       ...(!_.isEmpty(pageOptions.chapterStatus) && {
         status: {
           $in: pageOptions.chapterStatus,
@@ -70,14 +66,14 @@ export class ChapterService {
       .aggregate(pipes)
       .toArray();
 
-    for (const chapter of data) {
-      await this.chapterRepo.updateOne(
-        { id: chapter.id },
-        {
-          $unset: { lessonId: '' },
-        },
-      );
-    }
+    await Promise.all(
+      data.map(async (chapter) => {
+        const lesson = await this.lessonService.findByChapter(chapter.id);
+        if (lesson.length > 0) {
+          chapter['lesson'] = lesson[0];
+        }
+      }),
+    );
 
     const entities = data;
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
