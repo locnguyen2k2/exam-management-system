@@ -253,6 +253,8 @@ export class UserService {
 
     return {
       name: `${user.firstName} ${user.lastName}`,
+      firstName: `${user.firstName}`,
+      lastName: `${user.lastName}`,
       email: user.email,
       photo: user.photo,
       phone: user.phone,

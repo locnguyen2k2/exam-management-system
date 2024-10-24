@@ -27,6 +27,12 @@ export class UserProfile {
   @Field(() => String)
   name: string;
 
+  @Field(() => String)
+  firstName: string;
+
+  @Field(() => String)
+  lastName: string;
+
   @Field(() => String, { nullable: true })
   photo: string = '';
 

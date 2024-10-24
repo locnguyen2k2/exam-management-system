@@ -55,6 +55,8 @@ type UserPagination {
 type UserProfile {
   email: String!
   name: String!
+  firstName: String!
+  lastName: String!
   photo: String
   address: String
   phone: String
