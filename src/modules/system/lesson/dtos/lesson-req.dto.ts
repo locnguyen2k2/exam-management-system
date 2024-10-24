@@ -29,9 +29,6 @@ class LessonBaseDto extends BaseDto {
   @Field(() => [String], { nullable: true })
   classIds?: string[] = [];
 
-  @Field(() => [String], { nullable: true })
-  chapterIds?: string[] = [];
-
   @Field(() => StatusShareEnum)
   status: StatusShareEnum;
 }
@@ -64,6 +61,9 @@ export class EnableLessonsDto {
 
 @InputType('UpdateLessonArgs')
 export class UpdateLessonDto extends PartialType(LessonBaseDto) {
+  @Field(() => [String], { nullable: true })
+  chapterIds?: string[] = [];
+
   @HideField()
   updateBy: string;
 }

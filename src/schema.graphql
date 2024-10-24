@@ -902,7 +902,6 @@ input LessonBaseDto {
   description: String
   enable: Boolean!
   classIds: [String!] = []
-  chapterIds: [String!] = []
   status: StatusShareEnum!
 }
 
@@ -912,8 +911,8 @@ input UpdateLessonArgs {
   description: String
   enable: Boolean
   classIds: [String!] = []
-  chapterIds: [String!] = []
   status: StatusShareEnum
+  chapterIds: [String!] = []
 }
 
 input EnableLessonsArgs {

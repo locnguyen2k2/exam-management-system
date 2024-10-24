@@ -144,26 +144,23 @@ export class LessonService {
             `400:Tên học phần ${lesson.name} đã tồn tại!`,
           );
 
-        const chapters: ChapterEntity[] = [];
-
-        if (!_.isEmpty(lesson.chapterIds)) {
-          await Promise.all(
-            lesson.chapterIds.map(async (chapterId) => {
-              const chapter =
-                await this.chapterService.findAvailableChapterById(
-                  chapterId,
-                  data.createBy,
-                );
-
-              const index = chapters.findIndex(({ id }) => id === chapterId);
-              if (index === -1) chapters.push(chapter);
-            }),
-          );
-        }
+        // if (!_.isEmpty(lesson.chapterIds)) {
+        //   await Promise.all(
+        //     lesson.chapterIds.map(async (chapterId) => {
+        //       const chapter =
+        //         await this.chapterService.findAvailableChapterById(
+        //           chapterId,
+        //           data.createBy,
+        //         );
+        //
+        //       const index = chapters.findIndex(({ id }) => id === chapterId);
+        //       if (index === -1) chapters.push(chapter);
+        //     }),
+        //   );
+        // }
 
         const newLesson = new LessonEntity({
           ...lesson,
-          chapters,
           create_by: data.createBy,
           update_by: data.createBy,
         });
