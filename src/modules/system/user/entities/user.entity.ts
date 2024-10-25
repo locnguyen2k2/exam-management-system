@@ -2,8 +2,6 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
-import { IsEnum, IsOptional, IsPhoneNumber, MaxLength } from 'class-validator';
-import { Expose } from 'class-transformer';
 import { GenderEnum } from '~/modules/system/user/user.constant';
 
 @ObjectType('UserModel', { description: 'User Model' })
@@ -30,32 +28,22 @@ export class UserEntity extends ExtendedEntity {
     defaultValue: false,
   })
   @Column({ type: 'boolean', default: false })
-  status: boolean = false;
+  status: boolean;
 
   @Field(() => String, { nullable: true })
-  @MaxLength(255)
-  @Column({ type: 'string', length: 255 })
-  @IsOptional()
-  @Expose()
-  photo: string = null;
+  @Column({ type: 'string', length: 255, default: '' })
+  photo: string;
 
   @Field(() => String, { nullable: true })
-  @MaxLength(255)
-  @Column({ type: 'string', length: 255 })
-  @IsOptional()
-  @Expose()
+  @Column({ type: 'string', length: 255, default: '' })
   address: string = null;
 
   @Field(() => GenderEnum, { nullable: true })
-  @IsEnum(GenderEnum)
-  @IsOptional()
-  @Expose()
-  gender: GenderEnum = null;
+  @Column({ type: 'enum', enum: GenderEnum, default: null })
+  gender: GenderEnum;
 
-  @Field(() => String, { nullable: true })
-  @IsPhoneNumber()
-  @IsOptional()
-  @Expose()
+  @Field(() => String, { nullable: true, defaultValue: '' })
+  @Column({ type: 'string', default: '' })
   phone: string = null;
 
   @Field(() => [String])
