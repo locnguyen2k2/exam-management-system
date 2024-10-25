@@ -6,8 +6,9 @@ import { UserService } from '~/modules/system/user/user.service';
 import { UserProfile } from '~/modules/system/user/dtos/user-res.dto';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
-import { UpdateAccountDto } from '~/modules/auth/dtos/auth-req.dto';
 import { TokenService } from '~/modules/auth/services/token.service';
+import { UpdateInfoDto } from '~/modules/system/user/dtos/user-req.dto';
+import { plainToClass } from 'class-transformer';
 
 @Resolver()
 @UseGuards(JwtAuthGuard)
@@ -31,9 +32,9 @@ export class AccountResolver {
   @Mutation(() => UserProfile)
   async updateInfo(
     @CurrentUser() user: IAuthPayload,
-    @Args('updateAccountArgs') args: UpdateAccountDto,
+    @Args('updateAccountArgs') args: UpdateInfoDto,
   ): Promise<UserProfile> {
-    const data = UpdateAccountDto.plainToClass(args);
+    const data = plainToClass(UpdateInfoDto, args);
     return await this.userService.update(user.id, { ...data });
   }
 }

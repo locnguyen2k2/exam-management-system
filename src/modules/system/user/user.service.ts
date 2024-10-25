@@ -169,6 +169,7 @@ export class UserService {
       {
         ...(args?.lastName && { lastName: args.lastName }),
         ...(args?.firstName && { firstName: args.firstName }),
+        ...(args?.gender && { gender: args.gender }),
         ...(!_.isEmpty(photo) && { photo }),
         ...(args?.phone && { phone: args.phone }),
         ...(args?.address && { address: args.address }),

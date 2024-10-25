@@ -663,7 +663,7 @@ type Mutation {
   loginWithGG(idTokenArgs: String!): Credential!
   registerUser(registerUserArgs: RegisterArgs!): String!
   refreshToken(token: String!): String!
-  updateInfo(updateAccountArgs: UpdateAccountArgs!): UserProfile!
+  updateInfo(updateAccountArgs: UpdateInfoArgs!): UserProfile!
   createChapters(createChaptersArgs: CreateChaptersArgs!): [ChapterEntity!]!
   updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterEntity!
 
@@ -840,12 +840,13 @@ input RegisterArgs {
   password: String!
 }
 
-input UpdateAccountArgs {
-  lastName: String
+input UpdateInfoArgs {
   firstName: String
-  photo: String
-  phone: String
+  lastName: String
+  gender: GenderEnum
+  photo: Upload
   address: String
+  phone: String
 }
 
 input CreateChaptersArgs {
