@@ -670,7 +670,7 @@ type Mutation {
   """Kích hoạt chương"""
   enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
   updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
-  deleteChapters(chapterIds: [String!]!): [String!]!
+  deleteChapters(chapterIds: [String!]!): String!
   createLessons(createLessonArgs: CreateLessonArgs!): [LessonDefaultFields!]!
   updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonDefaultFields!
   enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonDefaultFields!]!
@@ -684,7 +684,7 @@ type Mutation {
 
   """Cập nhật đề thi"""
   updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
-  deleteExamPaper(examPaperId: String!): String!
+  deleteExamPapers(examPaperIds: [String!]!): String!
   createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionDefaultFields!]!
   updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionDefaultFields!
   enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionDefaultFields!]!

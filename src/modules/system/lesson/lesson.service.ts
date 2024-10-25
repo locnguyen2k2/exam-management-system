@@ -111,8 +111,7 @@ export class LessonService {
   }
 
   async detailLesson(id: string, uid: string): Promise<any> {
-    const isExisted = await this.findAvailable(id, uid);
-    return isExisted;
+    return await this.findAvailable(id, uid);
   }
 
   async findOne(id: string): Promise<LessonEntity> {
@@ -200,32 +199,20 @@ export class LessonService {
     return listLessons;
   }
 
-  async updateExams(id: string, exams: ExamEntity[]): Promise<LessonEntity> {
-    await this.findOne(id);
-    await Promise.all(
-      exams.map(async (exam) => {
-        await this.lessonRepo.findOneAndUpdate(
-          {
-            id,
-          },
-          {
-            $push: {
-              exams: exam,
-            },
-            $set: {
-              update_by: exams[0].create_by,
-            },
-          },
-        );
-      }),
-    );
-
-    return await this.findOne(id);
+  async findByExamId(examId: string): Promise<LessonEntity> {
+    return await this.lessonRepo.findOne({
+      where: {
+        'exams.id': {
+          $in: [examId],
+        },
+      },
+    });
   }
 
   async update(id: string, data: any): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
     const newClassIds: string[] = [];
+    const exams: ExamEntity[] = [];
 
     if (isExisted.create_by !== data.updateBy) {
       throw new BusinessException('400:Không thể cập nhật học phần này!');
@@ -241,8 +228,30 @@ export class LessonService {
       ) {
         throw new BusinessException('400:Tên học phần đã tồn tại!');
       }
+    }
 
-      // await this.examService.updateExamsLessonName(id, data.name);
+    if (!_.isNil(data.examIds)) {
+      await Promise.all(
+        data.examIds.map(async (examId) => {
+          exams.push(await this.examService.findOne(examId));
+        }),
+      );
+    }
+
+    const chapters: ChapterEntity[] = [];
+
+    if (!_.isNil(data.chapterIds)) {
+      await Promise.all(
+        data.chapterIds.map(async (chapterId) => {
+          const chapter = await this.chapterService.findAvailableChapterById(
+            chapterId,
+            data.createBy,
+          );
+
+          const index = chapters.findIndex(({ id }) => id === chapterId);
+          if (index === -1) chapters.push(chapter);
+        }),
+      );
     }
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
@@ -258,27 +267,7 @@ export class LessonService {
       }
     }
 
-    const chapters: ChapterEntity[] = [];
-
-    if (!_.isEmpty(data.chapterIds)) {
-      await Promise.all(
-        data.chapterIds.map(async (chapterId) => {
-          const chapter = await this.chapterService.findAvailableChapterById(
-            chapterId,
-            data.createBy,
-          );
-
-          const index = chapters.findIndex(({ id }) => id === chapterId);
-          if (index === -1) chapters.push(chapter);
-        }),
-      );
-    }
-
-    for (const classId of newClassIds) {
-      await this.classService.updateClassLessons(classId, [id]);
-    }
-
-    const { affected } = await this.lessonRepo.update(
+    await this.lessonRepo.update(
       { id },
       {
         ...(!_.isNil(data.name) && { name: data.name }),
@@ -286,14 +275,35 @@ export class LessonService {
         ...(!_.isNil(data.description) && { description: data.description }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),
         ...(!_.isNil(data.status) && { status: data.status }),
-        // ...(!_.isNil(data.chapterIds) && { chapterIds: data.chapterIds }),
         ...(!_.isEmpty(data.chapterIds) && { chapters }),
-        // ...(!_.isNil(data.examIds) && { examIds: data.examIds }),
+        ...(!_.isNil(data.examIds) && { exams: exams }),
         update_by: data.updateBy,
       },
     );
 
-    return affected === 0 ? isExisted : await this.findOne(id);
+    const result = await this.findOne(id);
+
+    if (!_.isEmpty(data.classIds)) {
+      for (const classId of newClassIds) {
+        await this.classService.updateClassLessons(classId, [id]);
+      }
+    }
+
+    return result;
+  }
+
+  async addExams(lessonId: string, examIds: string[]): Promise<boolean> {
+    const exams = await Promise.all(
+      examIds.map(async (id) => await this.examService.findOne(id)),
+    );
+
+    await this.lessonRepo.findOneAndUpdate(
+      { id: lessonId },
+      {
+        $push: { exams: { $each: exams } },
+      },
+    );
+    return true;
   }
 
   async enableLessons(data: EnableLessonsDto): Promise<LessonEntity[]> {

@@ -139,7 +139,7 @@ export class ChapterResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_CHAPTER)
-  @Mutation(() => [String], { name: 'deleteChapters' })
+  @Mutation(() => String, { name: 'deleteChapters' })
   async deleteMany(
     @CurrentUser() user: IAuthPayload,
     @Args('chapterIds', { type: () => [String] }) chapterIds: string[],

@@ -116,32 +116,3 @@ export class GenerateTokenDto extends BaseDto {
   @Field(() => TokenEntity)
   type: TokenEnum;
 }
-
-@InputType('UpdateAccountArgs')
-export class UpdateAccountDto extends BaseDto {
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
-  @IsOptional()
-  @Expose()
-  lastName: string;
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
-  @IsOptional()
-  @Expose()
-  firstName: string;
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
-  @IsOptional()
-  @Expose()
-  photo: string;
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
-  @IsOptional()
-  @Expose()
-  phone: string;
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
-  @IsOptional()
-  @Expose()
-  address: string;
-}

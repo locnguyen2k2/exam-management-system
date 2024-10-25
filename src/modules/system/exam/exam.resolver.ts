@@ -103,11 +103,11 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_EXAM)
-  @Mutation(() => String, { name: 'deleteExamPaper' })
+  @Mutation(() => String, { name: 'deleteExamPapers' })
   async delete(
     @CurrentUser() user: IAuthPayload,
-    @Args('examPaperId') id: string,
+    @Args('examPaperIds', { type: () => [String] }) ids: string[],
   ): Promise<string> {
-    return await this.examService.delete(id, user.id);
+    return await this.examService.deleteMany(ids, user.id);
   }
 }

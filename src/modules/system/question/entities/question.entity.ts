@@ -21,10 +21,6 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => String, { nullable: true })
   @Column({ type: 'string' })
   remark: string = '';
-  //
-  // @Field(() => String)
-  // @Column('string')
-  // chapterId: string;
 
   @Field(() => ChapterEntity)
   @Column('json')

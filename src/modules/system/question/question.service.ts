@@ -30,14 +30,8 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ImageService } from '~/modules/system/image/image.service';
 import * as _ from 'lodash';
 import { ExamService } from '~/modules/system/exam/exam.service';
-import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 
-export interface IClassifyChapter {
-  chapterId: string;
-  questions: QuestionEntity[];
-}
-
-export interface IClassifyLevel {
+export interface IClassifyQuestion {
   chapterId: string;
   info: { level: LevelEnum; questions: QuestionEntity[] }[];
 }
@@ -98,21 +92,23 @@ export class QuestionService {
 
     if (data.length > 0) {
       for (const question of data) {
-        const correctAnswerList = [];
-        for (const correctAnswer of question.correctAnswerIds) {
-          const newCorrectAnswer = {
-            score: correctAnswer.score,
-            ...(!_.isEmpty(correctAnswer.correctAnswerId) &&
-              (await this.answerService.findOne(
-                correctAnswer.correctAnswerId,
-              ))),
-          };
-          correctAnswerList.push(newCorrectAnswer);
-        }
+        const correctAnswerList = await this.detailCorrectAnswers(
+          question.correctAnswerIds,
+        );
+        // for (const correctAnswer of question.correctAnswerIds) {
+        //   const correctAnswerEntity = {
+        //     score: correctAnswer.score,
+        //     ...(await this.answerService.findOne(
+        //       correctAnswer.correctAnswerId,
+        //     )),
+        //   };
+        //
+        //   correctAnswerList.push(correctAnswerEntity);
+        // }
 
+        delete question.correctAnswerIds;
         if (correctAnswerList.length > 0) {
           question['correctAnswers'] = correctAnswerList;
-          delete question.correctAnswerIds;
         }
       }
     }
@@ -132,19 +128,21 @@ export class QuestionService {
       .toArray();
 
     if (isExisted.length > 0 && isExisted[0].create_by === uid) {
-      const correctAnswerList = [];
-      if (isExisted[0].correctAnswerIds.length > 0) {
-        for (const correctAnswer of isExisted[0].correctAnswerIds) {
-          const newCorrectAnswer = {
-            score: correctAnswer.score,
-            ...(!_.isEmpty(correctAnswer.correctAnswerId) &&
-              (await this.answerService.findOne(
-                correctAnswer.correctAnswerId,
-              ))),
-          };
-          correctAnswerList.push(newCorrectAnswer);
-        }
-      }
+      const correctAnswerList = await this.detailCorrectAnswers(
+        isExisted[0].correctAnswerIds,
+      );
+      // if (isExisted[0].correctAnswerIds.length > 0) {
+      //   for (const correctAnswer of isExisted[0].correctAnswerIds) {
+      //     const newCorrectAnswer = {
+      //       score: correctAnswer.score,
+      //       ...(!_.isEmpty(correctAnswer.correctAnswerId) &&
+      //         (await this.answerService.findOne(
+      //           correctAnswer.correctAnswerId,
+      //         ))),
+      //     };
+      //     correctAnswerList.push(newCorrectAnswer);
+      //   }
+      // }
       if (correctAnswerList.length > 0) {
         isExisted[0]['correctAnswers'] = correctAnswerList;
         delete isExisted[0].correctAnswerIds;
@@ -222,6 +220,21 @@ export class QuestionService {
         listQuestion.push(questionData);
       }),
     );
+  }
+
+  async detailCorrectAnswers(correctAnswers: any[]): Promise<any> {
+    const listCorrectAnswer = [];
+
+    for (const correctAnswer of correctAnswers) {
+      const correctAnswerEntity = {
+        score: correctAnswer.score,
+        ...(await this.answerService.findOne(correctAnswer.correctAnswerId)),
+      };
+
+      listCorrectAnswer.push(correctAnswerEntity);
+    }
+
+    return listCorrectAnswer;
   }
 
   async handleAnswers(data: any): Promise<any> {
@@ -309,73 +322,49 @@ export class QuestionService {
     return await this.questionRepo.save(newQuestions);
   }
 
-  async classifyByChapter(
-    questions: QuestionEntity[],
-  ): Promise<{ chapterId: string; questions: QuestionEntity[] }[]> {
-    const detailChapters: { chapterId: string; questions: QuestionEntity[] }[] =
-      [];
+  // Phân loại danh sách câu hỏi
+  async classifyQuestions(
+    data: QuestionEntity[],
+  ): Promise<IClassifyQuestion[]> {
+    const levelClassification: IClassifyQuestion[] = [];
 
-    questions.map((question) => {
-      const indexChapter = detailChapters.findIndex(
-        (detailChapter) => detailChapter.chapterId === question.chapter.id,
+    data.map((question) => {
+      const indexChapter = levelClassification.findIndex(
+        (classifyLevel) => classifyLevel.chapterId === question.chapter.id,
       );
 
       if (indexChapter > -1) {
-        detailChapters[indexChapter].questions.push(question);
+        const indexLevel = levelClassification[indexChapter].info.findIndex(
+          (classifyLevel) => classifyLevel.level === question.level,
+        );
+
+        if (indexLevel > -1) {
+          levelClassification[indexChapter].info[indexLevel].questions.push(
+            question,
+          );
+        } else {
+          levelClassification[indexChapter].info.push({
+            level: question.level,
+            questions: [question],
+          });
+        }
       } else {
-        detailChapters.push({
+        levelClassification.push({
           chapterId: question.chapter.id,
-          questions: [question],
+          info: [{ level: question.level, questions: [question] }],
         });
       }
     });
 
-    return detailChapters;
-  }
-
-  async classifyByLevel(data: IClassifyChapter[]): Promise<IClassifyLevel[]> {
-    const levelClassification: IClassifyLevel[] = [];
-
-    for (let i = 0; i < data.length; i++) {
-      data[i].questions.map((question) => {
-        const indexChapter = levelClassification.findIndex(
-          (classifyLevel) => classifyLevel.chapterId === question.chapter.id,
-        );
-
-        if (indexChapter > -1) {
-          const indexLevel = levelClassification[indexChapter].info.findIndex(
-            (classifyLevel) => classifyLevel.level === question.level,
-          );
-
-          if (indexLevel > -1) {
-            levelClassification[indexChapter].info[indexLevel].questions.push(
-              question,
-            );
-          } else {
-            levelClassification[indexChapter].info.push({
-              level: question.level,
-              questions: [question],
-            });
-          }
-        } else {
-          levelClassification.push({
-            chapterId: question.chapter.id,
-            info: [{ level: question.level, questions: [question] }],
-          });
-        }
-      });
-    }
-
     return levelClassification;
   }
 
-  async questionPercentages(questions: QuestionEntity[]): Promise<IScale[]> {
-    const chapterClassify = await this.classifyByChapter(questions);
-    const levelClassify = await this.classifyByLevel(chapterClassify);
+  async getQuestionRate(questions: QuestionEntity[]): Promise<IScale[]> {
+    const classifyQuestions = await this.classifyQuestions(questions);
     const totalQuestions = questions.length;
     const scales: IScale[] = [];
 
-    levelClassify.map(({ chapterId, info }) => {
+    classifyQuestions.map(({ chapterId, info }) => {
       info.map(({ level, questions }) => {
         scales.push({
           chapterId,
@@ -397,7 +386,10 @@ export class QuestionService {
   ): Promise<any> {
     const { chapterId, questionIds } = data;
     const questions: QuestionEntity[] = [];
-    let chapter = null;
+    const chapter = await this.chapterService.findAvailableChapterById(
+      chapterId,
+      uid,
+    );
 
     await Promise.all(
       questionIds.map(async (id) => {
@@ -406,11 +398,6 @@ export class QuestionService {
           throw new BusinessException(
             `400:Câu hỏi ${id} không có trong chương ${chapterId}`,
           );
-
-        chapter = await this.chapterService.findAvailableChapterById(
-          chapterId,
-          uid,
-        );
 
         if (!(await this.chapterService.lessonHasChapter(lessonId, chapterId)))
           throw new BusinessException(

@@ -14,7 +14,6 @@ import {
 } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
-import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { randomNumbs } from '~/utils/random';
 import * as _ from 'lodash';
@@ -44,7 +43,6 @@ export class ExamService {
     private readonly examRepo: MongoRepository<ExamEntity>,
     private readonly questionService: QuestionService,
     private readonly answerService: AnswerService,
-    private readonly chapterService: ChapterService,
   ) {}
 
   async findAll(
@@ -160,61 +158,61 @@ export class ExamService {
     });
   }
 
-  async handleQuestionLabel(
+  handleAnswersLabel(ids: string[], answerLabel: string) {
+    return ids.map((answerId, index) => {
+      const chars = alphabet.split('');
+      const label = handleLabel(answerLabel, `${chars[index]}`);
+
+      return { answerId, label };
+    });
+  }
+
+  handleQuestionLabel(
     questions: QuestionEntity[],
-    questionLabel: QuestionLabelEnum,
-    answerLabel: AnswerLabelEnum,
+    questionLabel: string,
+    answerLabel: string,
   ) {
-    return await Promise.all(
-      questions.map((question, index) => {
-        const answerIds = question.answerIds.map((answerId, index) => {
-          const chars = alphabet.split('');
-          const label = handleLabel(answerLabel, `${chars[index]}`);
+    return questions.map((question, index) => {
+      let answerIds = [];
 
-          return { answerId, label };
-        });
+      answerIds = this.handleAnswersLabel(question.answerIds, answerLabel);
 
-        return {
-          ...question,
-          answerIds,
-          label: handleLabel(questionLabel, `${index + 1}`),
-        };
-      }),
-    );
+      return {
+        ...question,
+        answerIds,
+        label: handleLabel(questionLabel, `${index + 1}`),
+      };
+    });
   }
 
   async create(data: CreateExamPaperDto): Promise<ExamDetailDto[]> {
+    const { lessonId, createBy } = data;
+    await this.lessonService.findAvailable(lessonId, createBy);
     const exams: ExamEntity[] = [];
-    const lesson = await this.lessonService.findAvailable(
-      data.lessonId,
-      data.createBy,
-    );
     const questsInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
           await this.questionService.validateQuestions(
-            data.lessonId,
+            lessonId,
             info,
-            data.createBy,
+            createBy,
           ),
       ),
     );
     const listQuestions = questsInfo.map((info) => info.questions).flat();
-    const scales =
-      await this.questionService.questionPercentages(listQuestions);
+    const scales = await this.questionService.getQuestionRate(listQuestions);
 
     for (let i = 0; i < data.numberExams; i++) {
-      const mixedQuestions =
+      const randQuestions =
         await this.questionService.randomQuestions(listQuestions);
-      const questions = await this.handleQuestionLabel(
-        mixedQuestions,
+      const questions = this.handleQuestionLabel(
+        randQuestions,
         data.questionLabel,
         data.answerLabel,
       );
       const newExam = new ExamEntity({
         label: data.label,
         time: data.time,
-        // lessonId: lesson.id,
         sku: data.sku + randomNumbs(3),
         status: data.status,
         enable: data.enable,
@@ -228,26 +226,23 @@ export class ExamService {
             answers: [...question.answerIds],
           };
         }),
-        create_by: data.createBy,
-        update_by: data.createBy,
+        create_by: createBy,
+        update_by: createBy,
       });
 
       exams.push(newExam);
     }
 
-    const newExams = this.examRepo.create(exams);
-    await this.lessonService.update(data.lessonId, {
-      ...lesson,
-      examIds: [
-        ...lesson.exams.map((exam) => exam.id),
-        ...newExams.map((exam) => exam.id),
-      ],
-      updateBy: data.createBy,
-    });
-    await this.examRepo.save(newExams);
+    const createExams = this.examRepo.create(exams);
+    const newExams = await this.examRepo.save(createExams);
+
+    await this.lessonService.addExams(
+      lessonId,
+      newExams.map((exam) => exam.id),
+    );
 
     return await Promise.all(
-      newExams.map(async (exam) => await this.getExamDetail(exam.id)),
+      newExams.map(async ({ id }) => await this.getExamDetail(id)),
     );
   }
 
@@ -314,7 +309,7 @@ export class ExamService {
       const mixedQuestions =
         await this.questionService.randomQuestions(listQuestions);
 
-      const questions = await this.handleQuestionLabel(
+      const questions = this.handleQuestionLabel(
         mixedQuestions,
         data.questionLabel,
         data.answerLabel,
@@ -345,25 +340,25 @@ export class ExamService {
       );
     }
 
-    const newExams = this.examRepo.create(listExams);
-    await this.lessonService.updateExams(data.lessonId, newExams);
-    await this.examRepo.save(newExams);
+    const createExams = this.examRepo.create(listExams);
+    const newExams = await this.examRepo.save(createExams);
+
+    await this.lessonService.addExams(
+      data.lessonId,
+      newExams.map(({ id }) => id),
+    );
 
     return await Promise.all(
       newExams.map(async (exam) => await this.getExamDetail(exam.id)),
     );
   }
 
-  // async updateExamsLessonName(lessonId: string, name: string) {
-  //   await this.examRepo.updateMany(
-  //     { 'lesson.lessonId': lessonId },
-  //     { $set: { 'lesson.name': name } },
-  //     { upsert: false },
-  //   );
-  // }
-
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
+    let listQuestions = [];
+    let answerLabel: string = !_.isEmpty(data?.answerLabel)
+      ? data.answerLabel
+      : null;
 
     if (isExisted.create_by !== data.updateBy) {
       throw new BusinessException(
@@ -371,41 +366,27 @@ export class ExamService {
       );
     }
 
-    if (data.lessonId) {
-      // const newLesson = await this.lessonService.findAvailable(
-      //   data.lessonId,
-      //   data.updateBy,
-      // );
-      // if (isExisted.lessonId !== newLesson.id) {
-      //   const oldLesson = await this.lessonService.findAvailable(
-      //     isExisted.lessonId,
-      //     data.updateBy,
-      //   );
-      //
-      //   const oldNewExams = new Set(oldLesson.exams.map(({ id }) => id));
-      //
-      //   oldNewExams.delete(id);
-      //
-      //   await this.lessonService.update(isExisted.lessonId, {
-      //     ...oldLesson,
-      //     examIds: [...oldNewExams],
-      //   });
-      //
-      //   await this.lessonService.update(newLesson.id, {
-      //     ...newLesson,
-      //     examIds: [...newLesson.exams.map(({ id }) => id), id],
-      //   });
-      //
-      //   await this.examRepo.updateMany(
-      //     { id: id },
-      //     {
-      //       $set: {
-      //         lessonId: newLesson.id,
-      //       },
-      //     },
-      //     { upsert: false },
-      //   );
-      // }
+    if (data.questionLabel) {
+      const questions: QuestionEntity[] = Array(isExisted.questions.length);
+      await Promise.all(
+        isExisted.questions.map(async (question, index) => {
+          const isQuestion = await this.questionService.findOne(
+            question.questionId,
+          );
+          if (!answerLabel) {
+            answerLabel = question.answers[0].label;
+          }
+          isQuestion['answerIds'] = question.answers.map(
+            ({ answerId }) => answerId,
+          );
+          questions[index] = isQuestion;
+        }),
+      );
+      listQuestions = this.handleQuestionLabel(
+        questions,
+        data.questionLabel,
+        answerLabel,
+      );
     }
 
     await this.examRepo.update(
@@ -414,9 +395,15 @@ export class ExamService {
         ...(!_.isNil(data.label) && { label: data.label }),
         ...(!_.isNil(data.time) && { time: data.time }),
         ...(!_.isNil(data.questionLabel) && {
-          questionLabel: data.questionLabel,
+          questions: listQuestions.map((question) => {
+            return {
+              questionId: question.id,
+              label: question.label,
+              correctAnswers: question.correctAnswerIds,
+              answers: [...question.answerIds],
+            };
+          }),
         }),
-        ...(!_.isNil(data.answerLabel) && { answerLabel: data.answerLabel }),
         ...(!_.isNil(data.maxScore) && { maxScore: data.maxScore }),
         ...(!_.isNil(data.status) && {
           status: data.status,
@@ -426,7 +413,19 @@ export class ExamService {
       },
     );
 
-    return await this.findOne(id);
+    const result = await this.findOne(id);
+
+    const lesson = await this.lessonService.findByExamId(result.id);
+
+    const newExams = lesson.exams.filter((exam) => exam.id !== result.id);
+    newExams.push(result);
+
+    await this.lessonService.update(lesson.id, {
+      examIds: newExams.map((exam) => exam.id),
+      updateBy: data.updateBy,
+    });
+
+    return result;
   }
 
   async enableExams(data: EnableExamsDto): Promise<ExamEntity[]> {
@@ -458,13 +457,28 @@ export class ExamService {
     return listExams;
   }
 
-  async delete(id: string, uid: string): Promise<string> {
-    const isExisted = await this.findOne(id);
-    if (isExisted.create_by !== uid) {
-      throw new BusinessException('400:Khong co quyen xoa ban ghi nay!');
+  async deleteMany(ids: string[], uid: string): Promise<string> {
+    await Promise.all(
+      ids.map(async (id) => {
+        const isExisted = await this.findOne(id);
+        if (isExisted.create_by !== uid) {
+          throw new BusinessException(`400:Không có quyền xóa bản ghi ${id}!`);
+        }
+      }),
+    );
+
+    for (const itemId of ids) {
+      const { exams, id } = await this.lessonService.findByExamId(itemId);
+      if (exams && exams.length > 0) {
+        const newExams = exams.filter((exam) => exam.id !== itemId);
+        await this.lessonService.update(id, {
+          examIds: newExams.map((exam) => exam.id),
+          updateBy: uid,
+        });
+      }
     }
 
-    await this.examRepo.deleteOne({ id });
+    await this.examRepo.deleteMany({ id: { $in: ids } });
     return '200:Xóa thành công';
   }
 }

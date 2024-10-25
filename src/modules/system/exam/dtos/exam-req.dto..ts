@@ -123,6 +123,7 @@ export class GenerateExamPaperDto extends BaseExamDto {
 export class UpdateExamPaperDto extends PartialType(BaseExamDto) {
   @HideField()
   numberExams;
+  lessonId;
   sku;
 
   @HideField()
