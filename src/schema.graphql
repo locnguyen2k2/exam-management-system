@@ -273,7 +273,7 @@ type ExamEntity {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   time: String!
   sku: String!
 
@@ -368,7 +368,7 @@ type ExamModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   time: String!
   sku: String!
 

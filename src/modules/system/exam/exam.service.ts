@@ -411,11 +411,8 @@ export class ExamService {
 
     const lesson = await this.lessonService.findByExamId(result.id);
 
-    const newExams = lesson.exams.filter((exam) => exam.id !== result.id);
-    newExams.push(result);
-
     await this.lessonService.update(lesson.id, {
-      examIds: newExams.map((exam) => exam.id),
+      examIds: lesson.exams.map((exam) => exam.id),
       updateBy: data.updateBy,
     });
 

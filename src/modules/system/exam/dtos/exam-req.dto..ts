@@ -1,6 +1,6 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { Field, HideField, InputType, PickType } from '@nestjs/graphql';
+import { Field, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Expose, Transform } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
@@ -13,6 +13,7 @@ import {
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
+import { ExtendedEntity } from '~/common/entity/base.entity';
 
 @InputType('ExamPaperPageOptions')
 export class ExamPaperPageOptions extends PageOptionDto {
@@ -120,15 +121,35 @@ export class GenerateExamPaperDto extends BaseExamDto {
 }
 
 @InputType('UpdateExamPaperArgs')
-export class UpdateExamPaperDto extends PickType(BaseExamDto, [
-  'answerLabel',
-  'questionLabel',
-  'time',
-  'label',
-  'enable',
-  'maxScore',
-  'status',
-] as const) {
+export class UpdateExamPaperDto extends BaseDto {
+  @Field(() => String, { nullable: true })
+  @Validate(IsValidString)
+  label: string;
+
+  @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
+  @Transform(({ value }) =>
+    typeof value === 'number' ? `${value} phút` : value,
+  )
+  time: string;
+
+  @Field(() => QuestionLabelEnum)
+  questionLabel: QuestionLabelEnum;
+
+  @Field(() => AnswerLabelEnum)
+  answerLabel: AnswerLabelEnum;
+
+  @Field(() => Number, {
+    description: '10 được đặt mặc định',
+    nullable: true,
+  })
+  maxScore: number = 10;
+
+  @Field(() => Boolean, { nullable: true })
+  enable: boolean = false;
+
+  @Field(() => StatusShareEnum, { nullable: true })
+  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+
   @HideField()
   updateBy: string;
 }

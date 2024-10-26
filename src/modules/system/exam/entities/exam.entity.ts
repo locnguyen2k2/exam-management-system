@@ -19,8 +19,8 @@ export class ScaleDto {
 @ObjectType()
 @Entity('exam_entity')
 export class ExamEntity extends ExtendedEntity {
-  @Field(() => String)
-  @Column({ type: 'string' })
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'string', default: null })
   label: string;
 
   @Field(() => String)
@@ -33,7 +33,7 @@ export class ExamEntity extends ExtendedEntity {
 
   @Field(() => Float, { description: '10 được đặt mặc định', nullable: true })
   @Column('int', { default: 10.0 })
-  maxScore: number = 10;
+  maxScore: number = 10.0;
 
   // IScale: Chapter, Level, Percent
   @Field(() => [ScaleDto])
@@ -41,16 +41,16 @@ export class ExamEntity extends ExtendedEntity {
   scales: IScale[];
 
   @Field(() => [ExamQuestionDto])
-  @Column('json', { array: true })
-  questions: ExamQuestionDto[] = [];
+  @Column('json', { array: true, default: [] })
+  questions: ExamQuestionDto[];
 
   @Field(() => Boolean, { nullable: true })
-  @Column('boolean')
-  enable: boolean = false;
+  @Column('boolean', { default: false })
+  enable: boolean;
 
   @Field(() => StatusShareEnum, { nullable: true })
-  @Column('enum', { enum: StatusShareEnum })
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  @Column('enum', { enum: StatusShareEnum, default: StatusShareEnum.PRIVATE })
+  status: StatusShareEnum;
 
   constructor(examEntity: Partial<ExamEntity>) {
     super();

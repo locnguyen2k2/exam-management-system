@@ -9,18 +9,14 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { QuestionDetailDto } from '~/modules/system/question/dtos/question-res.dto';
 import { ExtendedEntity } from '~/common/entity/base.entity';
-import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 
 @ObjectType('ExamDefaultFields')
 export class ExamDefaultFields extends ExtendedEntity {}
 
 @ObjectType('ExamModel')
 export class ExamDetailDto extends ExtendedEntity {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   label: string;
-
-  // @Field(() => LessonEntity)
-  // lesson: LessonEntity;
 
   @Field(() => String)
   time: string;
