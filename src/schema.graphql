@@ -925,7 +925,7 @@ input EnableLessonArgs {
 }
 
 input CreateExamPaperArgs {
-  label: String!
+  label: String
 
   """Thời gian làm bài (phút)"""
   time: Float!
@@ -965,7 +965,7 @@ input QuestionInfoArgs {
 }
 
 input GenerateExamPaperArgs {
-  label: String!
+  label: String
 
   """Thời gian làm bài (phút)"""
   time: Float!
@@ -1004,19 +1004,14 @@ input UpdateExamPaperArgs {
   label: String
 
   """Thời gian làm bài (phút)"""
-  time: Float
-  questionLabel: QuestionLabelEnum
-  answerLabel: AnswerLabelEnum
-  lessonId: String
-  sku: String
+  time: Float!
+  questionLabel: QuestionLabelEnum!
+  answerLabel: AnswerLabelEnum!
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
   enable: Boolean = false
   status: StatusShareEnum = PRIVATE
-
-  """Số lượng đề muốn random từ đề gốc đã nhập"""
-  numberExams: Float = 1
 }
 
 input CreateQuestionsArgs {

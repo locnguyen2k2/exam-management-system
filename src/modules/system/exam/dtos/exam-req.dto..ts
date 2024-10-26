@@ -1,6 +1,6 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
+import { Field, HideField, InputType, PickType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Expose, Transform } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
@@ -50,7 +50,7 @@ class Scale implements IScale {
 
 @InputType()
 class BaseExamDto extends BaseDto {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Validate(IsValidString)
   label: string;
 
@@ -120,12 +120,15 @@ export class GenerateExamPaperDto extends BaseExamDto {
 }
 
 @InputType('UpdateExamPaperArgs')
-export class UpdateExamPaperDto extends PartialType(BaseExamDto) {
-  @HideField()
-  numberExams;
-  lessonId;
-  sku;
-
+export class UpdateExamPaperDto extends PickType(BaseExamDto, [
+  'answerLabel',
+  'questionLabel',
+  'time',
+  'label',
+  'enable',
+  'maxScore',
+  'status',
+] as const) {
   @HideField()
   updateBy: string;
 }
