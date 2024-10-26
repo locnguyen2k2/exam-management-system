@@ -89,7 +89,7 @@ export class UserService {
   async findByRole(roleId: string): Promise<UserEntity[]> {
     return await this.userRepository.find({
       where: {
-        roleIds: {
+        'roles.id': {
           $all: [roleId],
         },
       },
