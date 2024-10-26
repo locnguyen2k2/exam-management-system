@@ -77,7 +77,7 @@ export class UserService {
   async findOne(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (user) return user;
-    throw new NotFoundException(`Người dùng không tồn tại!`);
+    throw new NotFoundException(ErrorEnum.USER_NOT_FOUND);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -104,7 +104,7 @@ export class UserService {
     delete data.roleIds;
 
     if (isExisted && isExisted.password)
-      throw new BusinessException('400:User is existed!');
+      throw new BusinessException(ErrorEnum.USER_IS_EXISTED);
 
     if (data.password) {
       hashPassword = await bcrypt.hashSync(data.password, 10);
@@ -286,9 +286,10 @@ export class UserService {
   }> {
     const isExisted = await this.findByEmail(email);
 
-    if (!isExisted) throw new BusinessException(ErrorEnum.USER_NOT_FOUND);
+    if (!isExisted)
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND, email);
     if (!isExisted.enable)
-      throw new BusinessException(ErrorEnum.USER_UNAVAILABLE);
+      throw new BusinessException(ErrorEnum.USER_UNAVAILABLE, email);
 
     const { tokens } = isExisted;
     const access_token = tokens.find(

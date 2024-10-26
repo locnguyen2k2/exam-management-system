@@ -23,10 +23,6 @@ import {
   ExamDetailDto,
   ExamPaginationDto,
 } from '~/modules/system/exam/dtos/exam-res.dto';
-import {
-  AnswerLabelEnum,
-  QuestionLabelEnum,
-} from '~/modules/system/exam/enums/label.enum';
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
@@ -89,7 +85,7 @@ export class ExamService {
     const questionIds = exam.questions.flat();
 
     if (uid && exam.create_by !== uid)
-      throw new BusinessException(`400:Đề thi không có sẵn!`);
+      throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
 
     await Promise.all(
       questionIds.map(async (question: any) => {
@@ -145,7 +141,7 @@ export class ExamService {
   async findOne(id: string): Promise<ExamEntity> {
     const isExisted = await this.examRepo.findOne({ where: { id } });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
@@ -361,9 +357,7 @@ export class ExamService {
       : null;
 
     if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException(
-        '400:Không có quyền thao tác trên bản ghi này!',
-      );
+      throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
     }
 
     if (data.questionLabel) {
@@ -436,7 +430,8 @@ export class ExamService {
         if (isExisted) {
           if (isExisted.create_by !== data.updateBy) {
             throw new BusinessException(
-              '400:Không có quyền thao tác trên bản ghi này!',
+              ErrorEnum.NO_PERMISSON,
+              examEnable.examId,
             );
           }
           isExisted.enable = examEnable.enable;
@@ -462,7 +457,7 @@ export class ExamService {
       ids.map(async (id) => {
         const isExisted = await this.findOne(id);
         if (isExisted.create_by !== uid) {
-          throw new BusinessException(`400:Không có quyền xóa bản ghi ${id}!`);
+          throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
         }
       }),
     );

@@ -68,13 +68,13 @@ export class RoleService {
   async findOne(id: string): Promise<RoleEntity> {
     const role = await this.roleRepository.findOne({ where: { id } });
     if (role) return role;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByValue(value: string): Promise<RoleEntity> {
     const isExisted = await this.roleRepository.findOne({ where: { value } });
     if (isExisted) return isExisted;
-    throw new NotFoundException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new NotFoundException(ErrorEnum.RECORD_NOT_FOUND, value);
   }
 
   async findByName(name: string): Promise<RoleEntity> {

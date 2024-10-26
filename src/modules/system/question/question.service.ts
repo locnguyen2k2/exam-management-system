@@ -149,7 +149,7 @@ export class QuestionService {
       }
       return isExisted[0];
     }
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByChapter(chapterId: string): Promise<QuestionEntity[]> {
@@ -161,7 +161,7 @@ export class QuestionService {
   async findOne(id: string): Promise<QuestionEntity> {
     const isExisted = await this.questionRepo.findOneBy({ id });
     if (isExisted) return isExisted;
-    throw new BusinessException(`400: Bản ghi ${id} không tồn tại`);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByContent(content: string): Promise<QuestionEntity> {
@@ -178,7 +178,7 @@ export class QuestionService {
     const isExisted = await this.findOne(id);
     if (isExisted.create_by === uid) return isExisted;
 
-    throw new BusinessException(`400:Bản ghi "${isExisted.id}" không có sẵn!`);
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async beforeAddQuestion(data: any) {
@@ -432,7 +432,7 @@ export class QuestionService {
     if (data.content) {
       const isReplaced = await this.findByContent(data.content);
       if (isReplaced.id !== id && isReplaced.create_by === data.updateBy)
-        throw new BusinessException('400:Nội dung câu hỏi đã tồn tại');
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.content);
     }
 
     if (data.chapterId) {
@@ -524,9 +524,7 @@ export class QuestionService {
         const isExisted = await this.findOne(questionEnable.questionId);
         if (isExisted) {
           if (isExisted.create_by !== data.updateBy) {
-            throw new BusinessException(
-              '400:Không có quyền thao tác trên bản ghi này!',
-            );
+            throw new BusinessException(ErrorEnum.NO_PERMISSON, isExisted.id);
           }
           isExisted.enable = questionEnable.enable;
           listQuestions.push(isExisted);
@@ -551,9 +549,7 @@ export class QuestionService {
       data.questionsStatus.map(async ({ questionId }) => {
         const isExisted = await this.findOne(questionId);
         if (isExisted.create_by !== data.updateBy) {
-          throw new BusinessException(
-            '400:Không có quyền thao tác trên bản ghi này!',
-          );
+          throw new BusinessException(ErrorEnum.NO_PERMISSON, questionId);
         }
       }),
     );
@@ -588,7 +584,7 @@ export class QuestionService {
       ids.map(async (id) => {
         const isExisted = await this.examService.findByQuestionId(id);
         if (isExisted.length !== 0)
-          throw new BusinessException(`400:Bản ghi ${id} đang được dùng!`);
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
         listQuestion.push(id);
       }),
     );

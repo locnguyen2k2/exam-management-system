@@ -83,7 +83,7 @@ export class PermissionAuthGuard implements CanActivate {
       allowAccess = userPers.includes(requirePerVals);
     }
 
-    if (!allowAccess) throw new BusinessException(ErrorEnum.NO_PERMISSION);
+    if (!allowAccess) throw new BusinessException(ErrorEnum.ACCESS_DENIED);
 
     return true;
   }

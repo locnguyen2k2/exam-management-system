@@ -22,6 +22,7 @@ import { pipeLine } from '~/utils/pipe-line';
 import { ClassService } from '~/modules/system/class/class.service';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
+import { ErrorEnum } from '~/common/enums/error.enum';
 
 @Injectable()
 export class LessonService {
@@ -101,7 +102,7 @@ export class LessonService {
 
     if (isExisted.create_by === uid) return isExisted;
 
-    throw new BusinessException(`400:Bản ghi "${id}" không có sẵn!`);
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async detailLesson(id: string, uid: string): Promise<any> {
@@ -111,7 +112,7 @@ export class LessonService {
   async findOne(id: string): Promise<LessonEntity> {
     const isExisted = await this.lessonRepo.findOne({ where: { id } });
     if (isExisted) return isExisted;
-    throw new BusinessException(`400:Học phần ${id} không tồn tại!`);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByChapter(chapterId: string): Promise<LessonEntity[]> {
@@ -133,9 +134,7 @@ export class LessonService {
         const isExisted = await this.findByName(lesson.name);
 
         if (isExisted && isExisted.create_by === data.createBy)
-          throw new BusinessException(
-            `400:Tên học phần ${lesson.name} đã tồn tại!`,
-          );
+          throw new BusinessException(ErrorEnum.RECORD_EXISTED, lesson.name);
 
         const newLesson = new LessonEntity({
           ...lesson,
@@ -194,7 +193,7 @@ export class LessonService {
     const exams: ExamEntity[] = [];
 
     if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException('400:Không thể cập nhật học phần này!');
+      throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
     }
 
     if (!_.isNil(data.name)) {
@@ -205,7 +204,7 @@ export class LessonService {
         isReplaced.id !== id &&
         isReplaced.create_by === data.updateBy
       ) {
-        throw new BusinessException('400:Tên học phần đã tồn tại!');
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
       }
     }
 
@@ -293,7 +292,8 @@ export class LessonService {
         if (isExisted) {
           if (isExisted.create_by !== data.updateBy) {
             throw new BusinessException(
-              '400:Không có quyền thao tác trên bản ghi này!',
+              ErrorEnum.NO_PERMISSON,
+              lessonEnable.lessonId,
             );
           }
           isExisted.enable = lessonEnable.enable;

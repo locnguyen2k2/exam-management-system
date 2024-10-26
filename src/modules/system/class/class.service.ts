@@ -77,7 +77,7 @@ export class ClassService {
   async findOne(id: string): Promise<ClassEntity> {
     const isExisted = await this.classRepo.findOneBy({ id });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByName(name: string): Promise<ClassEntity> {
@@ -107,9 +107,7 @@ export class ClassService {
     )
       return isExisted;
 
-    throw new BusinessException(
-      `400:Bản khi "${isExisted.name} không có sẵn!"`,
-    );
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async findByCode(code: string): Promise<ClassEntity> {
@@ -129,7 +127,7 @@ export class ClassService {
 
     if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
       return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async create(data: CreateClassDto): Promise<ClassEntity> {
@@ -137,7 +135,7 @@ export class ClassService {
     const isExisted = await this.findByName(data.name);
 
     if (isExisted && isExisted.create_by === data.createBy)
-      throw new BusinessException(ErrorEnum.RECORD_EXISTED);
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
 
     const item = new ClassEntity({
       ...data,
@@ -177,14 +175,14 @@ export class ClassService {
         isExisted.id !== isReplaced.id &&
         isExisted.create_by === data.updateBy
       )
-        throw new BusinessException(`400:Tên lớp "${data.name}" đã tồn tại!`);
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
     }
 
     if (!_.isEmpty(data.code)) {
       const isReplaced = await this.findByCode(data.code);
 
       if (isReplaced && isExisted.id !== isReplaced.id)
-        throw new BusinessException(`400:Mã lớp ${data.code} đã tồn tại!`);
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.code);
     }
 
     if (data.lessonIds && data.lessonIds.length > 0) {
@@ -282,14 +280,10 @@ export class ClassService {
       const isExisted = await this.findOne(id);
 
       if (isExisted.create_by !== uid)
-        throw new BusinessException(
-          `400:Không thể xóa bản ghi "${isExisted.name}"!`,
-        );
+        throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
 
       if (isExisted.lessons.length > 0)
-        throw new BusinessException(
-          `400:Xóa thất bại, bản ghi "${isExisted.name}" đang được dùng!`,
-        );
+        throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
 
       const isReplaced = classIds.some((classId) => classId === id);
 

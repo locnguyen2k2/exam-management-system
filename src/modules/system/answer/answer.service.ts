@@ -69,7 +69,7 @@ export class AnswerService {
       where: { value: { $regex: handleName, $options: 'i' } },
     });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, value);
   }
 
   async findAvailable(): Promise<AnswerEntity[]> {
@@ -80,13 +80,13 @@ export class AnswerService {
     const isExisted = await this.findOne(id);
 
     if (isExisted && isExisted.create_by === uid) return isExisted;
-    throw new BusinessException(`400:Bản ghi ${id} không khả dụng!`);
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async findOne(id: string): Promise<AnswerEntity> {
     const isExisted = await this.answerRepo.findOneBy({ id });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async create(data: CreateAnswersDto): Promise<AnswerEntity[]> {
@@ -110,9 +110,7 @@ export class AnswerService {
     const isExisted = await this.findOne(id);
 
     if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException(
-        '400:Không có quyền thao tác trên bản ghi này!',
-      );
+      throw new BusinessException(ErrorEnum.NO_PERMISSON);
     }
 
     const { affected } = await this.answerRepo.update(
@@ -135,16 +133,13 @@ export class AnswerService {
       ids.map(async (id) => {
         const isExisted = await this.findOne(id);
         if (isExisted.create_by !== uid)
-          throw new BusinessException(
-            `400:Khong the xoa ban ghi ${isExisted.id}`,
-          );
+          throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
         const isValid = await this.questionService.findByAnswerId(id);
-        if (isValid.length === 0) listIds.push(id);
+        if (isValid.length !== 0)
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
+        listIds.push(id);
       }),
     );
-
-    if (listIds.length === 0)
-      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
 
     await Promise.all(
       ids.map(async (id) => {
@@ -153,6 +148,6 @@ export class AnswerService {
     );
     await this.answerRepo.deleteMany({ id: { $in: ids } });
 
-    throw new BusinessException('200:Delete successfully!');
+    throw new BusinessException('200:Xóa thành công!');
   }
 }

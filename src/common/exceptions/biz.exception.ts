@@ -3,7 +3,7 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 
 export class BusinessException extends HttpException {
   private readonly errorCode: number;
-  constructor(error: ErrorEnum | string) {
+  constructor(error: ErrorEnum | string, id: string = null) {
     if (!error.includes(':')) {
       super(
         HttpException.createBody({
@@ -18,7 +18,7 @@ export class BusinessException extends HttpException {
     const [code, message] = error.split(':');
     super(
       HttpException.createBody({
-        message,
+        message: id ? `'${id}' ${message}` : message,
       }),
       parseInt(code),
     );

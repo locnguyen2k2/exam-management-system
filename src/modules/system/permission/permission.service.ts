@@ -73,13 +73,14 @@ export class PermissionService {
   async findOne(id: string): Promise<PermissionEntity> {
     const item = await this.permissionRepository.findOne({ where: { id } });
     if (item) return item;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async create(data: CreatePermissionDto): Promise<PermissionEntity> {
     const isExisted = await this.isExisted(data.value);
 
-    if (isExisted) throw new BusinessException(ErrorEnum.RECORD_EXISTED);
+    if (isExisted)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.value);
     const item = new PermissionEntity({
       ...data,
       create_by: data.createBy,

@@ -92,13 +92,13 @@ export class ChapterService {
 
     if (chapter.length > 0 && (!uid || (uid && chapter[0].create_by === uid)))
       return chapter[0];
-    throw new BusinessException(`400:Chapter không có sẵn!`);
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async findOne(id: string): Promise<ChapterEntity> {
     const isExisted = await this.chapterRepo.findOneBy({ id });
     if (isExisted) return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByName(name: string): Promise<ChapterEntity> {
@@ -123,7 +123,7 @@ export class ChapterService {
     if (isExisted && isExisted.enable && isExisted.create_by === uid)
       return isExisted;
 
-    throw new BusinessException(`400:Bản ghi ${id} không có sẵn`);
+    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
   async lessonHasChapter(
@@ -152,9 +152,7 @@ export class ChapterService {
         const isExisted = await this.findByName(chapData.name);
 
         if (isExisted && isExisted.create_by === data.createBy)
-          throw new BusinessException(
-            `400:Tên chương ${chapData.name} đã tồn tại`,
-          );
+          throw new BusinessException(ErrorEnum.RECORD_EXISTED, chapData.name);
 
         const isReplaced = newChapters.find(
           (chap: ChapterEntity) =>
@@ -230,15 +228,13 @@ export class ChapterService {
     let newChapters = [];
 
     if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException(
-        '400:Không có quyền thao tác trên bản ghi này!',
-      );
+      throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
     }
 
     if (!_.isNil(data.name) && !_.isEmpty(data.name)) {
       const isReplaced = await this.findByName(data.name);
       if (isReplaced && isReplaced.create_by === data.updateBy) {
-        throw new BusinessException(`400:${data.name} đã tồn tại!`);
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
       }
     }
 
@@ -301,9 +297,7 @@ export class ChapterService {
       data.chaptersEnable.map(async ({ chapterId }) => {
         const isExisted = await this.findOne(chapterId);
         if (isExisted.create_by !== data.updateBy) {
-          throw new BusinessException(
-            '400:Không có quyền thao tác trên bản ghi này!',
-          );
+          throw new BusinessException(ErrorEnum.NO_PERMISSON, chapterId);
         }
       }),
     );
@@ -325,9 +319,7 @@ export class ChapterService {
       data.chaptersStatus.map(async ({ chapterId }) => {
         const isExisted = await this.findOne(chapterId);
         if (isExisted.create_by !== data.updateBy) {
-          throw new BusinessException(
-            '400:Không có quyền thao tác trên bản ghi này!',
-          );
+          throw new BusinessException(ErrorEnum.NO_PERMISSON, chapterId);
         }
       }),
     );
@@ -350,7 +342,7 @@ export class ChapterService {
       ids.map(async (id) => {
         await this.findAvailableChapterById(id, uid);
         if ((await this.questionService.findByChapter(id)).length !== 0)
-          throw new BusinessException(`400:Bản ghi ${id} đang được dùng!`);
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
 
         const lessons = await this.lessonService.findByChapter(id);
         await Promise.all(
