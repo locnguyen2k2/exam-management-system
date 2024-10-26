@@ -3,6 +3,7 @@ import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
 import { GenderEnum } from '~/modules/system/user/user.constant';
+import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 
 @ObjectType('UserModel', { description: 'User Model' })
 @Entity('user_entity', { comment: 'User Entity' })
@@ -46,9 +47,9 @@ export class UserEntity extends ExtendedEntity {
   @Column({ type: 'string', default: '' })
   phone: string = null;
 
-  @Field(() => [String])
-  @Column('string', { array: true })
-  roleIds: string[];
+  @Field(() => [RoleEntity])
+  @Column('json', { array: true, default: [] })
+  roles: RoleEntity[];
 
   @Column(() => TokenEntity)
   tokens: TokenEntity[] = [];

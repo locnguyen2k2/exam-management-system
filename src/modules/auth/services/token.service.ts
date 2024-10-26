@@ -55,7 +55,7 @@ export class TokenService {
         email: user.email,
         enable: user.enable,
         status: user.status,
-        roles: await this.userService.getUserPermissions(user.id),
+        roles: this.userService.getUserPermissions(user),
       });
     }
   }
@@ -222,7 +222,7 @@ export class TokenService {
       email: user.email,
       enable: user.enable,
       status: user.status,
-      roles: await this.userService.getUserPermissions(user.id),
+      roles: this.userService.getUserPermissions(user),
     };
 
     const newAT = await this.createUuidToken({

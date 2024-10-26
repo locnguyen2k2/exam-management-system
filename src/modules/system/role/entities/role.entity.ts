@@ -1,6 +1,7 @@
 import { Column, Entity } from 'typeorm';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
+import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 
 @ObjectType('RoleModel', { description: 'Role model' })
 @Entity('role_entity')
@@ -17,9 +18,9 @@ export class RoleEntity extends ExtendedEntity {
   @Column({ type: 'string', default: '' })
   remark: string = '';
 
-  @Field(() => [String])
-  @Column('string', { array: true })
-  perIds: string[] = [];
+  @Field(() => [PermissionEntity])
+  @Column('json', { array: true })
+  permissions: PermissionEntity[] = [];
 
   constructor(roleEntity: Partial<RoleEntity>) {
     super();

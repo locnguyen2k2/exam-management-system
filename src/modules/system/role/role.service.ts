@@ -87,49 +87,32 @@ export class RoleService {
   async findByPermission(perId: string): Promise<RoleEntity[]> {
     return await this.roleRepository.find({
       where: {
-        perIds: {
+        'permissions.id': {
           $all: [perId],
         },
       },
     });
   }
 
-  async getPermissions(id: string): Promise<any> {
-    const isRole = await this.findOne(id);
-    const permissions: PermissionEntity[] = await Promise.all(
-      isRole.perIds.map(
-        async (perId) => await this.permissionService.findOne(perId),
-      ),
-    );
-    return { ...isRole, permissions };
-  }
-
   async create(data: RoleCreateDto): Promise<RoleEntity> {
-    const perIds: string[] = [];
+    const perIds = this.handleIds(data.permissionIds);
+    const permissions: PermissionEntity[] = [];
 
     const isExisted = await this.findByName(data.name);
-    if (isExisted) throw new BusinessException(ErrorEnum.RECORD_EXISTED);
+    if (isExisted)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
 
     await Promise.all(
-      data.permissionIds.map(async (perId) => {
-        const isExisted = await this.permissionService.findOne(perId);
-        if (isExisted) {
-          try {
-            const role = await this.findByValue(data.value);
-            if (!(await this.roleHasPermission(role.id, isExisted.id))) {
-              perIds.push(isExisted.id);
-            }
-          } catch {
-            perIds.push(isExisted.id);
-          }
-        }
+      perIds.map(async (perId) => {
+        const isPermission = await this.permissionService.findOne(perId);
+        permissions.push(isPermission);
       }),
     );
 
     delete data.permissionIds;
     const role = new RoleEntity({
       ...data,
-      perIds: perIds,
+      permissions,
       create_by: data.createBy,
       update_by: data.createBy,
     });
@@ -137,35 +120,53 @@ export class RoleService {
     return await this.roleRepository.save(newRole);
   }
 
+  handleIds(ids: string[]): string[] {
+    let result: string[] = [];
+    ids.map((id) => {
+      result = [...result.filter((handleId) => handleId !== id), id];
+    });
+
+    return result;
+  }
+
   async update(id: string, data: UpdateRoleDto): Promise<RoleEntity> {
     const isExisted = await this.findOne(id);
-    const listPermissions: string[] = [];
+    let permissions: PermissionEntity[] = [];
 
-    data?.permissionIds &&
-      (await Promise.all(
-        data.permissionIds.map(async (perId) => {
-          await this.permissionService.findOne(perId);
-          const index = listPermissions.findIndex((per) => per === perId);
-          index === -1 && listPermissions.push(perId);
-        }),
-      ));
+    if (!_.isNil(data?.permissionIds)) {
+      const perIds = this.handleIds(data.permissionIds);
+      permissions = await this.permissionService.getList(perIds);
+    }
 
-    const { affected } = await this.roleRepository.update(
+    await this.roleRepository.update(
       { id },
       {
         ...(data.name && { name: data.name }),
         ...(data.value && { value: data.value }),
         ...(data.remark && { remark: data.remark }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
-        ...(listPermissions.length > 0 && { perIds: listPermissions }),
+        ...(!_.isNil(data?.permissionIds) && { permissions: permissions }),
         ...(data?.updateBy && { update_by: data.updateBy }),
       },
     );
 
-    return affected === 0 ? isExisted : await this.findOne(id);
+    const result = await this.findOne(id);
+    const users = await this.userService.findByRole(id);
+
+    await Promise.all(
+      users.map(async (user) => {
+        await this.userService.update(user.id, {
+          roleIds: [id],
+        });
+      }),
+    );
+
+    return result;
   }
 
   async deleteMany(ids: string[]): Promise<string> {
+    const roleIds = this.handleIds(ids);
+
     await Promise.all(
       ids.map(async (id) => {
         const isExisted = await this.findOne(id);
@@ -175,24 +176,19 @@ export class RoleService {
           );
       }),
     );
-    const listRoles: string[] = [];
 
     await Promise.all(
-      ids.map(async (roleId) => {
+      roleIds.map(async (roleId) => {
         const isExisted = await this.userService.findByRole(roleId);
 
-        isExisted.length === 0 &&
-          listRoles.findIndex((rid) => rid === roleId) === -1 &&
-          listRoles.push(roleId);
+        if (isExisted.length !== 0)
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, roleId);
       }),
     );
 
-    if (listRoles.length === 0)
-      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
-
     await this.roleRepository.deleteMany({
       id: {
-        $in: listRoles,
+        $in: roleIds,
       },
     });
 

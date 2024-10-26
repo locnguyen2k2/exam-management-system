@@ -60,7 +60,8 @@ export class PermissionAuthGuard implements CanActivate {
 
     // Kiểm tra nếu PermissionGuard không có yêu cu quyền truy cập
     if (!requirePerVals) return true;
-    const roles = await this.userService.getUserPermissions(user.id);
+    const isUser = await this.userService.findOne(user.id);
+    const roles = this.userService.getUserPermissions(isUser);
     // Thông qua với user có quyền quản trị
     if (
       roles.some(

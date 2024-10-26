@@ -90,12 +90,18 @@ export class PermissionService {
     return await this.permissionRepository.save(newItem);
   }
 
+  async getList(ids: string[]): Promise<PermissionEntity[]> {
+    return await Promise.all(ids.map(async (id) => await this.findOne(id)));
+  }
+
   async update(
     id: string,
     data: UpdatePermissionDto,
   ): Promise<PermissionEntity> {
     const isExisted = await this.findOne(id);
-    const { affected } = await this.permissionRepository.update(
+    const roles = await this.roleService.findByPermission(id);
+
+    await this.permissionRepository.update(
       { id },
       {
         ...(data.name && { name: data.name }),
@@ -105,7 +111,18 @@ export class PermissionService {
         update_by: data.updateBy,
       },
     );
-    return affected === 0 ? isExisted : await this.findOne(id);
+    const result = await this.findOne(id);
+
+    await Promise.all(
+      roles.map(async (role) => {
+        await this.roleService.update(role.id, {
+          updateBy: data.updateBy,
+          permissionIds: role.permissions.map((permission) => permission.id),
+        });
+      }),
+    );
+
+    return result;
   }
 
   async deleteMany(ids: string[]): Promise<string> {

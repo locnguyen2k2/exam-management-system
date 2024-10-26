@@ -18,7 +18,6 @@ import * as _ from 'lodash';
 import * as bcrypt from 'bcryptjs';
 import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
-import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 import { pipeLine } from '~/utils/pipe-line';
 import { ImageService } from '~/modules/system/image/image.service';
 
@@ -99,7 +98,11 @@ export class UserService {
 
   async create(data: any): Promise<UserEntity> {
     const isExisted = await this.findByEmail(data.email);
-    const roleIds: string[] = await this.handleRoleIds(data.roleIds);
+    const roleIds: string[] = this.handleIds(data.roleIds);
+    const roles: RoleEntity[] = await Promise.all(
+      roleIds.map(async (roleId) => await this.roleService.findOne(roleId)),
+    );
+
     let hashPassword = null;
     delete data.roleIds;
 
@@ -113,7 +116,7 @@ export class UserService {
 
     const user = new UserEntity({
       ...data,
-      roleIds,
+      roles,
       password: hashPassword,
       create_by: data.createBy,
       update_by: data.createBy,
@@ -149,6 +152,7 @@ export class UserService {
 
   async update(id: string, args: any): Promise<UserProfile> {
     await this.findOne(id);
+    let listRole: RoleEntity[] = [];
 
     let photo = '';
 
@@ -156,9 +160,10 @@ export class UserService {
       photo += await this.imageService.uploadImage(args.photo);
     }
 
-    if (args.roleIds) {
-      await Promise.all(
-        args.roleIds.map(
+    if (!_.isEmpty(args.roleIds)) {
+      const roleIds = this.handleIds(args.roleIds);
+      listRole = await Promise.all(
+        roleIds.map(
           async (roleId: string) => await this.roleService.findOne(roleId),
         ),
       );
@@ -175,7 +180,7 @@ export class UserService {
         ...(args?.address && { address: args.address }),
         ...(!_.isNil(args?.enable) && { enable: args.enable }),
         ...(!_.isNil(args?.status) && { status: args.status }),
-        ...(!_.isNil(args?.roleIds) && { roleIds: args.roleIds }),
+        ...(!_.isEmpty(args?.roleIds) && { roles: listRole }),
         ...(args?.updateBy && { update_by: args.updateBy }),
       },
     );
@@ -212,45 +217,26 @@ export class UserService {
     return true;
   }
 
-  async getUserPermissions(id: string): Promise<any[]> {
-    const isExisted = await this.findOne(id);
+  getUserPermissions(user: UserEntity): any[] {
     const roles: any[] = [];
 
-    const userRoles = await Promise.all(
-      isExisted.roleIds.map(async (rid) => await this.roleService.findOne(rid)),
-    );
+    const userRoles = user.roles.map((role) => role);
 
-    await Promise.all(
-      userRoles.map(async (role: RoleEntity) => {
-        const permissions = (await this.roleService.getPermissions(role.id))
-          .permissions;
+    userRoles.map(async (role) => {
+      const permissions = role.permissions;
 
-        roles.push({
-          value: role.value,
-          permissions: permissions.map((pers: PermissionEntity) => pers.value),
-        });
-      }),
-    );
+      roles.push({
+        value: role.value,
+        permissions: permissions.map((pers) => pers.value),
+      });
+    });
 
     return roles;
-
-    // const permissions = (
-    //   await Promise.all(
-    //     userRoles.map(
-    //       async (role) =>
-    //         (await this.roleService.getPermissions(role.id)).permissions,
-    //     ),
-    //   )
-    // )
-    //   .flat()
-    //   .map((permission) => permission.value);
-    //
-    // return permissions;
   }
 
   async getProfile(uid: string): Promise<UserProfile> {
     const user = await this.findOne(uid);
-    const roles = await this.getUserPermissions(user.id);
+    const roles = this.getUserPermissions(user);
 
     return {
       name: `${user.firstName} ${user.lastName}`,
@@ -313,17 +299,13 @@ export class UserService {
     };
   }
 
-  async handleRoleIds(ids: string[]): Promise<string[]> {
-    const roleIds: string[] = [];
-    await Promise.all(
-      ids.map(async (roleId) => {
-        const isRole = await this.roleService.findOne(roleId);
-        const index = roleIds.indexOf(isRole.id);
-        index === -1 && roleIds.push(roleId);
-      }),
-    );
+  handleIds(ids: string[]): string[] {
+    let result: string[] = [];
+    ids.map((id) => {
+      result = [...result.filter((handleId) => handleId !== id), id];
+    });
 
-    return roleIds;
+    return result;
   }
 
   async resetTokens(email: string): Promise<boolean> {
