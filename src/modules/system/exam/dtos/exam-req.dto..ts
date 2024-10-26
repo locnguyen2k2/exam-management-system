@@ -126,16 +126,19 @@ export class UpdateExamPaperDto extends BaseDto {
   @Validate(IsValidString)
   label: string;
 
-  @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
+  @Field(() => Number, {
+    nullable: true,
+    description: 'Thời gian làm bài (phút)',
+  })
   @Transform(({ value }) =>
     typeof value === 'number' ? `${value} phút` : value,
   )
   time: string;
 
-  @Field(() => QuestionLabelEnum)
+  @Field(() => QuestionLabelEnum, { nullable: true })
   questionLabel: QuestionLabelEnum;
 
-  @Field(() => AnswerLabelEnum)
+  @Field(() => AnswerLabelEnum, { nullable: true })
   answerLabel: AnswerLabelEnum;
 
   @Field(() => Number, {
