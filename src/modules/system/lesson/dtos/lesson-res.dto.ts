@@ -3,35 +3,20 @@ import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { ChapterDetailDto } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { ExamDetailDto } from '~/modules/system/exam/dtos/exam-res.dto';
-import { ClassEntity } from '~/modules/system/class/entities/class.entity';
-import { Column } from 'typeorm';
-import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ClassSimpleDto } from '~/modules/system/class/dtos/class-res.dto';
 
-@ObjectType('LessonSimpleFields')
-export class LessonBaseDto {
-  @Field(() => String)
-  @Column({ type: 'string' })
-  lessonId: string;
-
-  @Field(() => String)
-  @Column({ type: 'string' })
-  name: string;
-}
-
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   label: string;
 
   @Field(() => String)
   name: string;
 
-  @Field(() => String)
-  description: string = '';
+  @Field(() => String, { nullable: true })
+  description: string;
 
   @Field(() => StatusShareEnum)
   status: StatusShareEnum = StatusShareEnum.PRIVATE;

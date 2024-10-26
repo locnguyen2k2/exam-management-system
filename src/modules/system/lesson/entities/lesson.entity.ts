@@ -9,7 +9,7 @@ import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 @Entity('lesson_entity')
 export class LessonEntity extends ExtendedEntity {
   @Field(() => String)
-  @Column('string')
+  @Column('string', { default: '' })
   label: string;
 
   @Field(() => String)
@@ -17,8 +17,8 @@ export class LessonEntity extends ExtendedEntity {
   name: string;
 
   @Field(() => String)
-  @Column('string')
-  description: string = '';
+  @Column('string', { default: '' })
+  description: string;
 
   @Field(() => StatusShareEnum)
   @Column('enum', { enum: StatusShareEnum })

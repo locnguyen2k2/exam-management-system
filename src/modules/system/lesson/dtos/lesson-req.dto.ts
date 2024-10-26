@@ -8,13 +8,13 @@ export class LessonPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], { nullable: true })
   lessonStatus: StatusShareEnum[];
 
-  @Field(() => [String], { nullable: true })
-  classIds: string[];
+  // @Field(() => [String], { nullable: true })
+  // classIds: string[];
 }
 
 @InputType()
 class LessonBaseDto extends BaseDto {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   label: string;
 
   @Field(() => String)

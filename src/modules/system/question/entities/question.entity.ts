@@ -19,8 +19,8 @@ export class QuestionEntity extends ExtendedEntity {
   picture: string;
 
   @Field(() => String, { nullable: true })
-  @Column({ type: 'string' })
-  remark: string = '';
+  @Column({ type: 'string', nullable: true })
+  remark: string;
 
   @Field(() => ChapterEntity)
   @Column('json')
@@ -55,7 +55,7 @@ export class QuestionEntity extends ExtendedEntity {
 
   @Field(() => [String])
   @Column('string', { array: true })
-  answerIds: string[] = [];
+  answerIds: string[];
 
   constructor(questionEntity: Partial<QuestionEntity>) {
     super();

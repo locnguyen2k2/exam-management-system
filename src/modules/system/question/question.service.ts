@@ -308,7 +308,7 @@ export class QuestionService {
           chapter,
           correctAnswerIds: [...new Set(correctAnswers)],
           answerIds: [...new Set(answerIds)],
-          picture,
+          ...(!_.isEmpty(questionData.picture) && { picture: picture }),
           create_by: data.createBy,
           update_by: data.createBy,
         });
@@ -570,27 +570,28 @@ export class QuestionService {
     return 'Cập nhật thành công!';
   }
 
-  async deleteMany(ids: string[]): Promise<string> {
+  async deleteMany(ids: string[], uid: string): Promise<string> {
     const listQuestion: string[] = [];
     const listIds: string[] = [];
 
     await Promise.all(
       ids.map(async (id) => {
-        await this.findOne(id);
         const index = listIds.findIndex((questId) => questId === id);
-        index === -1 && listIds.push(id);
+        if (index === -1) {
+          await this.findAvailable(id, uid);
+          listIds.push(id);
+        }
       }),
     );
 
     await Promise.all(
       ids.map(async (id) => {
         const isExisted = await this.examService.findByQuestionId(id);
-        if (isExisted.length === 0) listQuestion.push(id);
+        if (isExisted.length !== 0)
+          throw new BusinessException(`400:Bản ghi ${id} đang được dùng!`);
+        listQuestion.push(id);
       }),
     );
-
-    if (listQuestion.length === 0)
-      throw new BusinessException(ErrorEnum.RECORD_IN_USED);
 
     await this.questionRepo.deleteMany({ id: { $in: listQuestion } });
     throw new BusinessException('200:Xoá thành công!');

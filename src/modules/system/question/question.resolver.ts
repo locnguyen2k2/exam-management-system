@@ -101,8 +101,9 @@ export class QuestionResolver {
   @Permissions(PermissionEnum.DELETE_QUESTION)
   @Mutation(() => String, { name: 'deleteQuestions' })
   async deleteQuestions(
+    @CurrentUser() user: IAuthPayload,
     @Args('questionIds', { type: () => [String] }) questionIds: string[],
   ): Promise<string> {
-    return await this.questionService.deleteMany(questionIds);
+    return await this.questionService.deleteMany(questionIds, user.id);
   }
 }

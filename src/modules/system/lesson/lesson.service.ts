@@ -44,9 +44,9 @@ export class LessonService {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
       }),
-      ...(!_.isEmpty(pageOptions.classIds) && {
-        classIds: { $in: pageOptions.classIds },
-      }),
+      // ...(!_.isEmpty(pageOptions.classIds) && {
+      //   classIds: { $in: pageOptions.classIds },
+      // }),
       ...(!_.isEmpty(pageOptions.lessonStatus) && {
         status: { $in: pageOptions.lessonStatus },
       }),
@@ -101,12 +101,6 @@ export class LessonService {
 
     if (isExisted.create_by === uid) return isExisted;
 
-    // if (
-    //   isExisted.status === StatusShareEnum.PUBLIC &&
-    //   isExisted.enable === true
-    // )
-    //   return isExisted;
-
     throw new BusinessException(`400:Bản ghi "${id}" không có sẵn!`);
   }
 
@@ -142,21 +136,6 @@ export class LessonService {
           throw new BusinessException(
             `400:Tên học phần ${lesson.name} đã tồn tại!`,
           );
-
-        // if (!_.isEmpty(lesson.chapterIds)) {
-        //   await Promise.all(
-        //     lesson.chapterIds.map(async (chapterId) => {
-        //       const chapter =
-        //         await this.chapterService.findAvailableChapterById(
-        //           chapterId,
-        //           data.createBy,
-        //         );
-        //
-        //       const index = chapters.findIndex(({ id }) => id === chapterId);
-        //       if (index === -1) chapters.push(chapter);
-        //     }),
-        //   );
-        // }
 
         const newLesson = new LessonEntity({
           ...lesson,

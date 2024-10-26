@@ -441,9 +441,9 @@ type LessonModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   name: String!
-  description: String!
+  description: String
   status: StatusShareEnum!
   chapters: [ChapterEntity!]
   classes: [ClassSimpleFields!]
@@ -582,7 +582,6 @@ input LessonPageOptions {
   page: Int = 1
   take: Int = 10
   lessonStatus: [StatusShareEnum!]
-  classIds: [String!]
 }
 
 input ExamPaperPageOptions {
@@ -898,7 +897,7 @@ input CreateLessonArgs {
 }
 
 input LessonBaseDto {
-  label: String!
+  label: String
   name: String!
   description: String
   enable: Boolean!
