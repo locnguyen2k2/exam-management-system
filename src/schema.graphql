@@ -772,7 +772,7 @@ type Mutation {
   createLessons(createLessonArgs: CreateLessonArgs!): [LessonDefaultFields!]!
 
   """Cập nhật học phân"""
-  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonDefaultFields!
+  updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonModel!
 
   """Kích hoạt học phần"""
   enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonDefaultFields!]!

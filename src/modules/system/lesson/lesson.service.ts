@@ -7,7 +7,10 @@ import {
   EnableLessonsDto,
   LessonPageOptions,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
-import { LessonPaginationDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
+import {
+  LessonDetailDto,
+  LessonPaginationDto,
+} from '~/modules/system/lesson/dtos/lesson-res.dto';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
@@ -187,7 +190,7 @@ export class LessonService {
     });
   }
 
-  async update(id: string, data: any): Promise<LessonEntity> {
+  async update(id: string, data: any): Promise<LessonDetailDto> {
     const isExisted = await this.findOne(id);
     const newClassIds: string[] = [];
     const exams: ExamEntity[] = [];
@@ -259,7 +262,7 @@ export class LessonService {
       },
     );
 
-    const result = await this.findOne(id);
+    const result = await this.detailLesson(id, data.updateBy);
 
     if (!_.isEmpty(data.classIds)) {
       for (const classId of newClassIds) {

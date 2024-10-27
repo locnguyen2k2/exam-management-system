@@ -23,7 +23,10 @@ export class LessonResolver {
   constructor(private readonly lessonService: LessonService) {}
 
   @Permissions(PermissionEnum.LIST_LESSON)
-  @Query(() => LessonPaginationDto, { name: 'lessons', description: 'Danh sách học phân'})
+  @Query(() => LessonPaginationDto, {
+    name: 'lessons',
+    description: 'Danh sách học phân',
+  })
   async lessons(
     @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
@@ -40,7 +43,10 @@ export class LessonResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_LESSON)
-  @Query(() => LessonDetailDto, { name: 'lesson', description: 'Chi tiết học phần' })
+  @Query(() => LessonDetailDto, {
+    name: 'lesson',
+    description: 'Chi tiết học phần',
+  })
   async lesson(
     @Args('lessonId') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -60,19 +66,25 @@ export class LessonResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
-  @Mutation(() => LessonEntity, { name: 'updateLesson', description: 'Cập nhật học phân' })
+  @Mutation(() => LessonDetailDto, {
+    name: 'updateLesson',
+    description: 'Cập nhật học phân',
+  })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('id') id: string,
     @Args('updateLessonArgs') dto: UpdateLessonDto,
-  ): Promise<LessonEntity> {
+  ): Promise<LessonDetailDto> {
     const data = plainToClass(UpdateLessonDto, dto);
     data.updateBy = user.id;
     return await this.lessonService.update(id, data);
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
-  @Mutation(() => [LessonEntity], { name: 'enableLessons', description: 'Kích hoạt học phần' })
+  @Mutation(() => [LessonEntity], {
+    name: 'enableLessons',
+    description: 'Kích hoạt học phần',
+  })
   async enable(
     @CurrentUser() user: IAuthPayload,
     @Args('enableLessonsArgs') dto: EnableLessonsDto,
