@@ -109,7 +109,9 @@ export class LessonService {
   }
 
   async detailLesson(id: string, uid: string): Promise<any> {
-    return await this.findAvailable(id, uid);
+    const isExisted = await this.findAvailable(id, uid);
+    isExisted['classes'] = await this.classService.findByLesson(isExisted.id);
+    return isExisted;
   }
 
   async findOne(id: string): Promise<LessonEntity> {
