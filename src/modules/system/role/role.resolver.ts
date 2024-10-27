@@ -20,7 +20,7 @@ export class RoleResolver {
   @Permissions(PermissionEnum.LIST_ROLE)
   @Query(() => RolePagination, {
     name: 'roles',
-    description: 'Lấy danh sách quyền',
+    description: 'Lấy danh sách vai trò',
   })
   async roles(
     @Args('rolePageOptions', { nullable: true })
@@ -30,7 +30,10 @@ export class RoleResolver {
   }
 
   @Permissions(PermissionEnum.ADD_ROLE)
-  @Mutation(() => RoleEntity, { name: 'createRole' })
+  @Mutation(() => RoleEntity, {
+    name: 'createRole',
+    description: 'Tạp vai trò',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createRoleArgs') args: RoleCreateDto,
@@ -43,7 +46,7 @@ export class RoleResolver {
   @Permissions(PermissionEnum.UPDATE_ROLE)
   @Mutation(() => RoleEntity, {
     name: 'updateRole',
-    description: 'Cập nhật quền',
+    description: 'Cập nhật vai trò',
   })
   async update(
     @CurrentUser() user: IAuthPayload,
@@ -56,7 +59,10 @@ export class RoleResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_ROLE)
-  @Mutation(() => String, { name: 'deleteRoles' })
+  @Mutation(() => String, {
+    name: 'deleteRoles',
+    description: 'Xóa danh sách các vai trò',
+  })
   async deleteRoles(
     @Args('roleIds', { type: () => [String] }) roleIds: string[],
   ): Promise<string> {

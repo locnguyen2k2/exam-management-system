@@ -10,10 +10,10 @@ class AnswerBaseDto extends BaseDto {
   @Field(() => Boolean, { nullable: true })
   enable: boolean;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'Giá trị đám án đúng' })
   value: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String, { nullable: true, description: 'Chú thích' })
   remark: string;
 }
 

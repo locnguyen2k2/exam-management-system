@@ -30,7 +30,10 @@ export class ExamResolver {
   })
   async exams(
     @CurrentUser() user: IAuthPayload,
-    @Args('examPageOptions', { nullable: true })
+    @Args('examPageOptions', {
+      nullable: true,
+      description: 'Bộ lọc danh sách đề',
+    })
     examPageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
   ): Promise<ExamPaginationDto> {
     const isAdmin = user.roles.some(
@@ -77,7 +80,10 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_EXAM)
-  @Mutation(() => [ExamEntity], { name: 'enableExams' })
+  @Mutation(() => [ExamEntity], {
+    name: 'enableExams',
+    description: 'Kích hoạt danh sách dề thi',
+  })
   async enableExams(
     @CurrentUser() user: IAuthPayload,
     @Args('enableExamsArgs') dto: EnableExamsDto,
@@ -103,7 +109,10 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_EXAM)
-  @Mutation(() => String, { name: 'deleteExamPapers' })
+  @Mutation(() => String, {
+    name: 'deleteExamPapers',
+    description: 'Xóa danh sách đề thi',
+  })
   async delete(
     @CurrentUser() user: IAuthPayload,
     @Args('examPaperIds', { type: () => [String] }) ids: string[],

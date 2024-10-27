@@ -136,6 +136,8 @@ type AnswerModel {
   updateBy: String
   label: String
   value: String!
+
+  """Chú thích của đáp án"""
   remark: String
 }
 
@@ -154,17 +156,27 @@ type CorrectAnswerModel {
   updateBy: String
   label: String
   value: String!
+
+  """Chú thích của đáp án"""
   remark: String
+
+  """Điểm của đáp án đúng"""
   score: Float
 }
 
 type CorrectAnswerSimpleFields {
+  """Mã của đáp án đúng"""
   correctAnswerId: String!
+
+  """Điểm của đáp án đúng"""
   score: Float
 }
 
 type AnswerSimpleFields {
+  """Nhãn của đáp án"""
   label: String!
+
+  """Mã của đáp án"""
   answerId: String!
 }
 
@@ -186,8 +198,14 @@ type ChapterEntity {
 
   """Cập nhật bởi"""
   updateBy: String
+
+  """Đầu mục"""
   label: String!
+
+  """Tên chương"""
   name: String!
+
+  """Mô tả"""
   description: String
 
   """Trạng thái chia sẻ"""
@@ -286,6 +304,8 @@ type ExamEntity {
 
 type QuestionDefaultFields {
   id: String!
+
+  """Trạng thái kích hoạt"""
   enable: Boolean
   createdAt: String!
   updatedAt: String!
@@ -295,14 +315,32 @@ type QuestionDefaultFields {
 
   """Cập nhật bởi"""
   updateBy: String
+
+  """Nội dung câu hỏi"""
   content: String!
+
+  """Hình ảnh"""
   picture: String
+
+  """Chú thích"""
   remark: String
+
+  """Chương"""
   chapter: ChapterEntity!
+
+  """Cấp độ câu hỏi"""
   level: LevelEnum!
+
+  """Trạng thái"""
   status: StatusShareEnum
+
+  """Loại câu hỏi"""
   category: CategoryEnum!
+
+  """Mã đáp án đúng (1 hoặc nhiều tùy loại câu hỏi)"""
   correctAnswerIds: [CorrectAnswerSimpleFields!]!
+
+  """Mã đáp án"""
   answerIds: [String!]!
 }
 
@@ -456,18 +494,25 @@ type lessons {
 }
 
 type Query {
+  """Lấy danh sách người dùng"""
   users(userPageOptions: UserPageOptions): UserPagination!
+
+  """Chi tiết người dùng"""
   userDetail(id: String!): UserProfile!
 
-  """Lấy danh sách quyền"""
+  """Lấy danh sách vai trò"""
   roles(rolePageOptions: RolePageOptions): RolePagination!
 
   """Lấy danh sách phân quyên"""
   permissions(
-    """Permission page options"""
+    """Bộ lọc danh sách phân quyền"""
     perPageOptions: PermissionPageOptions
   ): PermissionPagination!
+
+  """Lấy thông tin tài khoản"""
   myProfile: UserProfile!
+
+  """Đăng xuất khỏi hệ thống"""
   logout: Boolean!
 
   """Lấy danh sách chương"""
@@ -475,19 +520,32 @@ type Query {
 
   """Lấy danh sách chương theo học phần"""
   chaptersByLesson(lessonId: String!, chapterPageOptions: ChapterPageOptions): ChapterPagination!
+
+  """Lấy chi tiết chương"""
   chapter(chapterId: String!): ChapterModel!
+
+  """Danh sách học phân"""
   lessons(lessonPageOptions: LessonPageOptions!): lessons!
+
+  """Chi tiết học phần"""
   lesson(lessonId: String!): LessonModel!
 
   """Lấy danh sách đề thi"""
-  exams(examPageOptions: ExamPaperPageOptions): ExamPagination!
+  exams(
+    """Bộ lọc danh sách đề"""
+    examPageOptions: ExamPaperPageOptions
+  ): ExamPagination!
 
   """Chi tiết đề thi"""
   examDetail(id: String!): ExamModel!
 
   """Lấy danh sách câu hỏi"""
   questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
+
+  """Chi tiết câu hỏi"""
   questionDetail(questionId: String!): QuestionModel!
+
+  """Lấy chi tiết đáp án"""
   answer(answerId: String!): AnswerModel!
 
   """Lấy danh sách đáp án"""
@@ -643,35 +701,80 @@ input ClassPageOptions {
 }
 
 type Mutation {
+  """Khởi tạo người dùng"""
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
+
+  """Cập nhật người dùng"""
   updateUser(userId: String!, updateUserArgs: UpdateUserArgs!): UserProfile!
+
+  """Xóa người dùng"""
   deleteUser(userId: String!): String!
+
+  """Tạp vai trò"""
   createRole(createRoleArgs: CreateRoleArgs!): RoleModel!
 
-  """Cập nhật quền"""
+  """Cập nhật vai trò"""
   updateRole(id: String!, updateRoleArgs: UpdateRoleArgs!): RoleModel!
+
+  """Xóa danh sách các vai trò"""
   deleteRoles(roleIds: [String!]!): String!
+
+  """Tạo phân quyền"""
   createPermission(createPermissionArgs: createPermissionArgs!): PermissionModel!
+
+  """Cập nhật phân quyền"""
   updatePermission(id: String!, updatePermissionArgs: updatePermissionArgs!): PermissionModel!
+
+  """Xóa danh sách phân quyền"""
   deletePermissions(permissionIds: [String!]!): String!
+
+  """Xác minh mã xác thực email"""
   verify(confirmTokenArgs: ConfirmEmailArgs!): String!
+
+  """Làm mới mã xác thực email"""
   refreshConfirmToken(email: String!): String!
+
+  """Quên mật khẩu"""
   forgotPassword(email: String!): String!
+
+  """Đổi mật khẩu"""
   resetPassword(resetPasswordArgs: ResetPasswordArgs!): String!
+
+  """Đăng nhập"""
   login(loginArgs: LoginArgs!): Credential!
+
+  """Đăng nhập với tài khoản google"""
   loginWithGG(idTokenArgs: String!): Credential!
+
+  """Đăng ký tài khoản mới"""
   registerUser(registerUserArgs: RegisterArgs!): String!
+
+  """Làm mới token truy cập"""
   refreshToken(token: String!): String!
+
+  """Cập nhật thông tin người dùng"""
   updateInfo(updateAccountArgs: UpdateInfoArgs!): UserProfile!
+
+  """Tạo chương"""
   createChapters(createChaptersArgs: CreateChaptersArgs!): [ChapterEntity!]!
+
+  """Cập nhật chương"""
   updateChapter(id: String!, updateChapterArgs: UpdateChapterArgs!): ChapterEntity!
 
   """Kích hoạt chương"""
   enableChapters(enableChaptersArgs: EnableChaptersArgs!): String!
+
+  """Cập nhật trạng thái chương"""
   updateChaptersStatus(updateChaptersStatusArgs: UpdateChaptersStatusArgs!): String!
+
+  """Xóa danh sách các chương"""
   deleteChapters(chapterIds: [String!]!): String!
   createLessons(createLessonArgs: CreateLessonArgs!): [LessonDefaultFields!]!
+
+  """Cập nhật học phân"""
   updateLesson(id: String!, updateLessonArgs: UpdateLessonArgs!): LessonDefaultFields!
+
+  """Kích hoạt học phần"""
   enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonDefaultFields!]!
 
   """Tạo đề thi"""
@@ -679,18 +782,38 @@ type Mutation {
 
   """Khởi tạo đề thi từ ngân hàng câu hỏi"""
   generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamModel!]!
+
+  """Kích hoạt danh sách dề thi"""
   enableExams(enableExamsArgs: EnableExamsArgs!): [ExamEntity!]!
 
   """Cập nhật đề thi"""
   updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
+
+  """Xóa danh sách đề thi"""
   deleteExamPapers(examPaperIds: [String!]!): String!
+
+  """Khởi tạo câu hỏi"""
   createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionDefaultFields!]!
+
+  """Cập nhật câu hỏi"""
   updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionDefaultFields!
+
+  """Kích hoạt danh sách câu hỏi"""
   enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionDefaultFields!]!
+
+  """Cập nhật câu hỏi"""
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
+
+  """Xóa danh sách câu hỏi"""
   deleteQuestions(questionIds: [String!]!): String!
+
+  """Tạo danh sách các câu hỏi"""
   createAnswers(createAnswersArgs: CreateAnswersArgs!): [AnswerModel!]!
+
+  """Cập nhật câu hỏi"""
   updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
+
+  """Xóa danh sách các câu hỏi"""
   deleteAnswers(answerIds: [String!]!): String!
 
   """Tạo lớp"""
@@ -853,10 +976,19 @@ input CreateChaptersArgs {
 }
 
 input ChapterBaseDto {
+  """Đầu mục"""
   label: String!
+
+  """Tên chương"""
   name: String!
+
+  """Mã học phần"""
   lessonId: String!
+
+  """Mô tả"""
   description: String = ""
+
+  """Trạng thái kích hoạt"""
   enable: Boolean
 
   """Trạng thái chia sẻ"""
@@ -864,10 +996,19 @@ input ChapterBaseDto {
 }
 
 input UpdateChapterArgs {
+  """Đầu mục"""
   label: String
+
+  """Tên chương"""
   name: String
+
+  """Mã học phần"""
   lessonId: String
+
+  """Mô tả"""
   description: String = ""
+
+  """Trạng thái kích hoạt"""
   enable: Boolean
 
   """Trạng thái chia sẻ"""
@@ -879,7 +1020,10 @@ input EnableChaptersArgs {
 }
 
 input EnableChapterDto {
+  """Mã chương """
   chapterId: String!
+
+  """Trạng thái kích hoạt"""
   enable: Boolean!
 }
 
@@ -888,6 +1032,7 @@ input UpdateChaptersStatusArgs {
 }
 
 input ChapterStatusDto {
+  """Mã chương """
   chapterId: String!
   status: StatusShareEnum!
 }
@@ -920,7 +1065,10 @@ input EnableLessonsArgs {
 }
 
 input EnableLessonArgs {
+  """Mã học phần"""
   lessonId: String!
+
+  """Trạng thái kích  hoạt"""
   enable: Boolean!
 }
 
@@ -1004,9 +1152,9 @@ input UpdateExamPaperArgs {
   label: String
 
   """Thời gian làm bài (phút)"""
-  time: Float!
-  questionLabel: QuestionLabelEnum!
-  answerLabel: AnswerLabelEnum!
+  time: Float
+  questionLabel: QuestionLabelEnum
+  answerLabel: AnswerLabelEnum
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
@@ -1075,19 +1223,32 @@ input CreateAnswersArgs {
 
 input AnswerBaseDto {
   enable: Boolean
+
+  """Giá trị đám án đúng"""
   value: String!
+
+  """Chú thích"""
   remark: String
 }
 
 input UpdateAnswerArgs {
   enable: Boolean
+
+  """Giá trị đám án đúng"""
   value: String
+
+  """Chú thích"""
   remark: String
 }
 
 input CreateClassArgs {
+  """Tên lớp"""
   name: String!
+
+  """Mã lớp"""
   code: String!
+
+  """Mô tả"""
   description: String
   startYear: String!
   endYear: String!
@@ -1097,8 +1258,13 @@ input CreateClassArgs {
 }
 
 input UpdateClassArgs {
+  """Tên lớp"""
   name: String
+
+  """Mã lớp"""
   code: String
+
+  """Mô tả"""
   description: String
   startYear: String
   endYear: String

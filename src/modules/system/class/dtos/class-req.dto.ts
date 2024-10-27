@@ -12,13 +12,13 @@ export class ClassPageOptions extends PageOptionDto {
 
 @InputType()
 class ClassBaseDto extends BaseDto {
-  @Field(() => String)
+  @Field(() => String, { description: 'Tên lớp' })
   name: string;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'Mã lớp' })
   code: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String, { nullable: true, description: 'Mô tả' })
   description: string;
 
   @Field(() => String)

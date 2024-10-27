@@ -21,7 +21,10 @@ export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
   @Permissions(PermissionEnum.LIST_USER)
-  @Query(() => UserPagination, { name: 'users' })
+  @Query(() => UserPagination, {
+    name: 'users',
+    description: 'Lấy danh sách người dùng',
+  })
   async users(
     @Args('userPageOptions', { nullable: true })
     userPagination: UserPageOptions = new UserPageOptions(),
@@ -30,13 +33,19 @@ export class UserResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_USER)
-  @Query(() => UserProfile, { name: 'userDetail' })
+  @Query(() => UserProfile, {
+    name: 'userDetail',
+    description: 'Chi tiết người dùng',
+  })
   async detail(@Args('id') id: string): Promise<UserProfile> {
     return await this.userService.getProfile(id);
   }
 
   @Permissions(PermissionEnum.ADD_USER)
-  @Mutation(() => UserEntity, { name: 'createUser' })
+  @Mutation(() => UserEntity, {
+    name: 'createUser',
+    description: 'Khởi tạo người dùng',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('adminCreateArgs') args: AdminCreateDto,
@@ -47,7 +56,10 @@ export class UserResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_USER)
-  @Mutation(() => UserProfile, { name: 'updateUser' })
+  @Mutation(() => UserProfile, {
+    name: 'updateUser',
+    description: 'Cập nhật người dùng',
+  })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('userId', { type: () => String! }) userId: string,
@@ -59,7 +71,7 @@ export class UserResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_USER)
-  @Mutation(() => String, { name: 'deleteUser' })
+  @Mutation(() => String, { name: 'deleteUser', description: 'Xóa người dùng' })
   async delete(
     @Args('userId', { type: () => String }) uid: string,
   ): Promise<string> {

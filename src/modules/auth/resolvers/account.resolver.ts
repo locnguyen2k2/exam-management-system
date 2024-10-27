@@ -19,17 +19,17 @@ export class AccountResolver {
     private readonly tokenService: TokenService,
   ) {}
 
-  @Query(() => UserProfile)
+  @Query(() => UserProfile, { description: 'Lấy thông tin tài khoản' })
   async myProfile(@CurrentUser() user: IAuthPayload): Promise<UserProfile> {
     return await this.userService.getProfile(user.id);
   }
 
-  @Query(() => Boolean)
+  @Query(() => Boolean, { description: 'Đăng xuất khỏi hệ thống' })
   async logout(@CurrentUser() user: IAuthPayload): Promise<boolean> {
     return await this.tokenService.deleteAuthTokensByUid(user.email);
   }
 
-  @Mutation(() => UserProfile)
+  @Mutation(() => UserProfile, { description: 'Cập nhật thông tin người dùng' })
   async updateInfo(
     @CurrentUser() user: IAuthPayload,
     @Args('updateAccountArgs') args: UpdateInfoDto,

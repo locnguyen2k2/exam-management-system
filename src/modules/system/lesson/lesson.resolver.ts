@@ -23,7 +23,7 @@ export class LessonResolver {
   constructor(private readonly lessonService: LessonService) {}
 
   @Permissions(PermissionEnum.LIST_LESSON)
-  @Query(() => LessonPaginationDto, { name: 'lessons' })
+  @Query(() => LessonPaginationDto, { name: 'lessons', description: 'Danh sách học phân'})
   async lessons(
     @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
@@ -40,7 +40,7 @@ export class LessonResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_LESSON)
-  @Query(() => LessonDetailDto, { name: 'lesson' })
+  @Query(() => LessonDetailDto, { name: 'lesson', description: 'Chi tiết học phần' })
   async lesson(
     @Args('lessonId') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -60,7 +60,7 @@ export class LessonResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
-  @Mutation(() => LessonEntity, { name: 'updateLesson' })
+  @Mutation(() => LessonEntity, { name: 'updateLesson', description: 'Cập nhật học phân' })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('id') id: string,
@@ -72,7 +72,7 @@ export class LessonResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
-  @Mutation(() => [LessonEntity], { name: 'enableLessons' })
+  @Mutation(() => [LessonEntity], { name: 'enableLessons', description: 'Kích hoạt học phần' })
   async enable(
     @CurrentUser() user: IAuthPayload,
     @Args('enableLessonsArgs') dto: EnableLessonsDto,

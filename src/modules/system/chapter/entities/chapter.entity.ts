@@ -6,15 +6,15 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 @ObjectType()
 @Entity('chapter_entity')
 export class ChapterEntity extends ExtendedEntity {
-  @Field(() => String, {})
+  @Field(() => String, { description: 'Đầu mục' })
   @Column('string')
   label: string;
 
-  @Field(() => String, {})
+  @Field(() => String, { description: 'Tên chương' })
   @Column('string')
   name: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String, { nullable: true, description: 'Mô tả' })
   @Column('string', { nullable: true })
   description: string;
 

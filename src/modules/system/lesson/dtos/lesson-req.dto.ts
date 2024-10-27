@@ -44,10 +44,10 @@ export class CreateLessonDto {
 
 @InputType('EnableLessonArgs')
 class EnableLessonDto {
-  @Field(() => String)
+  @Field(() => String, {description: 'Mã học phần'})
   lessonId: string;
 
-  @Field(() => Boolean)
+  @Field(() => Boolean, {description: 'Trạng thái kích  hoạt'})
   enable: boolean;
 }
 

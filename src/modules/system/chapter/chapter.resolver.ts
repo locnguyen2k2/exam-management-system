@@ -79,7 +79,10 @@ export class ChapterResolver {
   // }
 
   @Permissions(PermissionEnum.DETAIL_CHAPTER)
-  @Query(() => ChapterDetailDto, { name: 'chapter' })
+  @Query(() => ChapterDetailDto, {
+    name: 'chapter',
+    description: 'Lấy chi tiết chương',
+  })
   async chapter(
     @Args('chapterId') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -88,7 +91,10 @@ export class ChapterResolver {
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)
-  @Mutation(() => [ChapterEntity], { name: 'createChapters' })
+  @Mutation(() => [ChapterEntity], {
+    name: 'createChapters',
+    description: 'Tạo chương',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createChaptersArgs') dto: CreateChaptersDto,
@@ -99,7 +105,10 @@ export class ChapterResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_CHAPTER)
-  @Mutation(() => ChapterEntity, { name: 'updateChapter' })
+  @Mutation(() => ChapterEntity, {
+    name: 'updateChapter',
+    description: 'Cập nhật chương',
+  })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('id') id: string,
@@ -128,6 +137,7 @@ export class ChapterResolver {
   @Permissions(PermissionEnum.UPDATE_CHAPTER)
   @Mutation(() => String, {
     name: 'updateChaptersStatus',
+    description: 'Cập nhật trạng thái chương',
   })
   async updateChaptersStatus(
     @CurrentUser() user: IAuthPayload,
@@ -139,7 +149,10 @@ export class ChapterResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_CHAPTER)
-  @Mutation(() => String, { name: 'deleteChapters' })
+  @Mutation(() => String, {
+    name: 'deleteChapters',
+    description: 'Xóa danh sách các chương',
+  })
   async deleteMany(
     @CurrentUser() user: IAuthPayload,
     @Args('chapterIds', { type: () => [String] }) chapterIds: string[],

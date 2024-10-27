@@ -19,7 +19,10 @@ export class AnswerResolver {
   constructor(private readonly answerService: AnswerService) {}
 
   @Permissions(PermissionEnum.DETAIL_ANSWER)
-  @Query(() => AnswerEntity, { name: 'answer' })
+  @Query(() => AnswerEntity, {
+    name: 'answer',
+    description: 'Lấy chi tiết đáp án',
+  })
   async answer(
     @Args('answerId') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -47,7 +50,10 @@ export class AnswerResolver {
   }
 
   @Permissions(PermissionEnum.ADD_ANSWER)
-  @Mutation(() => [AnswerEntity], { name: 'createAnswers' })
+  @Mutation(() => [AnswerEntity], {
+    name: 'createAnswers',
+    description: 'Tạo danh sách các câu hỏi',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createAnswersArgs') dto: CreateAnswersDto,
@@ -58,7 +64,10 @@ export class AnswerResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_ANSWER)
-  @Mutation(() => AnswerEntity, { name: 'updateAnswer' })
+  @Mutation(() => AnswerEntity, {
+    name: 'updateAnswer',
+    description: 'Cập nhật câu hỏi',
+  })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('id') id: string,
@@ -71,7 +80,10 @@ export class AnswerResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_ANSWER)
-  @Mutation(() => String, { name: 'deleteAnswers' })
+  @Mutation(() => String, {
+    name: 'deleteAnswers',
+    description: 'Xóa danh sách các câu hỏi',
+  })
   async deleteAnswers(
     @CurrentUser() user: IAuthPayload,
     @Args('answerIds', { type: () => [String] }) answerIds: [string],

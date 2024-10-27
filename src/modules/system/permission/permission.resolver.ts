@@ -24,7 +24,7 @@ export class PermissionResolver {
   })
   async permissions(
     @Args('perPageOptions', {
-      description: 'Permission page options',
+      description: 'Bộ lọc danh sách phân quyền',
       nullable: true,
     })
     perPageOptions: PermissionPageOptions = new PermissionPageOptions(),
@@ -33,7 +33,7 @@ export class PermissionResolver {
   }
 
   @Permissions(PermissionEnum.ADD_PERMISSION)
-  @Mutation(() => PermissionEntity, { name: 'createPermission' })
+  @Mutation(() => PermissionEntity, { name: 'createPermission', description: 'Tạo phân quyền' })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createPermissionArgs') args: CreatePermissionDto,
@@ -44,7 +44,7 @@ export class PermissionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_PERMISSION)
-  @Mutation(() => PermissionEntity, { name: 'updatePermission' })
+  @Mutation(() => PermissionEntity, { name: 'updatePermission', description: 'Cập nhật phân quyền' })
   async update(
     @CurrentUser() user: IAuthPayload,
     @Args('id') id: string,
@@ -56,7 +56,7 @@ export class PermissionResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_PERMISSION)
-  @Mutation(() => String, { name: 'deletePermissions' })
+  @Mutation(() => String, { name: 'deletePermissions', description: 'Xóa danh sách phân quyền' })
   async deletePermissions(
     @Args('permissionIds', { type: () => [String] }) perIds: string[],
   ): Promise<string> {

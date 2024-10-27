@@ -12,19 +12,19 @@ export class ChapterPageOptions extends PageOptionDto {
 
 @InputType()
 export class ChapterBaseDto extends BaseDto {
-  @Field(() => String, {})
+  @Field(() => String, { description: 'Đầu mục' })
   label: string;
 
-  @Field(() => String, {})
+  @Field(() => String, { description: 'Tên chương' })
   name: string;
 
-  @Field(() => String, {})
+  @Field(() => String, { description: 'Mã học phần' })
   lessonId: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String, { nullable: true, description: 'Mô tả' })
   description: string = '';
 
-  @Field(() => Boolean, { nullable: true })
+  @Field(() => Boolean, { nullable: true, description: 'Trạng thái kích hoạt' })
   enable: boolean;
 
   @Field(() => StatusShareEnum, {
@@ -53,16 +53,16 @@ export class UpdateChapterDto extends PartialType(ChapterBaseDto) {
 
 @InputType()
 class EnableChapterDto {
-  @Field(() => String)
+  @Field(() => String, { description: 'Mã chương ' })
   chapterId: string;
 
-  @Field(() => Boolean)
+  @Field(() => Boolean, { description: 'Trạng thái kích hoạt' })
   enable: boolean;
 }
 
 @InputType()
 class ChapterStatusDto {
-  @Field(() => String)
+  @Field(() => String, { description: 'Mã chương ' })
   chapterId: string;
 
   @Field(() => StatusShareEnum)

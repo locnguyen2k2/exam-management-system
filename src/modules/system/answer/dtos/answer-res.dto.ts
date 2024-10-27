@@ -5,24 +5,24 @@ import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 
 @ObjectType('CorrectAnswerModel')
 export class CorrectAnswerDto extends AnswerEntity {
-  @Field(() => Float, { nullable: true })
+  @Field(() => Float, { nullable: true, description: 'Điểm của đáp án đúng' })
   score: number;
 }
 
 @ObjectType('CorrectAnswerSimpleFields')
 export class QuestionCorrectAnswerDto {
-  @Field(() => String)
+  @Field(() => String, { description: 'Mã của đáp án đúng' })
   correctAnswerId: string;
 
-  @Field(() => Float, { nullable: true })
+  @Field(() => Float, { nullable: true, description: 'Điểm của đáp án đúng' })
   score: number;
 }
 
 @ObjectType('AnswerSimpleFields')
 export class QuestionAnswerDto {
-  @Field(() => String)
+  @Field(() => String, { description: 'Nhãn của đáp án' })
   label: string;
-  @Field(() => String)
+  @Field(() => String, { description: 'Mã của đáp án' })
   answerId: string;
 }
 

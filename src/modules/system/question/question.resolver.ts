@@ -44,7 +44,7 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_QUESTION)
-  @Query(() => QuestionDetailDto, { name: 'questionDetail' })
+  @Query(() => QuestionDetailDto, { name: 'questionDetail', description: 'Chi tiết câu hỏi' })
   async question(
     @Args('questionId') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -53,7 +53,7 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)
-  @Mutation(() => [QuestionEntity], { name: 'createQuestion' })
+  @Mutation(() => [QuestionEntity], { name: 'createQuestion', description: 'Khởi tạo câu hỏi' })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createQuestionArgs') args: CreateQuestionsDto,
@@ -63,7 +63,7 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
-  @Mutation(() => QuestionEntity, { name: 'updateQuestion' })
+  @Mutation(() => QuestionEntity, { name: 'updateQuestion', description: 'Cập nhật câu hỏi' })
   async update(
     @Args('id') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -75,7 +75,7 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
-  @Mutation(() => [QuestionEntity], { name: 'enableQuestions' })
+  @Mutation(() => [QuestionEntity], { name: 'enableQuestions', description: 'Kích hoạt danh sách câu hỏi' })
   async enableQuestions(
     @CurrentUser() user: IAuthPayload,
     @Args('enableQuestionsArgs') dto: EnableQuestionsDto,
@@ -88,6 +88,7 @@ export class QuestionResolver {
   @Permissions(PermissionEnum.UPDATE_QUESTION)
   @Mutation(() => String, {
     name: 'updateQuestionsStatus',
+    description: 'Cập nhật câu hỏi'
   })
   async updateManyStatus(
     @CurrentUser() user: IAuthPayload,
@@ -99,7 +100,7 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_QUESTION)
-  @Mutation(() => String, { name: 'deleteQuestions' })
+  @Mutation(() => String, { name: 'deleteQuestions', description: 'Xóa danh sách câu hỏi' })
   async deleteQuestions(
     @CurrentUser() user: IAuthPayload,
     @Args('questionIds', { type: () => [String] }) questionIds: string[],

@@ -13,7 +13,11 @@ export class AnswerEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   value: string;
 
-  @Field(() => String, { nullable: true, defaultValue: null })
+  @Field(() => String, {
+    nullable: true,
+    defaultValue: null,
+    description: 'Chú thích của đáp án',
+  })
   @Column({ type: 'string', nullable: true, default: null })
   remark: string = null;
 
