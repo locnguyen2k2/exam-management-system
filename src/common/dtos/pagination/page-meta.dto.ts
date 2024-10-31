@@ -1,11 +1,12 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 
-interface IPagination {
+export interface IPagination {
   pageOptions: PageOptionDto;
   numberRecords: number;
 }
 
+// Dữ liệu trả về chưa thông tin phân trang
 @ObjectType('pagination')
 export class PageMetaDto {
   @Field(() => String)

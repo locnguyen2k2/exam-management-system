@@ -4,9 +4,9 @@ import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ExamService } from '~/modules/system/exam/exam.service';
 import { ExamResolver } from '~/modules/system/exam/exam.resolver';
 import { QuestionModule } from '~/modules/system/question/question.module';
-import { AnswerModule } from '~/modules/system/answer/answer.module';
 import { ChapterModule } from '~/modules/system/chapter/chapter.module';
 import { LessonModule } from '~/modules/system/lesson/lesson.module';
+import { AnswerModule } from '~/modules/system/answer/answer.module';
 
 @Module({
   imports: [

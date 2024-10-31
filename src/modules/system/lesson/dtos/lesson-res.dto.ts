@@ -3,9 +3,9 @@ import { IsArray } from 'class-validator';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { ExamDetailDto } from '~/modules/system/exam/dtos/exam-res.dto';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ClassSimpleDto } from '~/modules/system/class/dtos/class-res.dto';
+import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {
@@ -27,8 +27,8 @@ export class LessonDetailDto extends ExtendedEntity {
   @Field(() => [ClassSimpleDto], { nullable: true })
   classes?: ClassSimpleDto[] = [];
 
-  @Field(() => [ExamDetailDto], { nullable: true })
-  exams?: ExamDetailDto[] = [];
+  @Field(() => [ExamEntity], { nullable: true })
+  exams?: ExamEntity[] = [];
 }
 
 @ObjectType('lessons')

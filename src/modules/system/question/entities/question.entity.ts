@@ -4,13 +4,14 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
-import { QuestionCorrectAnswerDto } from '~/modules/system/answer/dtos/answer-res.dto';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
+import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { QuestionCorrectAnswerDto } from '~/modules/system/answer/dtos/answer-res.dto';
 
-@ObjectType('QuestionDefaultFields')
+@ObjectType('QuestionModel')
 @Entity('question_entity')
 export class QuestionEntity extends ExtendedEntity {
-  @Field(() => String, {description: 'Nội dung câu hỏi'})
+  @Field(() => String, { description: 'Nội dung câu hỏi' })
   @Column({ type: 'string' })
   content: string;
 
@@ -22,11 +23,11 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'string', nullable: true })
   remark: string;
 
-  @Field(() => ChapterEntity, {description: 'Chương'})
+  @Field(() => ChapterEntity, { description: 'Chương' })
   @Column('json')
   chapter: ChapterEntity;
 
-  @Field(() => LevelEnum, {description: 'Cấp độ câu hỏi'})
+  @Field(() => LevelEnum, { description: 'Cấp độ câu hỏi' })
   @Column({ type: 'enum', enum: LevelEnum })
   level: LevelEnum;
 
@@ -37,7 +38,7 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => StatusShareEnum, {
     nullable: true,
     defaultValue: StatusShareEnum.PRIVATE,
-    description: 'Trạng thái'
+    description: 'Trạng thái',
   })
   @Column({
     type: 'enum',
@@ -46,17 +47,15 @@ export class QuestionEntity extends ExtendedEntity {
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => CategoryEnum, {description: 'Loại câu hỏi'})
+  @Field(() => CategoryEnum, { description: 'Loại câu hỏi' })
   @Column('enum', { enum: CategoryEnum })
   category: CategoryEnum;
 
-  @Field(() => [QuestionCorrectAnswerDto], {description: 'Mã đáp án đúng (1 hoặc nhiều tùy loại câu hỏi)'})
+  @Field(() => [AnswerEntity], {
+    description: 'Danh sách đáp án',
+  })
   @Column('json', { array: true })
-  correctAnswerIds: QuestionCorrectAnswerDto[];
-
-  @Field(() => [String], {description: 'Mã đáp án'})
-  @Column('string', { array: true })
-  answerIds: string[];
+  answers: AnswerEntity[];
 
   constructor(questionEntity: Partial<QuestionEntity>) {
     super();

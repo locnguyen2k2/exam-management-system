@@ -13,10 +13,7 @@ import { Permissions } from '~/common/decorators/permission.decorator';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
-import {
-  QuestionDetailDto,
-  QuestionPagination,
-} from '~/modules/system/question/dtos/question-res.dto';
+import { QuestionPagination } from '~/modules/system/question/dtos/question-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 
 @Resolver('Questions')
@@ -32,7 +29,7 @@ export class QuestionResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
-  ): Promise<QuestionPagination> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
@@ -44,16 +41,22 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_QUESTION)
-  @Query(() => QuestionDetailDto, { name: 'questionDetail', description: 'Chi tiết câu hỏi' })
+  @Query(() => QuestionEntity, {
+    name: 'questionDetail',
+    description: 'Chi tiết câu hỏi',
+  })
   async question(
     @Args('questionId') id: string,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<QuestionDetailDto> {
+  ): Promise<QuestionEntity> {
     return this.questionService.detailQuestion(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)
-  @Mutation(() => [QuestionEntity], { name: 'createQuestion', description: 'Khởi tạo câu hỏi' })
+  @Mutation(() => [QuestionEntity], {
+    name: 'createQuestion',
+    description: 'Khởi tạo câu hỏi',
+  })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createQuestionArgs') args: CreateQuestionsDto,
@@ -63,7 +66,10 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
-  @Mutation(() => QuestionEntity, { name: 'updateQuestion', description: 'Cập nhật câu hỏi' })
+  @Mutation(() => QuestionEntity, {
+    name: 'updateQuestion',
+    description: 'Cập nhật câu hỏi',
+  })
   async update(
     @Args('id') id: string,
     @CurrentUser() user: IAuthPayload,
@@ -75,7 +81,10 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
-  @Mutation(() => [QuestionEntity], { name: 'enableQuestions', description: 'Kích hoạt danh sách câu hỏi' })
+  @Mutation(() => [QuestionEntity], {
+    name: 'enableQuestions',
+    description: 'Kích hoạt danh sách câu hỏi',
+  })
   async enableQuestions(
     @CurrentUser() user: IAuthPayload,
     @Args('enableQuestionsArgs') dto: EnableQuestionsDto,
@@ -88,7 +97,7 @@ export class QuestionResolver {
   @Permissions(PermissionEnum.UPDATE_QUESTION)
   @Mutation(() => String, {
     name: 'updateQuestionsStatus',
-    description: 'Cập nhật câu hỏi'
+    description: 'Cập nhật câu hỏi',
   })
   async updateManyStatus(
     @CurrentUser() user: IAuthPayload,
@@ -100,7 +109,10 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.DELETE_QUESTION)
-  @Mutation(() => String, { name: 'deleteQuestions', description: 'Xóa danh sách câu hỏi' })
+  @Mutation(() => String, {
+    name: 'deleteQuestions',
+    description: 'Xóa danh sách câu hỏi',
+  })
   async deleteQuestions(
     @CurrentUser() user: IAuthPayload,
     @Args('questionIds', { type: () => [String] }) questionIds: string[],

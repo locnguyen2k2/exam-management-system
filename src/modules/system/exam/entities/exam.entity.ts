@@ -16,7 +16,7 @@ export class ScaleDto {
   level: LevelEnum;
 }
 
-@ObjectType()
+@ObjectType('ExamModel')
 @Entity('exam_entity')
 export class ExamEntity extends ExtendedEntity {
   @Field(() => String, { nullable: true })
@@ -41,7 +41,7 @@ export class ExamEntity extends ExtendedEntity {
   scales: IScale[];
 
   @Field(() => [ExamQuestionDto])
-  @Column('json', { array: true, default: [] })
+  @Column('json', { array: true })
   questions: ExamQuestionDto[];
 
   @Field(() => Boolean, { nullable: true })

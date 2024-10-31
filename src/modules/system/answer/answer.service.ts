@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { MongoRepository } from 'typeorm';
 import {
-  AnswerPageOptions,
   CreateAnswersDto,
   UpdateAnswerDto,
 } from '~/modules/system/answer/dtos/answer-req.dto';
@@ -15,11 +14,10 @@ import {
 } from '~/common/constants/regex.constant';
 
 import * as _ from 'lodash';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
+import { paginate } from '~/helpers/paginate/paginate';
+import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 
 @Injectable()
 export class AnswerService {
@@ -30,10 +28,7 @@ export class AnswerService {
     private readonly questionService: QuestionService,
   ) {}
 
-  async findAll(
-    uid: string = null,
-    pageOptions: AnswerPageOptions = new AnswerPageOptions(),
-  ): Promise<AnswerPagination> {
+  async findAll(uid: string = null, pageOptions: PageOptionDto) {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
@@ -43,22 +38,11 @@ export class AnswerService {
       }),
     };
 
-    const pipes = [
+    return paginate(
+      this.answerRepo,
+      { pageOptions, filterOptions },
       searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
-
-    const [{ data, pageInfo }]: any[] = await this.answerRepo
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-    return new AnswerPagination(entities, pageMetaDto);
+    );
   }
 
   async findByValue(value: string): Promise<AnswerEntity[]> {
@@ -134,9 +118,6 @@ export class AnswerService {
         const isExisted = await this.findOne(id);
         if (isExisted.create_by !== uid)
           throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
-        const isValid = await this.questionService.findByAnswerId(id);
-        if (isValid.length !== 0)
-          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
         listIds.push(id);
       }),
     );

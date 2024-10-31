@@ -18,17 +18,11 @@ import { QuestionEntity } from '~/modules/system/question/entities/question.enti
 import { randomNumbs } from '~/utils/random';
 import * as _ from 'lodash';
 import { searchAtlas } from '~/utils/search';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import {
-  ExamDetailDto,
-  ExamPaginationDto,
-} from '~/modules/system/exam/dtos/exam-res.dto';
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
-import { pipeLine } from '~/utils/pipe-line';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class ExamService {
@@ -44,7 +38,7 @@ export class ExamService {
   async findAll(
     uid: string = null,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
-  ): Promise<ExamPaginationDto> {
+  ) {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
@@ -52,88 +46,23 @@ export class ExamService {
       ...(!_.isEmpty(pageOptions.examStatus) && {
         status: { $in: pageOptions.examStatus },
       }),
-      // ...(!_.isEmpty(pageOptions.lessonIds) && {
-      //   lessonId: { $in: pageOptions.lessonIds },
-      // }),
       ...(uid && {
         $or: [{ create_by: uid }],
       }),
     };
 
-    const pipes = [
+    return paginate(
+      this.examRepo,
+      { pageOptions, filterOptions },
       searchAtlas('searchExams', pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
-
-    const [{ data, pageInfo }]: any[] = await this.examRepo
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-
-    return new ExamPaginationDto(entities, pageMetaDto);
+    );
   }
 
-  async getExamDetail(id: string, uid?: string): Promise<ExamDetailDto> {
-    const questions = [];
+  async getExamDetail(id: string, uid?: string): Promise<ExamEntity> {
     const exam: any = await this.findOne(id);
-    const questionIds = exam.questions.flat();
 
     if (uid && exam.create_by !== uid)
       throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
-
-    await Promise.all(
-      questionIds.map(async (question: any) => {
-        const answers = question.answers;
-        for (let i = 0; i < answers.length; i++) {
-          const isAnswer = await this.answerService.findOne(
-            answers[i].answerId,
-          );
-          isAnswer['label'] = answers[i].label;
-          question.answers[i] = isAnswer;
-        }
-      }),
-    );
-
-    for (let i = 0; i < questionIds.length; i++) {
-      const question = questionIds[i];
-      const isQuestion = {
-        ...(await this.questionService.findOne(question.questionId)),
-        answers: [],
-        correctAnswers: [],
-      };
-
-      isQuestion['label'] = question.label;
-
-      for (const answer of question.answers) {
-        const index = isQuestion.correctAnswerIds.findIndex(
-          (value) => value.correctAnswerId === answer.id,
-        );
-
-        if (index !== -1) {
-          isQuestion.correctAnswers.push({
-            ...answer,
-            score: isQuestion.correctAnswerIds[index].score,
-          });
-        }
-      }
-
-      isQuestion.answers = question.answers.filter((answer: AnswerEntity) =>
-        isQuestion.answerIds.includes(answer.id),
-      );
-
-      delete isQuestion.answerIds;
-      delete isQuestion.correctAnswerIds;
-
-      questions.push(isQuestion);
-    }
-
-    exam.questions = questions;
 
     return exam;
   }
@@ -147,7 +76,7 @@ export class ExamService {
   async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
     return await this.examRepo.find({
       where: {
-        questionIds: {
+        'questions.id': {
           $all: [questionId],
         },
       },
@@ -171,20 +100,36 @@ export class ExamService {
     return questions.map((question, index) => {
       let answerIds = [];
 
-      answerIds = this.handleAnswersLabel(question.answerIds, answerLabel);
+      answerIds = this.handleAnswersLabel(
+        question.answers.map(({ id }) => id),
+        answerLabel,
+      );
+
+      const answers = [];
+
+      answerIds.map((answer) => {
+        const isAnswer = question.answers.find(
+          ({ id }) => id === answer.answerId,
+        );
+
+        answers.push({
+          ...isAnswer,
+          label: answer.label,
+        });
+      });
 
       return {
         ...question,
-        answerIds,
+        answers: answers,
         label: handleLabel(questionLabel, `${index + 1}`),
       };
     });
   }
 
-  async create(data: CreateExamPaperDto): Promise<ExamDetailDto[]> {
+  async create(data: CreateExamPaperDto): Promise<ExamEntity[]> {
     const { lessonId, createBy } = data;
+    const exams: any = [];
     await this.lessonService.findAvailable(lessonId, createBy);
-    const exams: ExamEntity[] = [];
     const questsInfo: IDetailChapter[] = await Promise.all(
       data.questionInfo.map(
         async (info) =>
@@ -201,7 +146,7 @@ export class ExamService {
     for (let i = 0; i < data.numberExams; i++) {
       const randQuestions =
         await this.questionService.randomQuestions(listQuestions);
-      const questions = this.handleQuestionLabel(
+      const questions: any = this.handleQuestionLabel(
         randQuestions,
         data.questionLabel,
         data.answerLabel,
@@ -216,10 +161,8 @@ export class ExamService {
         scales,
         questions: questions.map((question) => {
           return {
-            questionId: question.id,
+            ...question,
             label: question.label,
-            correctAnswers: question.correctAnswerIds,
-            answers: [...question.answerIds],
           };
         }),
         create_by: createBy,
@@ -237,17 +180,8 @@ export class ExamService {
       newExams.map((exam) => exam.id),
     );
 
-    return await Promise.all(
-      newExams.map(async ({ id }) => await this.getExamDetail(id)),
-    );
+    return newExams;
   }
-
-  // async countQuestionInExams(questionId: string): Promise<number> {
-  //   await this.questionService.findOne(questionId);
-  //   return await this.examRepo.countBy({
-  //     'questions.questionId': questionId,
-  //   });
-  // }
 
   handleScale(scales: IScale[]): IScale[] {
     const listScales: IScale[] = [];
@@ -268,7 +202,7 @@ export class ExamService {
     return listScales;
   }
 
-  async generate(data: GenerateExamPaperDto): Promise<ExamDetailDto[]> {
+  async generate(data: GenerateExamPaperDto): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
     const lesson = await this.lessonService.findAvailable(
@@ -305,7 +239,7 @@ export class ExamService {
       const mixedQuestions =
         await this.questionService.randomQuestions(listQuestions);
 
-      const questions = this.handleQuestionLabel(
+      const questions: any[] = this.handleQuestionLabel(
         mixedQuestions,
         data.questionLabel,
         data.answerLabel,
@@ -324,10 +258,8 @@ export class ExamService {
           scales: listScales,
           questions: questions.map((question) => {
             return {
-              questionId: question.id,
+              ...question,
               label: question.label,
-              correctAnswers: question.correctAnswerIds,
-              answers: [...question.answerIds],
             };
           }),
           create_by: data.createBy,
@@ -344,9 +276,7 @@ export class ExamService {
       newExams.map(({ id }) => id),
     );
 
-    return await Promise.all(
-      newExams.map(async (exam) => await this.getExamDetail(exam.id)),
-    );
+    return newExams;
   }
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
@@ -361,18 +291,14 @@ export class ExamService {
     }
 
     if (data.questionLabel) {
-      const questions: QuestionEntity[] = Array(isExisted.questions.length);
+      const questions: any[] = Array(isExisted.questions.length);
       await Promise.all(
         isExisted.questions.map(async (question, index) => {
-          const isQuestion = await this.questionService.findOne(
-            question.questionId,
-          );
+          const isQuestion = await this.questionService.findOne(question.id);
           if (!answerLabel) {
             answerLabel = question.answers[0].label;
           }
-          isQuestion['answerIds'] = question.answers.map(
-            ({ answerId }) => answerId,
-          );
+          isQuestion['answers'] = question.answers.map((answer) => answer);
           questions[index] = isQuestion;
         }),
       );
@@ -391,10 +317,8 @@ export class ExamService {
         ...(!_.isNil(data.questionLabel) && {
           questions: listQuestions.map((question) => {
             return {
-              questionId: question.id,
+              ...question,
               label: question.label,
-              correctAnswers: question.correctAnswerIds,
-              answers: [...question.answerIds],
             };
           }),
         }),

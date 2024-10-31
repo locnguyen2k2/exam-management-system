@@ -3,7 +3,6 @@ import { Permissions } from '~/common/decorators/permission.decorator';
 import { AnswerService } from '~/modules/system/answer/answer.service';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import {
-  AnswerPageOptions,
   CreateAnswersDto,
   UpdateAnswerDto,
 } from '~/modules/system/answer/dtos/answer-req.dto';
@@ -11,8 +10,9 @@ import { plainToClass } from 'class-transformer';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
-import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
+import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
+import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 
 @Resolver()
 export class AnswerResolver {
@@ -37,15 +37,15 @@ export class AnswerResolver {
   })
   async answers(
     @Args('answerPageOptions', { nullable: true })
-    chapterPageOptions: AnswerPageOptions = new AnswerPageOptions(),
+    answerPageOptions: PageOptionDto = new PageOptionDto(),
     @CurrentUser() user: IAuthPayload,
-  ): Promise<AnswerPagination> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
     return this.answerService.findAll(
       isAdmin ? null : user.id,
-      chapterPageOptions,
+      answerPageOptions,
     );
   }
 

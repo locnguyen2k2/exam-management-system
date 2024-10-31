@@ -1,23 +1,34 @@
-import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
+import {
+  Field,
+  Float,
+  HideField,
+  InputType,
+  PartialType,
+} from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
-import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 
-@InputType('AnswerPageOptions')
-export class AnswerPageOptions extends PageOptionDto {}
-
-@InputType()
-class AnswerBaseDto extends BaseDto {
+@InputType('CreateAnswerArgs')
+export class AnswerBaseDto extends BaseDto {
   @Field(() => Boolean, { nullable: true })
   enable: boolean;
 
-  @Field(() => String, { description: 'Giá trị đám án đúng' })
+  @Field(() => String, {
+    description:
+      'Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)',
+  })
   value: string;
+
+  @Field(() => Boolean, { nullable: true, defaultValue: false })
+  isCorrect: boolean;
+
+  @Field(() => Float, { nullable: true })
+  score: number;
 
   @Field(() => String, { nullable: true, description: 'Chú thích' })
   remark: string;
 }
 
-@InputType('CreateAnswersArgs')
+@InputType()
 export class CreateAnswersDto extends BaseDto {
   @Field(() => [AnswerBaseDto])
   items: AnswerBaseDto[];

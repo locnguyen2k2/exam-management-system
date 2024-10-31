@@ -134,14 +134,19 @@ type AnswerModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String
+
+  """
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
+  """
   value: String!
+  score: Float
+  isCorrect: Boolean
 
   """Chú thích của đáp án"""
   remark: String
 }
 
-type CorrectAnswerModel {
+type ExamQuestionAnswerModel {
   id: String!
 
   """Trạng thái quản lý"""
@@ -154,30 +159,19 @@ type CorrectAnswerModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String
+
+  """
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
+  """
   value: String!
+  score: Float
+  isCorrect: Boolean
 
   """Chú thích của đáp án"""
   remark: String
 
-  """Điểm của đáp án đúng"""
-  score: Float
-}
-
-type CorrectAnswerSimpleFields {
-  """Mã của đáp án đúng"""
-  correctAnswerId: String!
-
-  """Điểm của đáp án đúng"""
-  score: Float
-}
-
-type AnswerSimpleFields {
-  """Nhãn của đáp án"""
+  """Nhãn đáp án"""
   label: String!
-
-  """Mã của đáp án"""
-  answerId: String!
 }
 
 type answers {
@@ -217,92 +211,7 @@ enum StatusShareEnum {
   PRIVATE
 }
 
-type QuestionSimpleFields {
-  questionId: String!
-  label: String!
-  correctAnswers: [CorrectAnswerSimpleFields!]!
-  answers: [AnswerSimpleFields!]!
-}
-
 type QuestionModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String
-  content: String!
-  picture: String
-  remark: String
-  chapter: ChapterEntity!
-  level: LevelEnum!
-  status: StatusShareEnum
-  category: CategoryEnum!
-  correctAnswers: [CorrectAnswerModel!]!
-  answers: [AnswerModel!]!
-  sku: String
-}
-
-enum LevelEnum {
-  VERY_EASY
-  EASY
-  STANDARD
-  HARD
-  VERY_HARD
-}
-
-enum CategoryEnum {
-  EASSAY
-  SINGLE_CHOICE
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-  FILL_IN
-  MATCHING
-  ORDERING
-  IMAGE_BASED
-}
-
-type QuestionPagination {
-  data: [QuestionModel!]!
-  meta: pagination!
-}
-
-type ScaleDto {
-  percent: Float
-  chapterId: String
-  level: LevelEnum!
-}
-
-type ExamEntity {
-  id: String!
-  enable: Boolean
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String
-  time: String!
-  sku: String!
-
-  """10 được đặt mặc định"""
-  maxScore: Float
-  scales: [ScaleDto!]!
-  questions: [QuestionSimpleFields!]!
-  status: StatusShareEnum
-}
-
-type QuestionDefaultFields {
   id: String!
 
   """Trạng thái kích hoạt"""
@@ -337,11 +246,98 @@ type QuestionDefaultFields {
   """Loại câu hỏi"""
   category: CategoryEnum!
 
-  """Mã đáp án đúng (1 hoặc nhiều tùy loại câu hỏi)"""
-  correctAnswerIds: [CorrectAnswerSimpleFields!]!
+  """Danh sách đáp án"""
+  answers: [AnswerModel!]!
+}
 
-  """Mã đáp án"""
-  answerIds: [String!]!
+enum LevelEnum {
+  VERY_EASY
+  EASY
+  STANDARD
+  HARD
+  VERY_HARD
+}
+
+enum CategoryEnum {
+  EASSAY
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  FILL_IN
+  MATCHING
+  ORDERING
+  IMAGE_BASED
+}
+
+type ExamQuestionModel {
+  id: String!
+
+  """Trạng thái kích hoạt"""
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+
+  """Nội dung câu hỏi"""
+  content: String!
+
+  """Hình ảnh"""
+  picture: String
+
+  """Chú thích"""
+  remark: String
+
+  """Chương"""
+  chapter: ChapterEntity!
+
+  """Cấp độ câu hỏi"""
+  level: LevelEnum!
+
+  """Trạng thái"""
+  status: StatusShareEnum
+
+  """Loại câu hỏi"""
+  category: CategoryEnum!
+  answers: [ExamQuestionAnswerModel!]!
+  label: String!
+}
+
+type QuestionPagination {
+  data: [QuestionModel!]!
+  meta: pagination!
+}
+
+type ScaleDto {
+  percent: Float
+  chapterId: String
+  level: LevelEnum!
+}
+
+type ExamModel {
+  id: String!
+  enable: Boolean
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String
+  time: String!
+  sku: String!
+
+  """10 được đặt mặc định"""
+  maxScore: Float
+  scales: [ScaleDto!]!
+  questions: [ExamQuestionModel!]!
+  status: StatusShareEnum
 }
 
 type LessonDefaultFields {
@@ -362,64 +358,7 @@ type LessonDefaultFields {
   description: String!
   status: StatusShareEnum!
   chapters: [ChapterEntity!]!
-  exams: [ExamEntity!]!
-}
-
-type ChapterModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String!
-  name: String!
-  description: String
-  lesson: LessonDefaultFields
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questions: [QuestionDefaultFields!]!
-}
-
-type ChapterPagination {
-  data: [ChapterModel!]!
-  meta: pagination!
-}
-
-type ExamModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String
-  time: String!
-  sku: String!
-
-  """10.0 được đặt mặc định"""
-  maxScore: Float
-  scales: [ScaleDto!]!
-  questions: [QuestionModel!]!
-  status: StatusShareEnum
-}
-
-type ExamPagination {
-  data: [ExamEntity!]!
-  meta: pagination!
+  exams: [ExamModel!]!
 }
 
 type ClassModel {
@@ -493,6 +432,39 @@ type lessons {
   meta: pagination!
 }
 
+type ChapterModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String
+  lesson: LessonDefaultFields
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+  questions: [QuestionModel!]!
+}
+
+type ChapterPagination {
+  data: [ChapterModel!]!
+  meta: pagination!
+}
+
+type ExamPagination {
+  data: [ExamModel!]!
+  meta: pagination!
+}
+
 type Query {
   """Lấy danh sách người dùng"""
   users(userPageOptions: UserPageOptions): UserPagination!
@@ -549,7 +521,7 @@ type Query {
   answer(answerId: String!): AnswerModel!
 
   """Lấy danh sách đáp án"""
-  answers(answerPageOptions: AnswerPageOptions): answers!
+  answers(answerPageOptions: pageOptionArgs): answers!
 
   """Lấy danh sách lớp"""
   classes(classPageOptions: ClassPageOptions): ClassPagination!
@@ -558,7 +530,7 @@ type Query {
 input UserPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -581,7 +553,7 @@ enum EmailEnum {
 input RolePageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -602,7 +574,7 @@ enum RoleEnum {
 input PermissionPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -617,7 +589,7 @@ input PermissionPageOptions {
 input ChapterPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -631,7 +603,7 @@ input ChapterPageOptions {
 input LessonPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -645,7 +617,7 @@ input LessonPageOptions {
 input ExamPaperPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -654,13 +626,12 @@ input ExamPaperPageOptions {
   page: Int = 1
   take: Int = 10
   examStatus: [StatusShareEnum!]
-  lessonIds: [String!]
 }
 
 input QuestionPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -673,10 +644,10 @@ input QuestionPageOptions {
   questionCategory: [CategoryEnum!]
 }
 
-input AnswerPageOptions {
+input pageOptionArgs {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -689,7 +660,7 @@ input AnswerPageOptions {
 input ClassPageOptions {
   keyword: String = ""
 
-  """Trường sắp xếp (Mặc định cột ngày tạo)"""
+  """Trường sắp xếp (Mặc định ngày tạo)"""
   sort: String = "created_at"
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
@@ -784,22 +755,22 @@ type Mutation {
   generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamModel!]!
 
   """Kích hoạt danh sách dề thi"""
-  enableExams(enableExamsArgs: EnableExamsArgs!): [ExamEntity!]!
+  enableExams(enableExamsArgs: EnableExamsArgs!): [ExamModel!]!
 
   """Cập nhật đề thi"""
-  updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamEntity!
+  updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamModel!
 
   """Xóa danh sách đề thi"""
   deleteExamPapers(examPaperIds: [String!]!): String!
 
   """Khởi tạo câu hỏi"""
-  createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionDefaultFields!]!
+  createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionModel!]!
 
   """Cập nhật câu hỏi"""
-  updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionDefaultFields!
+  updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionModel!
 
   """Kích hoạt danh sách câu hỏi"""
-  enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionDefaultFields!]!
+  enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionModel!]!
 
   """Cập nhật câu hỏi"""
   updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
@@ -808,7 +779,7 @@ type Mutation {
   deleteQuestions(questionIds: [String!]!): String!
 
   """Tạo danh sách các câu hỏi"""
-  createAnswers(createAnswersArgs: CreateAnswersArgs!): [AnswerModel!]!
+  createAnswers(createAnswersArgs: CreateAnswersDto!): [AnswerModel!]!
 
   """Cập nhật câu hỏi"""
   updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
@@ -1176,13 +1147,30 @@ input QuestionArgs {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum!
-  correctAnswers: [CorrectAnswerIdsDto!]!
-  answerIds: [String!]!
+
+  """
+  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
+  """
+  quantity: Int
+
+  """
+  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
+  """
+  answers: [CreateAnswerArgs!]!
 }
 
-input CorrectAnswerIdsDto {
-  correctAnswerId: String!
+input CreateAnswerArgs {
+  enable: Boolean
+
+  """
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
+  """
+  value: String!
+  isCorrect: Boolean = false
   score: Float
+
+  """Chú thích"""
+  remark: String
 }
 
 input UpdateQuestionArgs {
@@ -1195,8 +1183,16 @@ input UpdateQuestionArgs {
   enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum
-  correctAnswers: [CorrectAnswerIdsDto!]
-  answerIds: [String!]
+
+  """
+  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
+  """
+  quantity: Int
+
+  """
+  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
+  """
+  answers: [CreateAnswerArgs!]
 }
 
 input EnableQuestionsArgs {
@@ -1217,25 +1213,19 @@ input QuestionStatusDto {
   status: StatusShareEnum!
 }
 
-input CreateAnswersArgs {
-  items: [AnswerBaseDto!]!
-}
-
-input AnswerBaseDto {
-  enable: Boolean
-
-  """Giá trị đám án đúng"""
-  value: String!
-
-  """Chú thích"""
-  remark: String
+input CreateAnswersDto {
+  items: [CreateAnswerArgs!]!
 }
 
 input UpdateAnswerArgs {
   enable: Boolean
 
-  """Giá trị đám án đúng"""
+  """
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
+  """
   value: String
+  isCorrect: Boolean = false
+  score: Float
 
   """Chú thích"""
   remark: String

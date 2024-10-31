@@ -1,9 +1,10 @@
 import {
   Field,
-  Float,
   HideField,
   InputType,
+  Int,
   PartialType,
+  PickType,
 } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
@@ -12,15 +13,7 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
-
-@InputType()
-export class CorrectAnswerIdsDto {
-  @Field(() => String)
-  correctAnswerId: string;
-
-  @Field(() => Float, { nullable: true })
-  score: number;
-}
+import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 
 @InputType('QuestionPageOptions')
 export class QuestionPageOptions extends PageOptionDto {
@@ -65,11 +58,21 @@ class QuestionBaseDto extends BaseDto {
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
-  @Field(() => [CorrectAnswerIdsDto])
-  correctAnswers: CorrectAnswerIdsDto[];
+  @Field(() => Int, {
+    nullable: true,
+    description:
+      'Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.',
+  })
+  quantity: number;
 
-  @Field(() => [String!]!)
-  answerIds: string[];
+  @Field(() => [AnswerBaseDto!]!, {
+    description:
+      'Với câu hỏi điền khuyết, ' +
+      'đáp án đúng là đáp án chứa các giá trị bị khuyết ' +
+      'và ngăn cách bởi tổ hợp các ký hiệu: [__]. ' +
+      'Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án',
+  })
+  answers: AnswerBaseDto[];
 }
 
 @InputType('CreateQuestionsArgs')

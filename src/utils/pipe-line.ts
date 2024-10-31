@@ -1,6 +1,10 @@
 import * as _ from 'lodash';
 
-export function pipeLine(pageOptions, filterOptions, lookups?: any[]) {
+export function pipeLine(
+  pageOptions: any,
+  filterOptions: any,
+  lookups?: any[],
+) {
   return !_.isNil(lookups)
     ? [
         {

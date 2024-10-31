@@ -18,6 +18,7 @@ import {
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { RoleEnum } from '~/modules/system/role/role.constant';
+import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Resolver('Chapters')
 export class ChapterResolver {
@@ -32,7 +33,7 @@ export class ChapterResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
-  ): Promise<ChapterPagination> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );

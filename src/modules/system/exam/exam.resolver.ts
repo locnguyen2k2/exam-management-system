@@ -12,10 +12,7 @@ import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
-import {
-  ExamDetailDto,
-  ExamPaginationDto,
-} from '~/modules/system/exam/dtos/exam-res.dto';
+import { ExamPaginationDto } from '~/modules/system/exam/dtos/exam-res.dto';
 import { plainToClass } from 'class-transformer';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 
@@ -35,7 +32,7 @@ export class ExamResolver {
       description: 'Bộ lọc danh sách đề',
     })
     examPageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
-  ): Promise<ExamPaginationDto> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
@@ -43,7 +40,7 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)
-  @Query(() => ExamDetailDto, {
+  @Query(() => ExamEntity, {
     name: 'examDetail',
     description: 'Chi tiết đề thi',
   })
@@ -52,28 +49,28 @@ export class ExamResolver {
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamDetailDto], {
+  @Mutation(() => [ExamEntity], {
     name: 'createExamPapers',
     description: 'Tạo đề thi',
   })
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createExamPaperArgs') dto: CreateExamPaperDto,
-  ): Promise<ExamDetailDto[]> {
+  ): Promise<ExamEntity[]> {
     const data = CreateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.create(data);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
-  @Mutation(() => [ExamDetailDto], {
+  @Mutation(() => [ExamEntity], {
     name: 'generateExamPapers',
     description: 'Khởi tạo đề thi từ ngân hàng câu hỏi',
   })
   async generate(
     @CurrentUser() user: IAuthPayload,
     @Args('generateExamPaperArgs') dto: GenerateExamPaperDto,
-  ): Promise<ExamDetailDto[]> {
+  ): Promise<ExamEntity[]> {
     const data = GenerateExamPaperDto.plainToClass(dto);
     data.createBy = user.id;
     return await this.examService.generate(data);

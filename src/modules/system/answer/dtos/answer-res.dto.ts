@@ -1,7 +1,6 @@
 import { Field, Float, ObjectType } from '@nestjs/graphql';
-import { IsArray } from 'class-validator';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
 
 @ObjectType('CorrectAnswerModel')
 export class CorrectAnswerDto extends AnswerEntity {
@@ -18,25 +17,11 @@ export class QuestionCorrectAnswerDto {
   score: number;
 }
 
-@ObjectType('AnswerSimpleFields')
-export class QuestionAnswerDto {
-  @Field(() => String, { description: 'Nhãn của đáp án' })
+@ObjectType('ExamQuestionAnswerModel')
+export class ExamQuestionAnswerDto extends AnswerEntity {
+  @Field(() => String, { description: 'Nhãn đáp án' })
   label: string;
-  @Field(() => String, { description: 'Mã của đáp án' })
-  answerId: string;
 }
 
 @ObjectType('answers')
-export class AnswerPagination {
-  @Field(() => [AnswerEntity])
-  @IsArray()
-  readonly data: AnswerEntity[];
-
-  @Field(() => PageMetaDto)
-  readonly meta: PageMetaDto;
-
-  constructor(data: AnswerEntity[], meta: PageMetaDto) {
-    this.data = data;
-    this.meta = meta;
-  }
-}
+export class AnswerPagination extends createPaginatedType(AnswerEntity) {}

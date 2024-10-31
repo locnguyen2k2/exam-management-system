@@ -18,12 +18,13 @@ import {
 
 import * as _ from 'lodash';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { searchIndexes } from '~/utils/search';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
+import { paginate } from '~/helpers/paginate/paginate';
+import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto';
 
 @Injectable()
 export class ChapterService {
@@ -40,7 +41,7 @@ export class ChapterService {
     uid: string = null,
     lessonId: string = null,
     pageOptions: ChapterPageOptions = new ChapterPageOptions(),
-  ): Promise<ChapterPagination> {
+  ) {
     const filterOptions = {
       ...(!_.isNil(pageOptions.enable) && {
         enable: pageOptions.enable,
@@ -57,10 +58,7 @@ export class ChapterService {
       }),
     };
 
-    const pipes = [
-      searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
+    const pipes = [...pipeLine(pageOptions, filterOptions)];
 
     const [{ data, pageInfo }]: any[] = await this.chapterRepo
       .aggregate(pipes)

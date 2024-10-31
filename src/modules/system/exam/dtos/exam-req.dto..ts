@@ -13,7 +13,6 @@ import {
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
-import { ExtendedEntity } from '~/common/entity/base.entity';
 
 @InputType('ExamPaperPageOptions')
 export class ExamPaperPageOptions extends PageOptionDto {
@@ -21,9 +20,6 @@ export class ExamPaperPageOptions extends PageOptionDto {
     nullable: true,
   })
   readonly examStatus?: StatusShareEnum[];
-
-  @Field(() => [String], { nullable: true })
-  readonly lessonIds?: string[];
 }
 
 @InputType('QuestionInfoArgs')
