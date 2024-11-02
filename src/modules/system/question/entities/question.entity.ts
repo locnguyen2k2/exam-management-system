@@ -23,10 +23,6 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'string', nullable: true })
   remark: string;
 
-  @Field(() => ChapterEntity, { description: 'Chương' })
-  @Column('json')
-  chapter: ChapterEntity;
-
   @Field(() => LevelEnum, { description: 'Cấp độ câu hỏi' })
   @Column({ type: 'enum', enum: LevelEnum })
   level: LevelEnum;
@@ -34,6 +30,10 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => Boolean, { nullable: true, description: 'Trạng thái kích hoạt' })
   @Column({ type: 'boolean' })
   enable: boolean = false;
+
+  @Field(() => ChapterEntity)
+  @Column('json')
+  chapter: ChapterEntity;
 
   @Field(() => StatusShareEnum, {
     nullable: true,

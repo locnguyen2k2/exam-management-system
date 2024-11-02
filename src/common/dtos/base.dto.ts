@@ -12,6 +12,16 @@ export abstract class BaseDto {
   @Transform(() => uuid())
   id: string;
 
+  @HideField()
+  @Expose()
+  @Transform(() => new Date().toISOString())
+  created_at: string;
+
+  @HideField()
+  @Expose()
+  @Transform(() => new Date().toISOString())
+  updated_at: string;
+
   @Field(() => Boolean, { nullable: true })
   enable: boolean;
 

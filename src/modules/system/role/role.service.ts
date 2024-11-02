@@ -12,8 +12,6 @@ import {
   RolePageOptions,
   UpdateRoleDto,
 } from '~/modules/system/role/dtos/role-req.dto';
-import { RolePagination } from '~/modules/system/role/dtos/role-res.dto';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { PermissionService } from '~/modules/system/permission/permission.service';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
@@ -21,9 +19,9 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pipe-line';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { UserService } from '~/modules/system/user/user.service';
+import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class RoleService {
@@ -35,9 +33,7 @@ export class RoleService {
     private readonly permissionService: PermissionService,
   ) {}
 
-  async findAll(
-    pageOptions: RolePageOptions = new RolePageOptions(),
-  ): Promise<RolePagination> {
+  async findAll(pageOptions: RolePageOptions = new RolePageOptions()) {
     const filterOptions = {
       ...(!_.isEmpty(pageOptions.value) && {
         value: { $in: pageOptions.value },
@@ -47,22 +43,11 @@ export class RoleService {
       }),
     };
 
-    const pipes = [
+    return paginate(
+      this.roleRepository,
+      { pageOptions, filterOptions },
       searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
-
-    const [{ data, pageInfo }]: any[] = await this.roleRepository
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-    return new RolePagination(entities, pageMetaDto);
+    );
   }
 
   async findOne(id: string): Promise<RoleEntity> {
@@ -130,7 +115,7 @@ export class RoleService {
   }
 
   async update(id: string, data: UpdateRoleDto): Promise<RoleEntity> {
-    const isExisted = await this.findOne(id);
+    await this.findOne(id);
     let permissions: PermissionEntity[] = [];
 
     if (!_.isNil(data?.permissionIds)) {
@@ -193,12 +178,5 @@ export class RoleService {
     });
 
     throw new BusinessException('200:Thao tác thành công');
-  }
-
-  async roleHasPermission(rid: string, perId: string): Promise<boolean> {
-    const role = await this.roleRepository.findOne({
-      where: { id: rid, perIds: perId },
-    });
-    return !!role;
   }
 }

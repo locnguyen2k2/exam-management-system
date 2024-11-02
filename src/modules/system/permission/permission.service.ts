@@ -2,8 +2,6 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermissionEntity } from '~/modules/system/permission/entities/permission.entity';
 import { MongoRepository } from 'typeorm';
-import { PermissionPaginationDto } from '~/modules/system/permission/dtos/permission-res.dto';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import {
   CreatePermissionDto,
   PermissionPageOptions,
@@ -18,9 +16,9 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-import { pipeLine } from '~/utils/pipe-line';
 import { RoleService } from '~/modules/system/role/role.service';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
+import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class PermissionService {
@@ -33,7 +31,7 @@ export class PermissionService {
 
   async findAll(
     pageOptions: PermissionPageOptions = new PermissionPageOptions(),
-  ): Promise<PermissionPaginationDto> {
+  ) {
     const filterOptions = {
       ...(!_.isEmpty(pageOptions.value) && {
         value: {
@@ -51,23 +49,11 @@ export class PermissionService {
       }),
     };
 
-    const pipes = [
+    return paginate(
+      this.permissionRepository,
+      { pageOptions, filterOptions },
       searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
-
-    const [{ data, pageInfo }]: any[] = await this.permissionRepository
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-
-    return new PermissionPaginationDto(entities, pageMetaDto);
+    );
   }
 
   async findOne(id: string): Promise<PermissionEntity> {
@@ -98,7 +84,7 @@ export class PermissionService {
     id: string,
     data: UpdatePermissionDto,
   ): Promise<PermissionEntity> {
-    const isExisted = await this.findOne(id);
+    await this.findOne(id);
     const roles = await this.roleService.findByPermission(id);
 
     await this.permissionRepository.update(

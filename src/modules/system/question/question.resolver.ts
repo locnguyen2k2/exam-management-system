@@ -27,6 +27,7 @@ export class QuestionResolver {
   })
   async questions(
     @CurrentUser() user: IAuthPayload,
+    @Args('chapterId') chapterId: string,
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
@@ -36,6 +37,7 @@ export class QuestionResolver {
 
     return this.questionService.findAll(
       isAdmin ? null : user.id,
+      chapterId,
       questionPageOptions,
     );
   }
@@ -95,14 +97,14 @@ export class QuestionResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
-  @Mutation(() => String, {
+  @Mutation(() => [QuestionEntity], {
     name: 'updateQuestionsStatus',
     description: 'Cập nhật câu hỏi',
   })
   async updateManyStatus(
     @CurrentUser() user: IAuthPayload,
     @Args('updateQuestionStatusArgs') dto: UpdateQuestionStatusDto,
-  ): Promise<string> {
+  ): Promise<QuestionEntity[]> {
     const data = plainToClass(UpdateQuestionStatusDto, dto);
     data.updateBy = user.id ? user.id : null;
     return await this.questionService.updateStatus(data);

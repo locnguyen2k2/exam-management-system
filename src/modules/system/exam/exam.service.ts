@@ -2,9 +2,10 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { MongoRepository } from 'typeorm';
-import { QuestionService } from '~/modules/system/question/question.service';
-import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
-import { AnswerService } from '~/modules/system/answer/answer.service';
+import {
+  IClassifyQuestion,
+  QuestionService,
+} from '~/modules/system/question/question.service';
 import {
   CreateExamPaperDto,
   EnableExamsDto,
@@ -23,6 +24,14 @@ import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { paginate } from '~/helpers/paginate/paginate';
+import { ChapterService } from '~/modules/system/chapter/chapter.service';
+import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { shuffle } from '~/utils/shuffle';
+
+export interface IChapterQuestion {
+  chapterId: string;
+  question: QuestionEntity;
+}
 
 @Injectable()
 export class ExamService {
@@ -32,7 +41,7 @@ export class ExamService {
     @InjectRepository(ExamEntity)
     private readonly examRepo: MongoRepository<ExamEntity>,
     private readonly questionService: QuestionService,
-    private readonly answerService: AnswerService,
+    private readonly chapterService: ChapterService,
   ) {}
 
   async findAll(
@@ -47,7 +56,11 @@ export class ExamService {
         status: { $in: pageOptions.examStatus },
       }),
       ...(uid && {
-        $or: [{ create_by: uid }],
+        $and: [
+          {
+            create_by: uid,
+          },
+        ],
       }),
     };
 
@@ -98,9 +111,7 @@ export class ExamService {
     answerLabel: string,
   ) {
     return questions.map((question, index) => {
-      let answerIds = [];
-
-      answerIds = this.handleAnswersLabel(
+      const answerIds = this.handleAnswersLabel(
         question.answers.map(({ id }) => id),
         answerLabel,
       );
@@ -108,7 +119,7 @@ export class ExamService {
       const answers = [];
 
       answerIds.map((answer) => {
-        const isAnswer = question.answers.find(
+        const isAnswer: AnswerEntity = question.answers.find(
           ({ id }) => id === answer.answerId,
         );
 
@@ -129,28 +140,42 @@ export class ExamService {
   async create(data: CreateExamPaperDto): Promise<ExamEntity[]> {
     const { lessonId, createBy } = data;
     const exams: any = [];
-    await this.lessonService.findAvailable(lessonId, createBy);
-    const questsInfo: IDetailChapter[] = await Promise.all(
-      data.questionInfo.map(
-        async (info) =>
-          await this.questionService.validateQuestions(
-            lessonId,
-            info,
-            createBy,
-          ),
-      ),
+    const lesson = await this.lessonService.detailLesson(lessonId, createBy);
+
+    const chapter: IChapterQuestion[] = await Promise.all(
+      data.questionIds.map(async (questionId) => {
+        const { chapterId, question } = await this.chapterService.getQuiz(
+          questionId,
+          data.createBy,
+        );
+
+        return { chapterId, question };
+      }),
     );
-    const listQuestions = questsInfo.map((info) => info.questions).flat();
-    const scales = await this.questionService.getQuestionRate(listQuestions);
+
+    chapter.map(({ chapterId }) => {
+      const isChapter = lesson.chapters.some(
+        (chapter) => chapter.id === chapterId,
+      );
+      if (!isChapter)
+        throw new BusinessException(
+          ErrorEnum.RECORD_NOT_FOUND,
+          `Chapter ${chapterId}`,
+        );
+    });
+
+    const classifyQuizzes = this.classifyQuestions(chapter);
+    const scales = await this.getQuestionRate(classifyQuizzes);
+    const listQuestions = chapter.map(({ question }) => question);
 
     for (let i = 0; i < data.numberExams; i++) {
-      const randQuestions =
-        await this.questionService.randomQuestions(listQuestions);
-      const questions: any = this.handleQuestionLabel(
+      const randQuestions = this.randomQuestions(listQuestions);
+      const questions: any[] = this.handleQuestionLabel(
         randQuestions,
         data.questionLabel,
         data.answerLabel,
       );
+
       const newExam = new ExamEntity({
         label: data.label,
         time: data.time,
@@ -173,14 +198,74 @@ export class ExamService {
     }
 
     const createExams = this.examRepo.create(exams);
-    const newExams = await this.examRepo.save(createExams);
 
-    await this.lessonService.addExams(
-      lessonId,
-      newExams.map((exam) => exam.id),
-    );
+    await this.lessonService.addExams(lessonId, createExams);
 
-    return newExams;
+    return createExams;
+  }
+
+  randomQuestions(
+    questions: QuestionEntity[],
+    quantity: number = questions.length,
+  ): QuestionEntity[] {
+    const handleQuestions: QuestionEntity[] = shuffle(questions);
+
+    questions.map(({ id, answers }) => {
+      const index = handleQuestions.findIndex((quest) => quest.id === id);
+      handleQuestions[index]['answers'] = shuffle(answers);
+    });
+
+    return handleQuestions.slice(0, quantity);
+  }
+
+  // Phân loại danh sách câu hỏi
+  classifyQuestions(data: IChapterQuestion[]): IClassifyQuestion[] {
+    const result: IClassifyQuestion[] = [];
+
+    data.map(({ chapterId, question }) => {
+      const idxChap = result.findIndex((info) => info.chapterId === chapterId);
+
+      if (idxChap > -1) {
+        const idxLv = result[idxChap].info.findIndex(
+          (info) => info.level === question.level,
+        );
+
+        if (idxLv > -1) {
+          result[idxChap].info[idxLv].questions.push(question);
+        } else {
+          result[idxChap].info.push({
+            level: question.level,
+            questions: [question],
+          });
+        }
+      } else {
+        result.push({
+          chapterId: chapterId,
+          info: [{ level: question.level, questions: [question] }],
+        });
+      }
+    });
+
+    return result;
+  }
+
+  async getQuestionRate(data: IClassifyQuestion[]): Promise<IScale[]> {
+    const totalQuestions = data.length;
+    const scales: IScale[] = [];
+
+    data.map(({ chapterId, info }) => {
+      info.map(({ level, questions }) => {
+        scales.push({
+          chapterId,
+          level,
+          percent: Number(
+            ((questions.length * 100) / totalQuestions).toFixed(2),
+          ),
+        });
+      });
+    });
+
+    return scales;
   }
 
   handleScale(scales: IScale[]): IScale[] {
@@ -205,7 +290,7 @@ export class ExamService {
   async generate(data: GenerateExamPaperDto): Promise<ExamEntity[]> {
     const listExams: ExamEntity[] = [];
     const { scales, totalQuestions, numberExams } = data;
-    const lesson = await this.lessonService.findAvailable(
+    const lesson = await this.lessonService.detailLesson(
       data.lessonId,
       data.createBy,
     );
@@ -220,7 +305,8 @@ export class ExamService {
           !lesson.chapters.find((chapter) => chapter.id === scale.chapterId)
         ) {
           throw new BusinessException(
-            `400:Không có chương ${scale.chapterId} trong học phần này!`,
+            ErrorEnum.RECORD_NOT_FOUND,
+            `Chapter ${scale.chapterId}`,
           );
         }
       }),
@@ -236,8 +322,7 @@ export class ExamService {
 
     for (let i = 0; i < numberExams; i++) {
       // Trộn câu hỏi và đáp án của từng câu
-      const mixedQuestions =
-        await this.questionService.randomQuestions(listQuestions);
+      const mixedQuestions = this.randomQuestions(listQuestions);
 
       const questions: any[] = this.handleQuestionLabel(
         mixedQuestions,
@@ -269,14 +354,30 @@ export class ExamService {
     }
 
     const createExams = this.examRepo.create(listExams);
-    const newExams = await this.examRepo.save(createExams);
 
-    await this.lessonService.addExams(
-      data.lessonId,
-      newExams.map(({ id }) => id),
+    await this.lessonService.addExams(data.lessonId, createExams);
+
+    return createExams;
+  }
+
+  async updateQuiz(quizId: string, data: any) {
+    const exams = await this.findByQuestionId(quizId);
+    console.log(exams);
+    await Promise.all(
+      exams.map(async (exam) => {
+        const newQuiz = data;
+        const quizzes = exam.questions.filter((quiz) => {
+          if (quiz.id === quizId) {
+            newQuiz['label'] = quiz.label;
+          } else {
+            return quiz;
+          }
+        });
+
+        console.log(quizzes, newQuiz);
+      }),
     );
-
-    return newExams;
+    return true;
   }
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
@@ -294,7 +395,10 @@ export class ExamService {
       const questions: any[] = Array(isExisted.questions.length);
       await Promise.all(
         isExisted.questions.map(async (question, index) => {
-          const isQuestion = await this.questionService.findOne(question.id);
+          const isQuestion = await this.chapterService.getQuiz(
+            question.id,
+            question.create_by,
+          );
           if (!answerLabel) {
             answerLabel = question.answers[0].label;
           }
@@ -376,7 +480,7 @@ export class ExamService {
   async deleteMany(ids: string[], uid: string): Promise<string> {
     await Promise.all(
       ids.map(async (id) => {
-        const isExisted = await this.findOne(id);
+        const isExisted = await this.lessonService.findByExamId(id);
         if (isExisted.create_by !== uid) {
           throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
         }
@@ -394,7 +498,6 @@ export class ExamService {
       }
     }
 
-    await this.examRepo.deleteMany({ id: { $in: ids } });
     return '200:Xóa thành công';
   }
 }

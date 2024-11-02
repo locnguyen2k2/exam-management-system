@@ -18,13 +18,13 @@ import {
 
 import * as _ from 'lodash';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import { searchIndexes } from '~/utils/search';
-import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { pipeLine } from '~/utils/pipe-line';
 import { QuestionService } from '~/modules/system/question/question.service';
-import { paginate } from '~/helpers/paginate/paginate';
 import { ChapterPagination } from '~/modules/system/chapter/dtos/chapter-res.dto';
+import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
+import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
+import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 
 @Injectable()
 export class ChapterService {
@@ -39,7 +39,6 @@ export class ChapterService {
 
   async findAll(
     uid: string = null,
-    lessonId: string = null,
     pageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ) {
     const filterOptions = {
@@ -84,11 +83,9 @@ export class ChapterService {
   }
 
   async findAvailableChapterById(id: string, uid?: string): Promise<any> {
-    const chapter = await this.chapterRepo
-      .aggregate([{ $match: { id } }])
-      .toArray();
+    const chapter = await this.findOne(id);
 
-    if (chapter.length > 0 && (!uid || (uid && chapter[0].create_by === uid)))
+    if (chapter && (!uid || (uid && chapter.create_by === uid)))
       return chapter[0];
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
@@ -109,14 +106,101 @@ export class ChapterService {
     if (isExisted) return isExisted;
   }
 
-  async findAvailable(): Promise<ChapterEntity[]> {
-    return await this.chapterRepo.findBy({
-      enable: true,
-      status: StatusShareEnum.PUBLIC,
-    });
+  async updateQuiz(chapterId: string, question: any): Promise<ChapterEntity> {
+    const isExisted = await this.findOne(chapterId);
+
+    const listQuestions: QuestionEntity[] = isExisted.questions.filter(
+      (isQuestion) => {
+        if (isQuestion.id !== question.id) return isQuestion;
+      },
+    );
+
+    await this.chapterRepo.update(
+      { id: chapterId },
+      { questions: [...listQuestions, question] },
+    );
+
+    return await this.findOne(chapterId);
   }
 
-  async findAvailableById(id: string, uid: string): Promise<ChapterEntity> {
+  async getQuiz(
+    questionId: string,
+    uid: string,
+  ): Promise<{ chapterId: string; question: QuestionEntity }> {
+    const isExisted = await this.chapterRepo.findOne({
+      where: {
+        'questions.id': questionId,
+        create_by: uid,
+      },
+    });
+
+    if (!isExisted)
+      throw new BusinessException(
+        ErrorEnum.RECORD_NOT_FOUND,
+        `Question ${questionId}`,
+      );
+
+    const question = isExisted.questions.map((question) => {
+      if (question.id === questionId) return question;
+    })[0];
+
+    return { chapterId: isExisted.id, question };
+  }
+
+  async findByQuizContent(content: string): Promise<ChapterEntity> {
+    const handleContent = content
+      .replace(regSpecialChars, '\\$&')
+      .replace(regWhiteSpace, '\\s*');
+
+    const isExisted = await this.chapterRepo.findOne({
+      where: {
+        'questions.content': { $regex: handleContent, $options: 'i' },
+      },
+    });
+
+    if (isExisted) return isExisted;
+  }
+
+  async getRamdomQuestions(
+    chapterId: string,
+    level: LevelEnum,
+    quantity: number,
+    uid: string,
+  ) {
+    const { questions } = (
+      await this.chapterRepo
+        .aggregate([
+          {
+            $match: {
+              id: chapterId,
+              create_by: uid,
+              'questions.level': level,
+            },
+          },
+          {
+            $project: {
+              questions: {
+                $filter: {
+                  input: '$questions',
+                  as: 'question',
+                  cond: {
+                    $and: [{ $eq: ['$$question.level', level] }],
+                  },
+                },
+              },
+            },
+          },
+          { $unwind: '$questions' },
+          { $sample: { size: quantity } },
+          { $group: { _id: '$id', questions: { $push: '$questions' } } },
+        ])
+        .toArray()
+    )[0];
+
+    return questions;
+  }
+
+  async findAvailable(id: string, uid: string): Promise<ChapterEntity> {
     const isExisted = await this.findOne(id);
     if (isExisted && isExisted.enable && isExisted.create_by === uid)
       return isExisted;
@@ -124,19 +208,21 @@ export class ChapterService {
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
-  async lessonHasChapter(
-    lessonId: string,
-    chapterId: string,
-  ): Promise<boolean> {
-    const lesson = await this.lessonService.findOne(lessonId);
+  async addQuestions(chapterId: string, questions: QuestionEntity[]) {
+    await this.chapterRepo.findOneAndUpdate(
+      { id: chapterId },
+      {
+        $push: { questions: { $each: questions } },
+      },
+    );
 
-    return lesson.chapters.some(({ id }) => id === chapterId);
+    return true;
   }
 
   async create(data: CreateChaptersDto): Promise<ChapterEntity[]> {
     const newChapters: ChapterEntity[] = [];
     const lessonChapters: {
-      chapters: ChapterEntity[];
+      chapterIds: string[];
       lessonId: string;
     }[] = [];
 
@@ -187,12 +273,12 @@ export class ChapterService {
           if (index === -1) {
             lessonChapters.push({
               lessonId: lesson.id,
-              chapters: [newChapter],
+              chapterIds: [newChapter.id],
             });
           } else {
-            !lessonChapters[index].chapters.find(
-              ({ id }) => id === newChapter.id,
-            ) && lessonChapters[index].chapters.push(newChapter);
+            !lessonChapters[index].chapterIds.find(
+              (chapterId) => chapterId === newChapter.id,
+            ) && lessonChapters[index].chapterIds.push(newChapter.id);
           }
         }
 
@@ -204,14 +290,14 @@ export class ChapterService {
 
     const result = await this.chapterRepo.save(createChapters);
 
-    lessonChapters.map(async ({ lessonId, chapters }) => {
-      const listChapter = chapters.map((chapter) =>
-        result.find(({ id }) => chapter.id === id),
+    lessonChapters.map(async ({ lessonId, chapterIds }) => {
+      const listChapterId = chapterIds.map(
+        (chapterId) => result.find(({ id }) => chapterId === id).id,
       );
       const lesson = await this.lessonService.findOne(lessonId);
       await this.lessonService.updateChapters(lessonId, [
-        ...lesson.chapters,
-        ...listChapter,
+        ...lesson.chapterIds,
+        ...listChapterId,
       ]);
     });
 
@@ -220,9 +306,9 @@ export class ChapterService {
 
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {
     const isExisted = await this.findOne(id);
-    let oldLesson = null;
+    let oldLesson: LessonEntity;
+    let newLesson: LessonEntity;
     let oldChapters = [];
-    let newLesson = null;
     let newChapters = [];
 
     if (isExisted.create_by !== data.updateBy) {
@@ -242,24 +328,24 @@ export class ChapterService {
         data.updateBy,
       );
 
-      const isReplaced = newLesson.chapters.find(
-        (chapter) => chapter.id === id,
+      const isReplaced = newLesson.chapterIds.find(
+        (chapterId) => chapterId === id,
       );
 
       if (!isReplaced) {
         oldLesson = (await this.lessonService.findByChapter(isExisted.id))[0];
 
         if (oldLesson?.id) {
-          if (oldLesson?.chapters && oldLesson.chapters.length > 0) {
-            oldChapters = oldLesson.chapters.filter(
-              (chapter) => chapter.id !== id,
+          if (oldLesson.chapterIds && oldLesson.chapterIds.length > 0) {
+            oldChapters = oldLesson.chapterIds.filter(
+              (chapterId) => chapterId !== id,
             );
           }
         }
 
-        if (newLesson?.chapters && newLesson.chapters.length > 0) {
-          newChapters = newLesson.chapters.filter(
-            (chapter) => chapter.id !== id,
+        if (newLesson.chapterIds && newLesson.chapterIds.length > 0) {
+          newChapters = newLesson.chapterIds.filter(
+            (chapterId) => chapterId !== id,
           );
         }
       }
@@ -284,10 +370,26 @@ export class ChapterService {
     newLesson &&
       (await this.lessonService.updateChapters(newLesson.id, [
         ...newChapters,
-        isExisted,
+        isExisted.id,
       ]));
 
     return result;
+  }
+
+  async updateChapterQuizzes(
+    chapterId: string,
+    quizzes: QuestionEntity[],
+  ): Promise<ChapterEntity> {
+    await this.chapterRepo.update(
+      {
+        id: chapterId,
+      },
+      {
+        questions: quizzes,
+      },
+    );
+
+    return await this.findOne(chapterId);
   }
 
   async enable(data: EnableChaptersDto): Promise<string> {
@@ -345,8 +447,8 @@ export class ChapterService {
         const lessons = await this.lessonService.findByChapter(id);
         await Promise.all(
           lessons.map(async (lesson) => {
-            const newChapters = lesson.chapters.filter(
-              (chapter) => chapter.id !== id,
+            const newChapters = lesson.chapterIds.filter(
+              (chapterId) => chapterId !== id,
             );
             await this.lessonService.updateChapters(lesson.id, newChapters);
           }),

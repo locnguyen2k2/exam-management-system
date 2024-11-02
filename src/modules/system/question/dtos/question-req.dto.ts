@@ -63,7 +63,7 @@ class QuestionBaseDto extends BaseDto {
     description:
       'Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.',
   })
-  quantity: number;
+  quantityWrongAnswers: number;
 
   @Field(() => [AnswerBaseDto!]!, {
     description:

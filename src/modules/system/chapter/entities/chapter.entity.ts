@@ -2,6 +2,7 @@ import { Column, Entity } from 'typeorm';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 
 @ObjectType()
 @Entity('chapter_entity')
@@ -29,6 +30,13 @@ export class ChapterEntity extends ExtendedEntity {
     default: StatusShareEnum.PRIVATE,
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
+
+  @Field(() => [QuestionEntity], {
+    nullable: true,
+    defaultValue: [],
+  })
+  @Column('json', { array: true })
+  questions: QuestionEntity[] = [];
 
   constructor(chapterEntity: Partial<ChapterEntity>) {
     super();

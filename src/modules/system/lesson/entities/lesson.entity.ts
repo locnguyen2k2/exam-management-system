@@ -24,9 +24,9 @@ export class LessonEntity extends ExtendedEntity {
   @Column('enum', { enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [ChapterEntity])
-  @Column('json', { array: true, default: [] })
-  chapters: ChapterEntity[] = [];
+  @Field(() => [String])
+  @Column('string', { array: true, default: [] })
+  chapterIds: string[] = [];
 
   @Field(() => [ExamEntity])
   @Column('json', { array: true, default: [] })

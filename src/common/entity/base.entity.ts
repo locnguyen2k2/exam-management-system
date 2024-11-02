@@ -30,17 +30,15 @@ export abstract class BaseEntity extends NestedBaseEntity {
   @CreateDateColumn({
     name: 'created_at',
     type: 'date',
-    default: new Date().toISOString(),
   })
-  created_at: string;
+  created_at: string = new Date().toISOString();
 
   @Field(() => String, { name: 'updatedAt' })
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'date',
-    default: new Date().toISOString(),
   })
-  updated_at: string;
+  updated_at: string = new Date().toISOString();
 }
 
 @ObjectType()

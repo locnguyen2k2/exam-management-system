@@ -15,7 +15,7 @@ import {
 
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
-import { QuestionService } from '~/modules/system/question/question.service';
+// import { QuestionService } from '~/modules/system/question/question.service';
 import { paginate } from '~/helpers/paginate/paginate';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 
@@ -24,8 +24,8 @@ export class AnswerService {
   constructor(
     @InjectRepository(AnswerEntity)
     private readonly answerRepo: MongoRepository<AnswerEntity>,
-    @Inject(forwardRef(() => QuestionService))
-    private readonly questionService: QuestionService,
+    // @Inject(forwardRef(() => QuestionService))
+    // private readonly questionService: QuestionService,
   ) {}
 
   async findAll(uid: string = null, pageOptions: PageOptionDto) {

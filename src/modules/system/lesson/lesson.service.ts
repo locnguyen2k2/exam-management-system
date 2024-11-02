@@ -27,6 +27,22 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ErrorEnum } from '~/common/enums/error.enum';
 
+const defaultLookup = [
+  {
+    $lookup: {
+      from: 'chapter_entity',
+      localField: 'chapterIds',
+      foreignField: 'id',
+      as: 'chapters',
+    },
+  },
+  {
+    $addFields: {
+      chapter: { $arrayElemAt: ['$chapter', 0] },
+    },
+  },
+];
+
 @Injectable()
 export class LessonService {
   constructor(
@@ -55,13 +71,17 @@ export class LessonService {
         status: { $in: pageOptions.lessonStatus },
       }),
       ...(uid && {
-        $or: [{ create_by: uid }],
+        $and: [
+          {
+            create_by: uid,
+          },
+        ],
       }),
     };
 
     const pipes = [
       searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
+      ...pipeLine(pageOptions, filterOptions, defaultLookup),
     ];
 
     const [{ data, pageInfo }]: any[] = await this.lessonRepo
@@ -108,8 +128,25 @@ export class LessonService {
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
-  async detailLesson(id: string, uid: string): Promise<any> {
-    const isExisted = await this.findAvailable(id, uid);
+  async detailLesson(id: string, uid: string): Promise<LessonDetailDto> {
+    await this.findAvailable(id, uid);
+    const isExisted = (
+      await this.lessonRepo
+        .aggregate([
+          ...defaultLookup,
+          {
+            $match: { id: id },
+          },
+        ])
+        .toArray()
+    )[0];
+
+    const listClass = await this.classService.findByLesson(isExisted.id);
+    listClass.forEach((isClass) => {
+      delete isClass.lessons;
+    });
+
+    isExisted['classes'] = listClass;
     isExisted['classes'] = await this.classService.findByLesson(isExisted.id);
     return isExisted;
   }
@@ -149,7 +186,7 @@ export class LessonService {
 
         if (!_.isEmpty(lesson.classIds)) {
           for (const classId of lesson.classIds) {
-            await this.classService.findAvailableById(classId, data.createBy);
+            await this.classService.findAvailable(classId, data.createBy);
             const index = classLessons.findIndex(
               (classLesson) => classLesson.classId === classId,
             );
@@ -216,7 +253,8 @@ export class LessonService {
     if (!_.isNil(data.examIds)) {
       await Promise.all(
         data.examIds.map(async (examId) => {
-          exams.push(await this.examService.findOne(examId));
+          const isExam = await this.findByExamId(examId);
+          exams.push(isExam.exams.find((exam) => exam.id === examId));
         }),
       );
     }
@@ -239,7 +277,7 @@ export class LessonService {
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
       for (const classId of data.classIds) {
-        const newClass = await this.classService.findAvailableById(
+        const newClass = await this.classService.findAvailable(
           classId,
           data.updateBy,
         );
@@ -248,6 +286,10 @@ export class LessonService {
           !isReplaced && newClassIds.push(classId);
         }
       }
+    }
+
+    if (!_.isNil(data.examIds)) {
+      await this.classService.updateLessonExams(id, exams);
     }
 
     await this.lessonRepo.update(
@@ -275,10 +317,8 @@ export class LessonService {
     return result;
   }
 
-  async addExams(lessonId: string, examIds: string[]): Promise<boolean> {
-    const exams = await Promise.all(
-      examIds.map(async (id) => await this.examService.findOne(id)),
-    );
+  async addExams(lessonId: string, exams: ExamEntity[]): Promise<boolean> {
+    await this.findAvailable(lessonId, exams[0].create_by);
 
     await this.lessonRepo.findOneAndUpdate(
       { id: lessonId },
@@ -286,6 +326,9 @@ export class LessonService {
         $push: { exams: { $each: exams } },
       },
     );
+
+    await this.classService.addLessonExams(lessonId, exams);
+
     return true;
   }
 
@@ -319,14 +362,11 @@ export class LessonService {
     return listLessons;
   }
 
-  async updateChapters(
-    id: string,
-    chapters: ChapterEntity[],
-  ): Promise<boolean> {
+  async updateChapters(id: string, chapterIds: string[]): Promise<boolean> {
     await this.lessonRepo.update(
       { id },
       {
-        chapters: chapters,
+        chapterIds: chapterIds,
       },
     );
 

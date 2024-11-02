@@ -95,8 +95,8 @@ export class CreateExamPaperDto extends BaseExamDto {
   @HideField()
   scales: Scale[];
 
-  @Field(() => [QuestionInfoDto])
-  questionInfo: QuestionInfoDto[];
+  @Field(() => [String])
+  questionIds: string[];
 
   @HideField()
   createBy: string;

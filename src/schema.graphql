@@ -174,11 +174,6 @@ type ExamQuestionAnswerModel {
   label: String!
 }
 
-type answers {
-  data: [AnswerModel!]!
-  meta: pagination!
-}
-
 type ChapterEntity {
   id: String!
 
@@ -204,6 +199,7 @@ type ChapterEntity {
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum
+  questions: [QuestionModel!]
 }
 
 enum StatusShareEnum {
@@ -234,11 +230,9 @@ type QuestionModel {
   """Chú thích"""
   remark: String
 
-  """Chương"""
-  chapter: ChapterEntity!
-
   """Cấp độ câu hỏi"""
   level: LevelEnum!
+  chapter: ChapterEntity!
 
   """Trạng thái"""
   status: StatusShareEnum
@@ -292,11 +286,9 @@ type ExamQuestionModel {
   """Chú thích"""
   remark: String
 
-  """Chương"""
-  chapter: ChapterEntity!
-
   """Cấp độ câu hỏi"""
   level: LevelEnum!
+  chapter: ChapterEntity!
 
   """Trạng thái"""
   status: StatusShareEnum
@@ -357,7 +349,7 @@ type LessonDefaultFields {
   name: String!
   description: String!
   status: StatusShareEnum!
-  chapters: [ChapterEntity!]!
+  chapterIds: [String!]!
   exams: [ExamModel!]!
 }
 
@@ -512,16 +504,10 @@ type Query {
   examDetail(id: String!): ExamModel!
 
   """Lấy danh sách câu hỏi"""
-  questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
+  questions(chapterId: String!, questionPageOptions: QuestionPageOptions): QuestionPagination!
 
   """Chi tiết câu hỏi"""
   questionDetail(questionId: String!): QuestionModel!
-
-  """Lấy chi tiết đáp án"""
-  answer(answerId: String!): AnswerModel!
-
-  """Lấy danh sách đáp án"""
-  answers(answerPageOptions: pageOptionArgs): answers!
 
   """Lấy danh sách lớp"""
   classes(classPageOptions: ClassPageOptions): ClassPagination!
@@ -644,19 +630,6 @@ input QuestionPageOptions {
   questionCategory: [CategoryEnum!]
 }
 
-input pageOptionArgs {
-  keyword: String = ""
-
-  """Trường sắp xếp (Mặc định ngày tạo)"""
-  sort: String = "created_at"
-
-  """Thứ tự sắp xếp (Mặc định giảm dần)"""
-  sorted: Boolean = false
-  enable: Boolean
-  page: Int = 1
-  take: Int = 10
-}
-
 input ClassPageOptions {
   keyword: String = ""
 
@@ -669,6 +642,9 @@ input ClassPageOptions {
   page: Int = 1
   take: Int = 10
   classStatus: [StatusShareEnum!]
+
+  """Tên lớp"""
+  lessonIds: [String!]!
 }
 
 type Mutation {
@@ -773,19 +749,10 @@ type Mutation {
   enableQuestions(enableQuestionsArgs: EnableQuestionsArgs!): [QuestionModel!]!
 
   """Cập nhật câu hỏi"""
-  updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): String!
+  updateQuestionsStatus(updateQuestionStatusArgs: UpdateQuestionStatusArgs!): [QuestionModel!]!
 
   """Xóa danh sách câu hỏi"""
   deleteQuestions(questionIds: [String!]!): String!
-
-  """Tạo danh sách các câu hỏi"""
-  createAnswers(createAnswersArgs: CreateAnswersDto!): [AnswerModel!]!
-
-  """Cập nhật câu hỏi"""
-  updateAnswer(id: String!, updateAnswerArgs: UpdateAnswerArgs!): AnswerModel!
-
-  """Xóa danh sách các câu hỏi"""
-  deleteAnswers(answerIds: [String!]!): String!
 
   """Tạo lớp"""
   createClass(createClassArgs: CreateClassArgs!): ClassModel!
@@ -1060,7 +1027,7 @@ input CreateExamPaperArgs {
 
   """Số lượng đề muốn random từ đề gốc đã nhập"""
   numberExams: Float = 1
-  questionInfo: [QuestionInfoArgs!]!
+  questionIds: [String!]!
 }
 
 enum QuestionLabelEnum {
@@ -1076,11 +1043,6 @@ enum AnswerLabelEnum {
   UP_DOT
   UP_COLON
   UP_BRACKET
-}
-
-input QuestionInfoArgs {
-  chapterId: String!
-  questionIds: [String!]!
 }
 
 input GenerateExamPaperArgs {
@@ -1151,7 +1113,7 @@ input QuestionArgs {
   """
   Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
   """
-  quantity: Int
+  quantityWrongAnswers: Int
 
   """
   Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
@@ -1187,7 +1149,7 @@ input UpdateQuestionArgs {
   """
   Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
   """
-  quantity: Int
+  quantityWrongAnswers: Int
 
   """
   Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
@@ -1211,24 +1173,6 @@ input UpdateQuestionStatusArgs {
 input QuestionStatusDto {
   questionId: String!
   status: StatusShareEnum!
-}
-
-input CreateAnswersDto {
-  items: [CreateAnswerArgs!]!
-}
-
-input UpdateAnswerArgs {
-  enable: Boolean
-
-  """
-  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
-  """
-  value: String
-  isCorrect: Boolean = false
-  score: Float
-
-  """Chú thích"""
-  remark: String
 }
 
 input CreateClassArgs {

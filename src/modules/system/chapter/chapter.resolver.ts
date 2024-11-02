@@ -39,7 +39,6 @@ export class ChapterResolver {
     );
     return this.chapterService.findAll(
       isAdmin ? null : user.id,
-      null,
       chapterPageOptions,
     );
   }
@@ -61,7 +60,6 @@ export class ChapterResolver {
 
     return this.chapterService.findAll(
       isAdmin ? null : user.id,
-      lessonId,
       chapterPageOptions,
     );
   }

@@ -31,7 +31,7 @@ export class LessonResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
     pageOptions: LessonPageOptions = new LessonPageOptions(),
-  ): Promise<LessonPaginationDto> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );

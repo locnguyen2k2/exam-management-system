@@ -9,7 +9,6 @@ import {
 } from '~/modules/system/class/dtos/class-req.dto';
 import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
 import * as _ from 'lodash';
-import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { searchIndexes } from '~/utils/search';
 import { pipeLine } from '~/utils/pipe-line';
 import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
@@ -21,6 +20,7 @@ import {
 } from '~/common/constants/regex.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
+import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 
 @Injectable()
 export class ClassService {
@@ -42,6 +42,9 @@ export class ClassService {
       ...(!_.isEmpty(pageOptions.classStatus) && {
         status: { $in: pageOptions.classStatus },
       }),
+      ...(!_.isEmpty(pageOptions.lessonIds) && {
+        'lessons.id': { $all: pageOptions.lessonIds },
+      }),
       ...(uid && {
         $or: [{ create_by: uid }],
       }),
@@ -54,15 +57,6 @@ export class ClassService {
     const [{ data, pageInfo }]: any[] = await this.classRepo
       .aggregate(pipes)
       .toArray();
-
-    if (data.length > 0) {
-      for (const item of data) {
-        await this.classRepo.updateOne(
-          { id: item.id },
-          { $unset: { lessonIds: '' } },
-        );
-      }
-    }
 
     const entities = data;
     const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
@@ -96,15 +90,12 @@ export class ClassService {
     return await this.classRepo.find({ 'lessons.id': { $in: [lessonId] } });
   }
 
-  async getAvaliable(id: string, uid: string): Promise<ClassEntity> {
+  async findAvailable(id: string, uid: string): Promise<ClassEntity> {
     const isExisted = await this.findOne(id);
 
     if (isExisted.create_by === uid) return isExisted;
 
-    if (
-      isExisted.enable === true &&
-      isExisted.status === StatusShareEnum.PUBLIC
-    )
+    if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
       return isExisted;
 
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
@@ -120,14 +111,6 @@ export class ClassService {
     });
 
     if (isExisted) return isExisted;
-  }
-
-  async findAvailableById(id: string, uid?: string): Promise<ClassEntity> {
-    const isExisted = await this.findOne(id);
-
-    if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
-      return isExisted;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async create(data: CreateClassDto): Promise<ClassEntity> {
@@ -148,13 +131,6 @@ export class ClassService {
         lessons.push(
           await this.lessonService.findAvailable(lessonId, data.createBy),
         );
-
-        // const newLessonClassIds = [...isLesson.classIds, newItem.id];
-
-        // await this.lessonService.updateLessonClasses(
-        //   isLesson.id,
-        //   newLessonClassIds,
-        // );
       }
     }
 
@@ -163,8 +139,42 @@ export class ClassService {
     return await this.classRepo.save(newItem);
   }
 
+  async addLessonExams(lessonId: string, exams: ExamEntity[]) {
+    const listClass = await this.findByLesson(lessonId);
+
+    await Promise.all(
+      listClass.map(async ({ id }) => {
+        await this.classRepo.findOneAndUpdate(
+          { id, 'lessons.id': lessonId },
+          {
+            $push: {
+              'lessons.$.exams': { $each: exams },
+            },
+          },
+        );
+      }),
+    );
+  }
+
+  async updateLessonExams(lessonId: string, exams: ExamEntity[]) {
+    const listClass = await this.findByLesson(lessonId);
+
+    await Promise.all(
+      listClass.map(async ({ id }) => {
+        await this.classRepo.findOneAndUpdate(
+          { id: id, 'lessons.id': lessonId },
+          {
+            $set: {
+              'lessons.$.exams': exams,
+            },
+          },
+        );
+      }),
+    );
+  }
+
   async update(id: string, data: UpdateClassDto): Promise<ClassEntity> {
-    const isExisted = await this.getAvaliable(id, data.updateBy);
+    const isExisted = await this.findAvailable(id, data.updateBy);
     const lessons: LessonEntity[] = [];
 
     if (!_.isEmpty(data.name)) {

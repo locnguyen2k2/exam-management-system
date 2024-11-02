@@ -9,7 +9,7 @@ import {
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
 } from '~/modules/system/question/dtos/question-req.dto';
-import { AnswerService } from '~/modules/system/answer/answer.service';
+// import { AnswerService } from '~/modules/system/answer/answer.service';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
@@ -20,7 +20,6 @@ import {
 import { searchIndexes } from '~/utils/search';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
-import { QuestionInfoDto } from '~/modules/system/exam/dtos/exam-req.dto.';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { ImageService } from '~/modules/system/image/image.service';
@@ -31,6 +30,7 @@ import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { v4 as uuid } from 'uuid';
 import { paginate } from '~/helpers/paginate/paginate';
+import { shuffle } from '~/utils/shuffle';
 
 export interface IClassifyQuestion {
   chapterId: string;
@@ -44,16 +44,18 @@ export class QuestionService {
     private readonly questionRepo: MongoRepository<QuestionEntity>,
     @Inject(forwardRef(() => ExamService))
     private readonly examService: ExamService,
-    private readonly answerService: AnswerService,
+    // private readonly answerService: AnswerService,
     private readonly chapterService: ChapterService,
     private readonly imageService: ImageService,
   ) {}
 
   async findAll(
     uid: string,
+    chapterId: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
     const filterOptions = {
+      id: chapterId,
       ...(!_.isEmpty(pageOptions.questionCategory) && {
         category: { $in: pageOptions.questionCategory },
       }),
@@ -79,10 +81,10 @@ export class QuestionService {
   }
 
   async detailQuestion(id: string, uid: string): Promise<QuestionEntity> {
-    const isExisted = await this.findOne(id);
+    const isExisted = await this.findOne(id, uid);
 
-    if (isExisted[0].create_by === uid) {
-      return isExisted[0];
+    if (isExisted) {
+      return isExisted;
     }
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
@@ -93,72 +95,68 @@ export class QuestionService {
     });
   }
 
-  async findOne(id: string): Promise<QuestionEntity> {
-    const isExisted = await this.questionRepo.findOneBy({ id });
-    if (isExisted) return isExisted;
+  async findOne(id: string, uid: string): Promise<QuestionEntity> {
+    const { question } = await this.chapterService.getQuiz(id, uid);
+    if (question) return question;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  async findByContent(content: string): Promise<QuestionEntity> {
+  async isReplacedContent(
+    content: string,
+    uid: string,
+  ): Promise<QuestionEntity> {
     const handleContent = content
       .replace(regSpecialChars, '\\$&')
       .replace(regWhiteSpace, '\\s*');
+
     const isExisted = await this.questionRepo.findOneBy({
       content: { $regex: handleContent, $options: 'i' },
     });
+
+    if (isExisted && isExisted.create_by === uid)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, content);
+
     if (isExisted) return isExisted;
   }
 
-  async findAvailable(id: string, uid: string): Promise<QuestionEntity> {
-    const isExisted = await this.findOne(id);
-    if (isExisted.create_by === uid) return isExisted;
-
-    throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
-  }
-
   async beforeAddQuestion(data: any) {
-    const listQuestion: any[] = [];
-    await Promise.all(
-      data.questions.map(async (questionData: any) => {
-        await this.chapterService.findAvailableById(
-          questionData.chapterId,
-          data.createBy,
-        );
+    const listQuestion = [];
 
-        const isExisted = await this.findByContent(questionData.content);
-        if (isExisted && isExisted.create_by === data.createBy)
-          throw new BusinessException(
-            `400:Nội dung câu hỏi "${questionData.content}" đã tồn tại`,
-          );
+    await this.chapterService.findAvailable(data.chapterId, data.createBy);
 
-        const countCorrectAnswers = questionData.answers.filter(
-          (answer: AnswerEntity) => answer.isCorrect,
-        );
-
-        if (
-          questionData.category !== CategoryEnum.MULTIPLE_CHOICE &&
-          countCorrectAnswers.length > 1
-        ) {
-          throw new BusinessException(
-            '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng (isCorrect = true)!',
-          );
-        }
-
-        if (
-          listQuestion.find(
-            (quest: any) =>
-              quest.content.toLowerCase().replace(/\s/g, '') ===
-              questionData.content.toLowerCase().replace(/\s/g, ''),
-          )
-        ) {
-          throw new BusinessException(
-            `400:Nội dung câu hỏi ${questionData.content} bị trùng!`,
-          );
-        }
-
-        listQuestion.push(questionData);
-      }),
+    const isReplaced = await this.chapterService.findByQuizContent(
+      data.content,
     );
+
+    if (isReplaced && isReplaced.id === data.chapterId)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${data.content}`);
+
+    const countCorrectAnswers = data.answers.filter(
+      (answer: AnswerEntity) => answer.isCorrect,
+    );
+
+    if (
+      data.category !== CategoryEnum.MULTIPLE_CHOICE &&
+      countCorrectAnswers.length > 1
+    ) {
+      throw new BusinessException(
+        '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng (isCorrect = true)!',
+      );
+    }
+
+    if (
+      listQuestion.find(
+        (quest: any) =>
+          quest.content.toLowerCase().replace(/\s/g, '') ===
+          data.content.toLowerCase().replace(/\s/g, ''),
+      )
+    ) {
+      throw new BusinessException(
+        `400:Nội dung câu hỏi ${data.content} bị trùng!`,
+      );
+    }
+
+    listQuestion.push(data);
   }
 
   classifyAnswers(answers: any): {
@@ -220,75 +218,62 @@ export class QuestionService {
     return listValue;
   }
 
-  handleFillInContent(content: string): string[] {
+  handleFillInContent(content: string): number {
     const listValue = content.split('[__]');
-    let isDeleted = 0;
-    for (let i = listValue.length - 1; i >= 0; i--) {
-      if (_.isEmpty(listValue[i])) {
-        if (isDeleted === 0) {
-          if (i !== 0) {
-            isDeleted += 1;
-            listValue.splice(i, 1);
-          }
-        } else {
-          throw new BusinessException(
-            '400:Giữa 2 ô trống [__][__] phải có nội dung hoặc dấu ngắt câu!',
-          );
-        }
-      } else {
-        if (isDeleted === 1) {
-          isDeleted -= 1;
-        }
-      }
-    }
-
-    return listValue;
+    if (listValue.length === 0)
+      throw new BusinessException(
+        '400:Nội dung phải có ít nhất 1 ô trống ([__])',
+      );
+    return listValue.length - 1;
   }
 
-  handleFillInAnswers(quantity: number, correctAnswer: AnswerBaseDto) {
-    if (correctAnswer) {
-      if (quantity > this.maxFillInAnswers(correctAnswer))
-        throw new BusinessException(
-          `400:${this.maxFillInAnswers(correctAnswer)} là số đáp án tối đa`,
-        );
-
-      const listAnswers: any[] = [];
-      const listCorrectValue = this.handleFillInAnswerValue(
-        correctAnswer.value,
+  randFillInWrongAnswers(quantity: number, correctAnswer: AnswerBaseDto) {
+    if (quantity > this.maxFillInAnswers(correctAnswer) - 1)
+      throw new BusinessException(
+        `400:${this.maxFillInAnswers(correctAnswer) - 1} là số đáp án nhiễu tối đa`,
       );
 
-      while (listAnswers.length < quantity) {
-        const shuffledValues = this.shuffle(listCorrectValue);
-        const wrongValue = shuffledValues.reduce(
-          (acc: string, curr: string) => acc + `${curr}[__]`,
-          '',
-        );
+    const listAnswers: any[] = [];
+    const listCorrectValue = this.handleFillInAnswerValue(correctAnswer.value);
 
-        const isDuplicate = listAnswers.some(
-          (answer) => answer.value === wrongValue,
-        );
+    while (listAnswers.length < quantity) {
+      const shuffledValues = shuffle(listCorrectValue);
+      const wrongValue = shuffledValues.reduce(
+        (acc: string, curr: string) => acc + `${curr}[__]`,
+        '',
+      );
 
-        // Ensure no duplicates and that wrongValue does not match correctAnswer.value
-        if (!isDuplicate && wrongValue !== correctAnswer.value) {
-          listAnswers.push({
-            isCorrect: false,
-            enable: correctAnswer.enable,
-            value: wrongValue,
-            remark: null,
-            score: null,
-          });
-        }
+      const isDuplicate = listAnswers.some(
+        (answer) => answer.value === wrongValue,
+      );
+
+      if (!isDuplicate && wrongValue !== correctAnswer.value) {
+        listAnswers.push({
+          isCorrect: false,
+          enable: correctAnswer.enable,
+          value: wrongValue,
+          remark: null,
+          score: null,
+        });
       }
-
-      return { correctAnswers: [correctAnswer], wrongAnswers: listAnswers };
     }
+
+    return { correctAnswers: [correctAnswer], wrongAnswers: listAnswers };
   }
 
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
-    const questionsInfo: QuestionEntity[] = [];
+    const questionsInfo: { chapterId: string; question: QuestionEntity }[] = [];
 
-    // Kiểm tra chương, nội dung câu hỏi
-    await this.beforeAddQuestion(data);
+    // Kiểm tra câu hỏi
+    await Promise.all(
+      data.questions.map(
+        async (questionData: any) =>
+          await this.beforeAddQuestion({
+            ...questionData,
+            createBy: data.createBy,
+          }),
+      ),
+    );
 
     await Promise.all(
       data.questions.map(async (questionData, index) => {
@@ -298,36 +283,29 @@ export class QuestionService {
           throw new BusinessException('400:Phải có ít nhất 1 đáp án đúng!');
 
         if (questionData.category === CategoryEnum.FILL_IN) {
-          const isContent = this.handleFillInContent(questionData.content);
+          const quantityValue = this.handleFillInContent(questionData.content);
 
-          if (questionData.content.split('[__]').length === 1) {
-            throw new BusinessException(
-              '400:Nội dung phải có ít nhất 1 chổ trống ký hiệu: [__] để điền giá trị đúng',
-            );
-          }
-
-          if (!_.isNil(questionData.quantity)) {
+          if (!_.isNil(questionData.quantityWrongAnswers)) {
             if (
               answers.correctAnswers[0].value.startsWith('[__]') ||
               !answers.correctAnswers[0].value.endsWith('[__]')
-            ) {
+            )
               throw new BusinessException(
                 '400:Đáp án đúng câu hỏi điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
               );
-            }
 
             if (
-              isContent.length !==
+              quantityValue !==
               this.handleFillInAnswerValue(answers.correctAnswers[0].value)
                 .length
             ) {
               throw new BusinessException(
-                `400:Đáp án không được quá ${isContent.length} giá trị ([__])!`,
+                `400:Đáp án không được quá ${quantityValue} giá trị ([__])!`,
               );
             }
 
-            answers = this.handleFillInAnswers(
-              questionData.quantity,
+            answers = this.randFillInWrongAnswers(
+              questionData.quantityWrongAnswers,
               answers.correctAnswers[0],
             );
           } else {
@@ -356,145 +334,110 @@ export class QuestionService {
           (answer) => new AnswerEntity({ ...answer }),
         );
         let picture = '';
-        const chapter = await this.chapterService.findAvailableChapterById(
-          chapterId,
-          data.createBy,
-        );
-        delete questionData.chapterId;
 
         if (questionData.picture) {
           picture += await this.imageService.uploadImage(questionData.picture);
         }
 
-        const question = new QuestionEntity({
+        const initial = new QuestionEntity({
           ...questionData,
-          chapter,
           answers: [...new Set(answerEntitties)],
           ...(!_.isEmpty(questionData.picture) && { picture: picture }),
           create_by: data.createBy,
           update_by: data.createBy,
         });
 
-        questionsInfo.push(question);
+        const question = this.questionRepo.create(initial);
+
+        questionsInfo.push({ chapterId, question });
       }),
-    );
-
-    const newQuestions = this.questionRepo.create(questionsInfo);
-
-    return await this.questionRepo.save(newQuestions);
-  }
-
-  // Phân loại danh sách câu hỏi
-  async classifyQuestions(
-    data: QuestionEntity[],
-  ): Promise<IClassifyQuestion[]> {
-    const levelClassification: IClassifyQuestion[] = [];
-
-    data.map((question) => {
-      const indexChapter = levelClassification.findIndex(
-        (classifyLevel) => classifyLevel.chapterId === question.chapter.id,
-      );
-
-      if (indexChapter > -1) {
-        const indexLevel = levelClassification[indexChapter].info.findIndex(
-          (classifyLevel) => classifyLevel.level === question.level,
-        );
-
-        if (indexLevel > -1) {
-          levelClassification[indexChapter].info[indexLevel].questions.push(
-            question,
-          );
-        } else {
-          levelClassification[indexChapter].info.push({
-            level: question.level,
-            questions: [question],
-          });
-        }
-      } else {
-        levelClassification.push({
-          chapterId: question.chapter.id,
-          info: [{ level: question.level, questions: [question] }],
-        });
-      }
-    });
-
-    return levelClassification;
-  }
-
-  async getQuestionRate(questions: QuestionEntity[]): Promise<IScale[]> {
-    const classifyQuestions = await this.classifyQuestions(questions);
-    const totalQuestions = questions.length;
-    const scales: IScale[] = [];
-
-    classifyQuestions.map(({ chapterId, info }) => {
-      info.map(({ level, questions }) => {
-        scales.push({
-          chapterId,
-          level,
-          percent: Number(
-            ((questions.length * 100) / totalQuestions).toFixed(2),
-          ),
-        });
-      });
-    });
-
-    return scales;
-  }
-
-  async validateQuestions(
-    lessonId: string,
-    data: QuestionInfoDto,
-    uid: string,
-  ): Promise<any> {
-    const { chapterId, questionIds } = data;
-    const questions: QuestionEntity[] = [];
-    const chapter = await this.chapterService.findAvailableChapterById(
-      chapterId,
-      uid,
     );
 
     await Promise.all(
-      questionIds.map(async (id) => {
-        const question = await this.findAvailable(id, uid);
-        if (question.chapter.id !== chapterId)
-          throw new BusinessException(
-            `400:Câu hỏi ${id} không có trong chương ${chapterId}`,
-          );
-
-        if (!(await this.chapterService.lessonHasChapter(lessonId, chapterId)))
-          throw new BusinessException(
-            `400:Học phần ${lessonId} không có ${chapterId}`,
-          );
-
-        questions.push(question);
-      }),
+      questionsInfo.map(
+        async ({ chapterId, question }) =>
+          await this.chapterService.addQuestions(chapterId, [question]),
+      ),
     );
 
-    return { chapter, questions };
+    return questionsInfo.map(({ question }) => question);
   }
 
+  // async validateQuestions(
+  //   lessonId: string,
+  //   data: QuestionInfoDto,
+  //   uid: string,
+  // ): Promise<any> {
+  //   const { chapterId, questionIds } = data;
+  //   const questions: QuestionEntity[] = [];
+  //   const chapter = await this.chapterService.findAvailableChapterById(
+  //     chapterId,
+  //     uid,
+  //   );
+  //
+  //   await Promise.all(
+  //     questionIds.map(async (id) => {
+  //       const question = await this.findAvailable(id, uid);
+  //       if (question.chapter.id !== chapterId)
+  //         throw new BusinessException(
+  //           `400:Câu hỏi ${id} không có trong chương ${chapterId}`,
+  //         );
+  //
+  //       if (!(await this.chapterService.lessonHasChapter(lessonId, chapterId)))
+  //         throw new BusinessException(
+  //           `400:Học phần ${lessonId} không có ${chapterId}`,
+  //         );
+  //
+  //       questions.push(question);
+  //     }),
+  //   );
+  //
+  //   return { chapter, questions };
+  // }
+
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
-    const isExisted = await this.findAvailable(id, data.updateBy);
-    let chapter = null;
-
-    // const listAnswers: string[] = [];
-    // const correctAnswers: CorrectAnswerIdsDto[] = [];
+    const { chapterId, question } = await this.chapterService.getQuiz(
+      id,
+      data.updateBy,
+    );
     let picture = '';
+    let newQuestions = [];
+    let oldQuestions = [];
+    const newQuestion = question;
 
-    if (data.content) {
-      const isReplaced = await this.findByContent(data.content);
-      if (isReplaced.id !== id && isReplaced.create_by === data.updateBy)
-        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.content);
-    }
-
-    if (data.chapterId) {
-      chapter = await this.chapterService.findAvailableById(
+    if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
+      const newChapter = await this.chapterService.findAvailable(
         data.chapterId,
         data.updateBy,
       );
+      const oldChapter = await this.chapterService.findAvailable(
+        chapterId,
+        data.updateBy,
+      );
+
+      oldQuestions = oldChapter.questions.filter((question) => {
+        if (question.id !== id) return question;
+      });
+      newQuestions = newChapter.questions.filter((question) => question);
     }
 
-    const category = data.category ? data.category : isExisted.category;
+    // if (data.content) {
+    //   const isReplaced = await this.chapterService.findByQuizContent(
+    //     data.content,
+    //   );
+    //
+    //   if (
+    //     isReplaced &&
+    //     isReplaced.id !== isExisted.chapterId &&
+    //     isReplaced.create_by === isExisted.question.create_by
+    //   ) {
+    //     throw new BusinessException(
+    //       ErrorEnum.RECORD_EXISTED,
+    //       `${data.content}`,
+    //     );
+    //   }
+    // }
+    // const category = data.category ? data.category : isExisted.category;
 
     // if (
     //   category !== CategoryEnum.MULTIPLE_CHOICE &&
@@ -544,104 +487,137 @@ export class QuestionService {
     // }
 
     if (data.picture) {
-      if (!_.isEmpty(isExisted.picture)) {
-        await this.imageService.deleteImage(isExisted.picture);
+      if (!_.isEmpty(question.picture)) {
+        await this.imageService.deleteImage(question.picture);
       }
       picture += await this.imageService.uploadImage(data.picture);
     }
 
-    const { affected } = await this.questionRepo.update(
-      { id },
-      {
-        // ...(data.label && { label: data.label }),
-        ...(data.content && { content: data.content }),
-        ...(data.chapterId && { chapter }),
-        ...(data.level && { level: data.level }),
-        ...(data.status && { status: data.status }),
-        ...(data.category && { category: data.category }),
-        // ...(correctAnswers.length > 0 && { correctAnswerIds: correctAnswers }),
-        // ...(listAnswers.length > 0 && { answerIds: listAnswers }),
-        ...(!_.isEmpty(picture) && { picture: picture }),
-        ...(!_.isNil(data?.enable) && { enable: data.enable }),
-        update_by: data.updateBy,
-      },
+    newQuestion.update_by = data.updateBy;
+    if (!_.isEmpty(data.content)) newQuestion.content = data.content;
+    if (data.level) newQuestion.level = data.level;
+    if (data.status) newQuestion.status = data.status;
+    if (!_.isEmpty(data.remark)) newQuestion.remark = data.remark;
+    if (!_.isEmpty(picture)) newQuestion.picture = picture;
+    if (!_.isNil(data?.enable)) newQuestion.enable = data.enable;
+    // ...(data.category && { category: data.category }),
+    // ...(correctAnswers.length > 0 && { correctAnswerIds: correctAnswers }),
+    // ...(listAnswers.length > 0 && { answerIds: listAnswers }),
+
+    await this.chapterService.updateQuiz(chapterId, newQuestion);
+
+    await this.examService.updateQuiz(id, newQuestions);
+
+    if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
+      await this.chapterService.updateChapterQuizzes(chapterId, oldQuestions);
+      await this.chapterService.updateChapterQuizzes(data.chapterId, [
+        ...newQuestions,
+        newQuestion,
+      ]);
+    }
+
+    const newQuiz = await this.chapterService.getQuiz(
+      question.id,
+      data.updateBy,
     );
-    return affected ? await this.findOne(id) : isExisted;
+
+    return newQuiz.question;
   }
 
   async enableQuestions(data: EnableQuestionsDto): Promise<QuestionEntity[]> {
-    const listQuestions: QuestionEntity[] = [];
+    const listQuestions: { chapterId: string; question: QuestionEntity }[] = [];
     await Promise.all(
-      data.questionsEnable.map(async (questionEnable: any) => {
-        const isExisted = await this.findOne(questionEnable.questionId);
-        if (isExisted) {
-          if (isExisted.create_by !== data.updateBy) {
-            throw new BusinessException(ErrorEnum.NO_PERMISSON, isExisted.id);
+      data.questionsEnable.map(async ({ questionId, enable }: any) => {
+        const { chapterId, question } = await this.chapterService.getQuiz(
+          questionId,
+          data.updateBy,
+        );
+        if (question) {
+          if (question.create_by !== data.updateBy) {
+            throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
           }
-          isExisted.enable = questionEnable.enable;
-          listQuestions.push(isExisted);
+          question.enable = enable;
+          listQuestions.push({ chapterId, question });
         }
       }),
     );
 
     await Promise.all(
-      data.questionsEnable.map(async ({ questionId, enable }) => {
-        await this.questionRepo.update(
-          { id: questionId },
-          { enable, update_by: data.updateBy },
-        );
+      listQuestions.map(async ({ chapterId, question }) => {
+        await this.chapterService.updateQuiz(chapterId, question);
       }),
     );
 
-    return listQuestions;
+    return listQuestions.map(({ question }) => question);
   }
 
-  async updateStatus(data: UpdateQuestionStatusDto): Promise<string> {
-    await Promise.all(
-      data.questionsStatus.map(async ({ questionId }) => {
-        const isExisted = await this.findOne(questionId);
-        if (isExisted.create_by !== data.updateBy) {
-          throw new BusinessException(ErrorEnum.NO_PERMISSON, questionId);
-        }
-      }),
-    );
+  async updateStatus(data: UpdateQuestionStatusDto): Promise<QuestionEntity[]> {
+    const listQuestions: { chapterId: string; question: QuestionEntity }[] = [];
 
     await Promise.all(
       data.questionsStatus.map(async ({ questionId, status }) => {
-        await this.questionRepo.update(
-          { id: questionId },
-          { status, update_by: data.updateBy },
+        const { chapterId, question } = await this.chapterService.getQuiz(
+          questionId,
+          data.updateBy,
         );
-      }),
-    );
-
-    return 'Cập nhật thành công!';
-  }
-
-  async deleteMany(ids: string[], uid: string): Promise<string> {
-    const listQuestion: string[] = [];
-    const listIds: string[] = [];
-
-    await Promise.all(
-      ids.map(async (id) => {
-        const index = listIds.findIndex((questId) => questId === id);
-        if (index === -1) {
-          await this.findAvailable(id, uid);
-          listIds.push(id);
+        if (question) {
+          if (question.create_by !== data.updateBy) {
+            throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
+          }
+          question.status = status;
+          listQuestions.push({ chapterId, question });
         }
       }),
     );
 
     await Promise.all(
-      ids.map(async (id) => {
-        const isExisted = await this.examService.findByQuestionId(id);
-        if (isExisted.length !== 0)
-          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
-        listQuestion.push(id);
+      listQuestions.map(async ({ chapterId, question }) => {
+        await this.chapterService.updateQuiz(chapterId, question);
       }),
     );
 
-    await this.questionRepo.deleteMany({ id: { $in: listQuestion } });
+    return listQuestions.map(({ question }) => question);
+  }
+
+  async deleteMany(ids: string[], uid: string): Promise<string> {
+    const listQuestions: { chapterId: string; question: QuestionEntity }[] = [];
+
+    await Promise.all(
+      ids.map(async (id) => {
+        const index = listQuestions.findIndex(
+          ({ question }) => question.id === id,
+        );
+
+        if (index === -1) {
+          const { chapterId, question } = await this.chapterService.getQuiz(
+            id,
+            uid,
+          );
+          listQuestions.push({ chapterId, question });
+        }
+      }),
+    );
+
+    await Promise.all(
+      listQuestions.map(async ({ question }) => {
+        const isExisted = await this.examService.findByQuestionId(question.id);
+        if (isExisted.length !== 0)
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, question.id);
+      }),
+    );
+
+    for (const { chapterId, question } of listQuestions) {
+      const chapter = await this.chapterService.findOne(chapterId);
+      const newQuestions = chapter.questions.filter(
+        ({ id }) => id !== question.id,
+      );
+
+      await this.chapterService.updateChapterQuizzes(chapterId, newQuestions);
+    }
+
+    await this.questionRepo.deleteMany({
+      id: { $in: listQuestions.map(({ question }) => question.id) },
+    });
     throw new BusinessException('200:Xoá thành công!');
   }
 
@@ -682,55 +658,14 @@ export class QuestionService {
     quantity: number,
     uid: string,
   ): Promise<IDetailChapter> {
-    const chapter = await this.chapterService.findAvailableById(chapterId, uid);
-    const questions = await this.questionRepo
-      .aggregate([
-        {
-          $match: {
-            'chapter.id': chapter.id,
-            level: level,
-            create_by: uid,
-          },
-        },
-        { $sample: { size: quantity } },
-      ])
-      .toArray();
-
-    return { chapter, questions };
-  }
-
-  shuffle(arr: any[]): any[] {
-    let i = arr.length;
-    let j: any;
-    let temp: any;
-
-    while (--i > 0) {
-      j = Math.floor(Math.random() * (i + 1));
-      temp = arr[j];
-      arr[j] = arr[i];
-      arr[i] = temp;
-    }
-
-    return arr;
-  }
-
-  async randomQuestions(
-    questions: QuestionEntity[],
-    quantity: number = questions.length,
-  ): Promise<QuestionEntity[]> {
-    const handleQuestions: QuestionEntity[] = this.shuffle(questions);
-
-    await Promise.all(
-      questions.map(async ({ id, answers }) => {
-        const oldAnswers = answers;
-        const handleAnswers = this.shuffle(oldAnswers.map(({ id }) => id));
-        const index = handleQuestions.findIndex((quest) => quest.id === id);
-        handleQuestions[index]['answers'] = handleAnswers.map((id) =>
-          oldAnswers.find((answer) => answer.id === id),
-        );
-      }),
+    const chapter = await this.chapterService.findAvailable(chapterId, uid);
+    const questions = await this.chapterService.getRamdomQuestions(
+      chapterId,
+      level,
+      quantity,
+      uid,
     );
 
-    return handleQuestions.slice(0, quantity);
+    return { chapter, questions };
   }
 }

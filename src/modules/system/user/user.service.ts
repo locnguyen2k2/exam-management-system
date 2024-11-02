@@ -20,6 +20,7 @@ import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { pipeLine } from '~/utils/pipe-line';
 import { ImageService } from '~/modules/system/image/image.service';
+import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class UserService {
@@ -31,9 +32,7 @@ export class UserService {
     private readonly imageService: ImageService,
   ) {}
 
-  async findAll(
-    pageOptions: UserPageOptions = new UserPageOptions(),
-  ): Promise<UserPagination> {
+  async findAll(pageOptions: UserPageOptions = new UserPageOptions()) {
     const emailPatterns =
       !_.isEmpty(pageOptions.email) &&
       pageOptions.email.map((domain) => new RegExp(`${domain}$`, 'i'));
@@ -54,23 +53,11 @@ export class UserService {
       }),
     };
 
-    const pipes = [
+    return paginate(
+      this.userRepository,
+      { pageOptions, filterOptions },
       searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
-    ];
-
-    const [{ data, pageInfo }]: any[] = await this.userRepository
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-
-    return new UserPagination(entities, pageMetaDto);
+    );
   }
 
   async findOne(id: string): Promise<UserEntity> {

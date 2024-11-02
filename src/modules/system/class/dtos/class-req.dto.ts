@@ -8,6 +8,9 @@ import { MaxLength } from 'class-validator';
 export class ClassPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], { nullable: true })
   classStatus: StatusShareEnum[];
+
+  @Field(() => [String], { description: 'Tên lớp' })
+  lessonIds: string[];
 }
 
 @InputType()

@@ -15,6 +15,7 @@ import { PermissionEnum } from '~/modules/system/permission/permission.constant'
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { plainToClass } from 'class-transformer';
+import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Resolver('User')
 export class UserResolver {
@@ -28,7 +29,7 @@ export class UserResolver {
   async users(
     @Args('userPageOptions', { nullable: true })
     userPagination: UserPageOptions = new UserPageOptions(),
-  ): Promise<UserPagination> {
+  ): Promise<PageDto<UserEntity>> {
     return await this.userService.findAll(userPagination);
   }
 
