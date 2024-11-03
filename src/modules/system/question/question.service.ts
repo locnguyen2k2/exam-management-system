@@ -17,7 +17,6 @@ import {
   regSpecialChars,
   regWhiteSpace,
 } from '~/common/constants/regex.constant';
-import { searchIndexes } from '~/utils/search';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
@@ -29,7 +28,6 @@ import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { v4 as uuid } from 'uuid';
-import { paginate } from '~/helpers/paginate/paginate';
 import { shuffle } from '~/utils/shuffle';
 
 export interface IClassifyQuestion {
@@ -54,30 +52,16 @@ export class QuestionService {
     chapterId: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
-    const filterOptions = {
-      id: chapterId,
-      ...(!_.isEmpty(pageOptions.questionCategory) && {
-        category: { $in: pageOptions.questionCategory },
-      }),
-      ...(!_.isEmpty(pageOptions.questionLevel) && {
-        level: { $in: pageOptions.questionLevel },
-      }),
-      ...(!_.isEmpty(pageOptions.questionStatus) && {
-        status: { $in: pageOptions.questionStatus },
-      }),
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      ...(uid && {
-        $or: [{ create_by: uid }],
-      }),
-    };
-
-    return paginate(
-      this.questionRepo,
-      { pageOptions, filterOptions },
-      searchIndexes(pageOptions.keyword),
+    const paginated = await this.chapterService.findQuizzes(
+      chapterId,
+      pageOptions,
+      uid,
     );
+
+    return {
+      data: paginated.data[0] ? paginated.data[0].questions : [],
+      meta: paginated.meta,
+    };
   }
 
   async detailQuestion(id: string, uid: string): Promise<QuestionEntity> {
@@ -356,7 +340,7 @@ export class QuestionService {
     await Promise.all(
       questionsInfo.map(
         async ({ chapterId, question }) =>
-          await this.chapterService.addQuestions(chapterId, [question]),
+          await this.chapterService.addQuizzes(chapterId, [question]),
       ),
     );
 
@@ -396,13 +380,13 @@ export class QuestionService {
   // }
 
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
+    let picture = '';
+    let newQuestions = [];
+    let oldQuestions = [];
     const { chapterId, question } = await this.chapterService.getQuiz(
       id,
       data.updateBy,
     );
-    let picture = '';
-    let newQuestions = [];
-    let oldQuestions = [];
     const newQuestion = question;
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
@@ -509,8 +493,8 @@ export class QuestionService {
     await this.examService.updateQuiz(id, newQuestions);
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
-      await this.chapterService.updateChapterQuizzes(chapterId, oldQuestions);
-      await this.chapterService.updateChapterQuizzes(data.chapterId, [
+      await this.chapterService.updateQuizzes(chapterId, oldQuestions);
+      await this.chapterService.updateQuizzes(data.chapterId, [
         ...newQuestions,
         newQuestion,
       ]);
@@ -612,7 +596,7 @@ export class QuestionService {
         ({ id }) => id !== question.id,
       );
 
-      await this.chapterService.updateChapterQuizzes(chapterId, newQuestions);
+      await this.chapterService.updateQuizzes(chapterId, newQuestions);
     }
 
     await this.questionRepo.deleteMany({
@@ -659,7 +643,7 @@ export class QuestionService {
     uid: string,
   ): Promise<IDetailChapter> {
     const chapter = await this.chapterService.findAvailable(chapterId, uid);
-    const questions = await this.chapterService.getRamdomQuestions(
+    const questions = await this.chapterService.randQuizzes(
       chapterId,
       level,
       quantity,

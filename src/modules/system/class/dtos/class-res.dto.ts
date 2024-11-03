@@ -1,9 +1,8 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { IsArray } from 'class-validator';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
+import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
 
 @ObjectType('ClassSimpleFields')
 export class ClassSimpleDto extends ExtendedEntity {
@@ -30,16 +29,4 @@ export class ClassSimpleDto extends ExtendedEntity {
 }
 
 @ObjectType('ClassPagination')
-export class ClassPaginationDto {
-  @Field(() => [ClassEntity])
-  @IsArray()
-  readonly data: ClassEntity[];
-
-  @Field(() => PageMetaDto)
-  readonly meta: PageMetaDto;
-
-  constructor(data: ClassEntity[], meta: PageMetaDto) {
-    this.data = data;
-    this.meta = meta;
-  }
-}
+export class ClassPaginationDto extends createPaginatedType(ClassEntity) {}

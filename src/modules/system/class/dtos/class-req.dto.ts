@@ -9,7 +9,7 @@ export class ClassPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], { nullable: true })
   classStatus: StatusShareEnum[];
 
-  @Field(() => [String], { description: 'Tên lớp' })
+  @Field(() => [String], { description: 'Mã lớp', nullable: true })
   lessonIds: string[];
 }
 

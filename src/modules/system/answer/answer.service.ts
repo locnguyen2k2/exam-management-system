@@ -29,14 +29,18 @@ export class AnswerService {
   ) {}
 
   async findAll(uid: string = null, pageOptions: PageOptionDto) {
-    const filterOptions = {
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      ...(uid && {
-        $or: [{ create_by: uid }],
-      }),
-    };
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(uid && {
+            $or: [{ create_by: uid }],
+          }),
+        },
+      },
+    ];
 
     return paginate(
       this.answerRepo,

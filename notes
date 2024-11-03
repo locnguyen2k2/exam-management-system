@@ -1,0 +1,3 @@
+Index Database (MongoDB)
+- Không thể tạo chỉ mục cho 2 Array,
+- Prefix rules (tiền tố) truy vấn trong mongoDB từ: Buộc phải có chỉ mục ngoài cùng bên trái

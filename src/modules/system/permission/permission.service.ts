@@ -32,22 +32,26 @@ export class PermissionService {
   async findAll(
     pageOptions: PermissionPageOptions = new PermissionPageOptions(),
   ) {
-    const filterOptions = {
-      ...(!_.isEmpty(pageOptions.value) && {
-        value: {
-          $regex: pageOptions.value
-            .replace(regSpecialChars, '\\$&')
-            .replace(regWhiteSpace, '\\s*'),
-          $options: 'i',
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isEmpty(pageOptions.value) && {
+            value: {
+              $regex: pageOptions.value
+                .replace(regSpecialChars, '\\$&')
+                .replace(regWhiteSpace, '\\s*'),
+              $options: 'i',
+            },
+          }),
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(!_.isNil(pageOptions.permissionStatus) && {
+            status: pageOptions.permissionStatus,
+          }),
         },
-      }),
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      ...(!_.isNil(pageOptions.permissionStatus) && {
-        status: pageOptions.permissionStatus,
-      }),
-    };
+      },
+    ];
 
     return paginate(
       this.permissionRepository,

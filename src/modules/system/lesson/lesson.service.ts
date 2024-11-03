@@ -7,13 +7,9 @@ import {
   EnableLessonsDto,
   LessonPageOptions,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
-import {
-  LessonDetailDto,
-  LessonPaginationDto,
-} from '~/modules/system/lesson/dtos/lesson-res.dto';
+import { LessonDetailDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import {
   regSpecialChars,
@@ -21,11 +17,11 @@ import {
 } from '~/common/constants/regex.constant';
 import { ExamService } from '~/modules/system/exam/exam.service';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
-import { pipeLine } from '~/utils/pipe-line';
 import { ClassService } from '~/modules/system/class/class.service';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ErrorEnum } from '~/common/enums/error.enum';
+import { paginate } from '~/helpers/paginate/paginate';
 
 const defaultLookup = [
   {
@@ -59,53 +55,48 @@ export class LessonService {
   async findAll(
     uid: string,
     pageOptions: LessonPageOptions = new LessonPageOptions(),
-  ): Promise<LessonPaginationDto> {
-    const filterOptions = {
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      // ...(!_.isEmpty(pageOptions.classIds) && {
-      //   classIds: { $in: pageOptions.classIds },
-      // }),
-      ...(!_.isEmpty(pageOptions.lessonStatus) && {
-        status: { $in: pageOptions.lessonStatus },
-      }),
-      ...(uid && {
-        $and: [
-          {
-            create_by: uid,
-          },
-        ],
-      }),
-    };
-
-    const pipes = [
-      searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions, defaultLookup),
+  ) {
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(!_.isEmpty(pageOptions.lessonStatus) && {
+            status: { $all: pageOptions.lessonStatus },
+          }),
+          ...(uid && {
+            $and: [
+              {
+                create_by: uid,
+              },
+            ],
+          }),
+        },
+      },
     ];
 
-    const [{ data, pageInfo }]: any[] = await this.lessonRepo
-      .aggregate(pipes)
-      .toArray();
+    const paginated = await paginate(
+      this.lessonRepo,
+      { pageOptions, filterOptions, lookups: defaultLookup },
+      searchIndexes(pageOptions.keyword),
+    );
+
+    const detailLessons = [];
 
     await Promise.all(
-      data.map(async (lesson) => {
+      paginated.data.map(async (lesson) => {
         const listClass = await this.classService.findByLesson(lesson.id);
-        listClass.forEach((isClass) => {
-          delete isClass.lessons;
-        });
 
-        lesson['classes'] = listClass;
+        const detailLesson = {
+          ...lesson,
+          classes: listClass,
+        };
+        detailLessons.push(detailLesson);
       }),
     );
 
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-
-    return new LessonPaginationDto(data, pageMetaDto);
+    return { data: detailLessons, meta: paginated.meta };
   }
 
   async findByName(name: string): Promise<LessonEntity> {
@@ -160,7 +151,7 @@ export class LessonService {
   async findByChapter(chapterId: string): Promise<LessonEntity[]> {
     return await this.lessonRepo.find({
       where: {
-        'chapters.id': {
+        chapterIds: {
           $all: [chapterId],
         },
       },
@@ -232,6 +223,7 @@ export class LessonService {
   async update(id: string, data: any): Promise<LessonDetailDto> {
     const isExisted = await this.findOne(id);
     const newClassIds: string[] = [];
+    const oldClassIds: string[] = [];
     const exams: ExamEntity[] = [];
 
     if (isExisted.create_by !== data.updateBy) {
@@ -264,7 +256,7 @@ export class LessonService {
     if (!_.isNil(data.chapterIds)) {
       await Promise.all(
         data.chapterIds.map(async (chapterId) => {
-          const chapter = await this.chapterService.findAvailableChapterById(
+          const chapter = await this.chapterService.findAvailable(
             chapterId,
             data.createBy,
           );
@@ -276,16 +268,18 @@ export class LessonService {
     }
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
-      for (const classId of data.classIds) {
-        const newClass = await this.classService.findAvailable(
-          classId,
-          data.updateBy,
-        );
-        if (!newClass.lessons.find((lesson) => lesson.id === id)) {
-          const isReplaced = newClassIds.some((itemId) => itemId === classId);
-          !isReplaced && newClassIds.push(classId);
-        }
-      }
+      await Promise.all(
+        data.classIds.map(async (classId) => {
+          const newClass = await this.classService.findAvailable(
+            classId,
+            data.updateBy,
+          );
+          if (!newClass.lessons.find((lesson) => lesson.id === id)) {
+            const isReplaced = newClassIds.some((itemId) => itemId === classId);
+            !isReplaced && newClassIds.push(classId);
+          }
+        }),
+      );
     }
 
     if (!_.isNil(data.examIds)) {
@@ -309,9 +303,11 @@ export class LessonService {
     const result = await this.detailLesson(id, data.updateBy);
 
     if (!_.isEmpty(data.classIds)) {
-      for (const classId of newClassIds) {
-        await this.classService.updateClassLessons(classId, [id]);
-      }
+      await Promise.all(
+        newClassIds.map(async (classId) => {
+          await this.classService.updateClassLessons(classId, [id]);
+        }),
+      );
     }
 
     return result;

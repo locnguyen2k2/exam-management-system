@@ -1,36 +1,37 @@
 import * as _ from 'lodash';
 
-export function pipeLine(
-  pageOptions: any,
-  filterOptions: any,
-  lookups?: any[],
-) {
-  return !_.isNil(lookups)
+export interface IPipeLine {
+  filterOptions: any[];
+  groups?: any[];
+  pageOptions: any;
+  lookups?: any[];
+}
+
+export function pipeLine({
+  filterOptions,
+  groups,
+  pageOptions,
+  lookups,
+}: IPipeLine) {
+  const paginate = !_.isNull(groups)
     ? [
-        {
-          $facet: {
-            data: [
-              ...lookups,
-              { $match: filterOptions },
-              { $skip: pageOptions.skip },
-              { $limit: pageOptions.take },
-              { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-            ],
-            pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-          },
-        },
+        { $skip: pageOptions.skip },
+        { $limit: pageOptions.take },
+        { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
       ]
-    : [
-        {
-          $facet: {
-            data: [
-              { $match: filterOptions },
-              { $skip: pageOptions.skip },
-              { $limit: pageOptions.take },
-              { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-            ],
-            pageInfo: [{ $match: filterOptions }, { $count: 'numberRecords' }],
-          },
-        },
-      ];
+    : null;
+
+  return [
+    {
+      $facet: {
+        data: [
+          ...filterOptions,
+          ...(!Array.isArray(groups) ? paginate : []),
+          ...(Array.isArray(lookups) ? lookups : []),
+          ...(Array.isArray(groups) ? groups : []),
+        ],
+        pageInfo: [...filterOptions, { $count: 'numberRecords' }],
+      },
+    },
+  ];
 }

@@ -5,7 +5,6 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
-import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
 
 @ObjectType('ChapterModel')
 export class ChapterDetailDto extends ExtendedEntity {
@@ -28,7 +27,7 @@ export class ChapterDetailDto extends ExtendedEntity {
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [QuestionEntity])
+  @Field(() => [QuestionEntity], { nullable: true })
   questions: QuestionEntity[];
 }
 

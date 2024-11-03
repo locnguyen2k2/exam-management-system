@@ -4,9 +4,7 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
-import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
-import { QuestionCorrectAnswerDto } from '~/modules/system/answer/dtos/answer-res.dto';
 
 @ObjectType('QuestionModel')
 @Entity('question_entity')
@@ -30,10 +28,6 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => Boolean, { nullable: true, description: 'Trạng thái kích hoạt' })
   @Column({ type: 'boolean' })
   enable: boolean = false;
-
-  @Field(() => ChapterEntity)
-  @Column('json')
-  chapter: ChapterEntity;
 
   @Field(() => StatusShareEnum, {
     nullable: true,

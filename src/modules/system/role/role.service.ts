@@ -34,14 +34,18 @@ export class RoleService {
   ) {}
 
   async findAll(pageOptions: RolePageOptions = new RolePageOptions()) {
-    const filterOptions = {
-      ...(!_.isEmpty(pageOptions.value) && {
-        value: { $in: pageOptions.value },
-      }),
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-    };
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isEmpty(pageOptions.value) && {
+            value: { $in: pageOptions.value },
+          }),
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+        },
+      },
+    ];
 
     return paginate(
       this.roleRepository,

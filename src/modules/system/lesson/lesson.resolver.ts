@@ -17,6 +17,7 @@ import {
   LessonPaginationDto,
 } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
+import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Resolver('Lessons')
 export class LessonResolver {
@@ -31,7 +32,7 @@ export class LessonResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
     pageOptions: LessonPageOptions = new LessonPageOptions(),
-  ) {
+  ): Promise<PageDto<LessonDetailDto>> {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );

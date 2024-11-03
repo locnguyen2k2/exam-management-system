@@ -53,7 +53,7 @@ export class ChapterResolver {
     @Args('lessonId') lessonId: string,
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
-  ): Promise<ChapterPagination> {
+  ): Promise<PageDto<ChapterDetailDto>> {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
@@ -86,7 +86,7 @@ export class ChapterResolver {
     @Args('chapterId') id: string,
     @CurrentUser() user: IAuthPayload,
   ): Promise<ChapterDetailDto> {
-    return this.chapterService.findAvailableChapterById(id, user.id);
+    return this.chapterService.findAvailable(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)

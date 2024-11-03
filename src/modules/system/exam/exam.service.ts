@@ -48,21 +48,25 @@ export class ExamService {
     uid: string = null,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
   ) {
-    const filterOptions = {
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      ...(!_.isEmpty(pageOptions.examStatus) && {
-        status: { $in: pageOptions.examStatus },
-      }),
-      ...(uid && {
-        $and: [
-          {
-            create_by: uid,
-          },
-        ],
-      }),
-    };
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(!_.isEmpty(pageOptions.examStatus) && {
+            status: { $in: pageOptions.examStatus },
+          }),
+          ...(uid && {
+            $and: [
+              {
+                create_by: uid,
+              },
+            ],
+          }),
+        },
+      },
+    ];
 
     return paginate(
       this.examRepo,

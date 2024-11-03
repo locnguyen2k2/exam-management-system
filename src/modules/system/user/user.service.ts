@@ -2,11 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { UserEntity } from '~/modules/system/user/entities/user.entity';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
-import {
-  UserPagination,
-  UserProfile,
-} from '~/modules/system/user/dtos/user-res.dto';
+import { UserProfile } from '~/modules/system/user/dtos/user-res.dto';
 import { UserPageOptions } from '~/modules/system/user/dtos/user-req.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { RoleService } from '~/modules/system/role/role.service';
@@ -18,7 +14,6 @@ import * as _ from 'lodash';
 import * as bcrypt from 'bcryptjs';
 import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
-import { pipeLine } from '~/utils/pipe-line';
 import { ImageService } from '~/modules/system/image/image.service';
 import { paginate } from '~/helpers/paginate/paginate';
 
@@ -36,22 +31,26 @@ export class UserService {
     const emailPatterns =
       !_.isEmpty(pageOptions.email) &&
       pageOptions.email.map((domain) => new RegExp(`${domain}$`, 'i'));
-    const filterOptions = {
-      ...(!_.isEmpty(pageOptions.gender) && {
-        gender: { $in: pageOptions.gender },
-      }),
-      ...(!_.isEmpty(pageOptions.email) && {
-        email: {
-          $in: emailPatterns,
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isEmpty(pageOptions.gender) && {
+            gender: { $in: pageOptions.gender },
+          }),
+          ...(!_.isEmpty(pageOptions.email) && {
+            email: {
+              $in: emailPatterns,
+            },
+          }),
+          ...(!_.isNil(pageOptions.userStatus) && {
+            status: pageOptions.userStatus,
+          }),
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
         },
-      }),
-      ...(!_.isNil(pageOptions.userStatus) && {
-        status: pageOptions.userStatus,
-      }),
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-    };
+      },
+    ];
 
     return paginate(
       this.userRepository,

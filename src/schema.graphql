@@ -174,39 +174,6 @@ type ExamQuestionAnswerModel {
   label: String!
 }
 
-type ChapterEntity {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-
-  """Đầu mục"""
-  label: String!
-
-  """Tên chương"""
-  name: String!
-
-  """Mô tả"""
-  description: String
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questions: [QuestionModel!]
-}
-
-enum StatusShareEnum {
-  PUBLIC
-  PRIVATE
-}
-
 type QuestionModel {
   id: String!
 
@@ -232,7 +199,6 @@ type QuestionModel {
 
   """Cấp độ câu hỏi"""
   level: LevelEnum!
-  chapter: ChapterEntity!
 
   """Trạng thái"""
   status: StatusShareEnum
@@ -250,6 +216,11 @@ enum LevelEnum {
   STANDARD
   HARD
   VERY_HARD
+}
+
+enum StatusShareEnum {
+  PUBLIC
+  PRIVATE
 }
 
 enum CategoryEnum {
@@ -288,7 +259,6 @@ type ExamQuestionModel {
 
   """Cấp độ câu hỏi"""
   level: LevelEnum!
-  chapter: ChapterEntity!
 
   """Trạng thái"""
   status: StatusShareEnum
@@ -332,6 +302,34 @@ type ExamModel {
   status: StatusShareEnum
 }
 
+type ChapterEntity {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+
+  """Đầu mục"""
+  label: String!
+
+  """Tên chương"""
+  name: String!
+
+  """Mô tả"""
+  description: String
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+  questions: [QuestionModel!]
+}
+
 type LessonDefaultFields {
   id: String!
 
@@ -371,6 +369,39 @@ type ClassModel {
   endYear: String
   status: StatusShareEnum
   lessons: [LessonDefaultFields!]
+}
+
+type ExamPagination {
+  data: [ExamModel!]!
+  meta: pagination!
+}
+
+type ChapterModel {
+  id: String!
+
+  """Trạng thái quản lý"""
+  enable: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  """Tạo bởi"""
+  createBy: String
+
+  """Cập nhật bởi"""
+  updateBy: String
+  label: String!
+  name: String!
+  description: String
+  lesson: LessonDefaultFields
+
+  """Trạng thái chia sẻ"""
+  status: StatusShareEnum
+  questions: [QuestionModel!]
+}
+
+type ChapterPagination {
+  data: [ChapterModel!]!
+  meta: pagination!
 }
 
 type ClassSimpleFields {
@@ -421,39 +452,6 @@ type LessonModel {
 
 type lessons {
   data: [LessonModel!]!
-  meta: pagination!
-}
-
-type ChapterModel {
-  id: String!
-
-  """Trạng thái quản lý"""
-  enable: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  """Tạo bởi"""
-  createBy: String
-
-  """Cập nhật bởi"""
-  updateBy: String
-  label: String!
-  name: String!
-  description: String
-  lesson: LessonDefaultFields
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questions: [QuestionModel!]!
-}
-
-type ChapterPagination {
-  data: [ChapterModel!]!
-  meta: pagination!
-}
-
-type ExamPagination {
-  data: [ExamModel!]!
   meta: pagination!
 }
 
@@ -643,8 +641,8 @@ input ClassPageOptions {
   take: Int = 10
   classStatus: [StatusShareEnum!]
 
-  """Tên lớp"""
-  lessonIds: [String!]!
+  """Mã lớp"""
+  lessonIds: [String!]
 }
 
 type Mutation {

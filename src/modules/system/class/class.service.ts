@@ -7,11 +7,8 @@ import {
   CreateClassDto,
   UpdateClassDto,
 } from '~/modules/system/class/dtos/class-req.dto';
-import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
 import * as _ from 'lodash';
 import { searchIndexes } from '~/utils/search';
-import { pipeLine } from '~/utils/pipe-line';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import {
@@ -21,6 +18,7 @@ import {
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
+import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class ClassService {
@@ -34,38 +32,31 @@ export class ClassService {
   async findAll(
     uid: string = null,
     pageOptions: ClassPageOptions = new ClassPageOptions(),
-  ): Promise<ClassPaginationDto> {
-    const filterOptions = {
-      ...(!_.isNil(pageOptions.enable) && {
-        enable: pageOptions.enable,
-      }),
-      ...(!_.isEmpty(pageOptions.classStatus) && {
-        status: { $in: pageOptions.classStatus },
-      }),
-      ...(!_.isEmpty(pageOptions.lessonIds) && {
-        'lessons.id': { $all: pageOptions.lessonIds },
-      }),
-      ...(uid && {
-        $or: [{ create_by: uid }],
-      }),
-    };
-    const pipes = [
-      searchIndexes(pageOptions.keyword),
-      ...pipeLine(pageOptions, filterOptions),
+  ) {
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(!_.isEmpty(pageOptions.classStatus) && {
+            status: { $in: pageOptions.classStatus },
+          }),
+          ...(!_.isEmpty(pageOptions.lessonIds) && {
+            'lessons.id': { $all: pageOptions.lessonIds },
+          }),
+          ...(uid && {
+            $or: [{ create_by: uid }],
+          }),
+        },
+      },
     ];
 
-    const [{ data, pageInfo }]: any[] = await this.classRepo
-      .aggregate(pipes)
-      .toArray();
-
-    const entities = data;
-    const numberRecords = data.length > 0 && pageInfo[0].numberRecords;
-    const pageMetaDto = new PageMetaDto({
-      pageOptions,
-      numberRecords,
-    });
-
-    return new ClassPaginationDto(entities, pageMetaDto);
+    return paginate(
+      this.classRepo,
+      { pageOptions, filterOptions },
+      searchIndexes(pageOptions.keyword),
+    );
   }
 
   async findOne(id: string): Promise<ClassEntity> {

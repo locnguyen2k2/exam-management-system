@@ -2,7 +2,6 @@ import { Column, Entity } from 'typeorm';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 
 @ObjectType('LessonDefaultFields')

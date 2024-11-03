@@ -13,6 +13,7 @@ import {
 import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import { plainToClass } from 'class-transformer';
+import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Resolver('Class Resolver')
 export class ClassResolver {
@@ -27,7 +28,7 @@ export class ClassResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('classPageOptions', { nullable: true })
     classPageOptions: ClassPageOptions = new ClassPageOptions(),
-  ): Promise<ClassPaginationDto> {
+  ): Promise<PageDto<ClassEntity>> {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );

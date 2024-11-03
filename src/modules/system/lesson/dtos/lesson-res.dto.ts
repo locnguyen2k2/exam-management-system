@@ -6,6 +6,7 @@ import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
 import { ClassSimpleDto } from '~/modules/system/class/dtos/class-res.dto';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
+import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
 
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {
@@ -32,16 +33,4 @@ export class LessonDetailDto extends ExtendedEntity {
 }
 
 @ObjectType('lessons')
-export class LessonPaginationDto {
-  @Field(() => [LessonDetailDto])
-  @IsArray()
-  readonly data: LessonDetailDto[];
-
-  @Field(() => PageMetaDto)
-  readonly meta: PageMetaDto;
-
-  constructor(data: LessonDetailDto[], meta: PageMetaDto) {
-    this.data = data;
-    this.meta = meta;
-  }
-}
+export class LessonPaginationDto extends createPaginatedType(LessonDetailDto) {}
