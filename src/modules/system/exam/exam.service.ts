@@ -18,12 +18,10 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { randomNumbs } from '~/utils/random';
 import * as _ from 'lodash';
-import { searchAtlas } from '~/utils/search';
 import { handleLabel } from '~/utils/label';
 import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { paginate } from '~/helpers/paginate/paginate';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { shuffle } from '~/utils/shuffle';
@@ -47,32 +45,17 @@ export class ExamService {
   async findAll(
     uid: string = null,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
+    lessonId: string,
   ) {
-    const filterOptions = [
-      {
-        $match: {
-          ...(!_.isNil(pageOptions.enable) && {
-            enable: pageOptions.enable,
-          }),
-          ...(!_.isEmpty(pageOptions.examStatus) && {
-            status: { $in: pageOptions.examStatus },
-          }),
-          ...(uid && {
-            $and: [
-              {
-                create_by: uid,
-              },
-            ],
-          }),
-        },
-      },
-    ];
-
-    return paginate(
-      this.examRepo,
-      { pageOptions, filterOptions },
-      searchAtlas('searchExams', pageOptions.keyword),
+    const paginated = await this.lessonService.findExams(
+      lessonId,
+      pageOptions,
+      uid,
     );
+    return {
+      data: paginated.data[0] ? paginated.data[0].exams : [],
+      meta: paginated.meta,
+    };
   }
 
   async getExamDetail(id: string, uid?: string): Promise<ExamEntity> {

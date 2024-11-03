@@ -494,6 +494,8 @@ type Query {
 
   """Lấy danh sách đề thi"""
   exams(
+    lessonId: String!
+
     """Bộ lọc danh sách đề"""
     examPageOptions: ExamPaperPageOptions
   ): ExamPagination!

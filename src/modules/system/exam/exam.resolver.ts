@@ -27,6 +27,7 @@ export class ExamResolver {
   })
   async exams(
     @CurrentUser() user: IAuthPayload,
+    @Args('lessonId') lessonId: string,
     @Args('examPageOptions', {
       nullable: true,
       description: 'Bộ lọc danh sách đề',
@@ -36,7 +37,11 @@ export class ExamResolver {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
-    return this.examService.findAll(isAdmin ? null : user.id, examPageOptions);
+    return this.examService.findAll(
+      isAdmin ? null : user.id,
+      examPageOptions,
+      lessonId,
+    );
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)

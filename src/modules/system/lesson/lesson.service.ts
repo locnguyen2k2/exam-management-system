@@ -22,6 +22,8 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { paginate } from '~/helpers/paginate/paginate';
+import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
+import { ExamPaperPageOptions } from '~/modules/system/exam/dtos/exam-req.dto.';
 
 const defaultLookup = [
   {
@@ -156,6 +158,56 @@ export class LessonService {
         },
       },
     });
+  }
+
+  async findExams(
+    lessonId: string,
+    pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
+    uid: string,
+  ) {
+    const filterOptions = [
+      {
+        $unwind: '$exams',
+      },
+      {
+        $match: {
+          id: lessonId,
+          ...(!_.isNil(pageOptions.enable) && {
+            'exams.enable': pageOptions.enable,
+          }),
+          ...(!_.isEmpty(pageOptions.examStatus) && {
+            'exams.status': { $in: pageOptions.examStatus },
+          }),
+          ...(uid && {
+            $and: [
+              {
+                create_by: uid,
+              },
+            ],
+          }),
+        },
+      },
+      { $skip: pageOptions.skip },
+      { $limit: pageOptions.take },
+      {
+        $sort: {
+          [`exams.${pageOptions.sort}`]: !pageOptions.sorted ? -1 : 1,
+        },
+      },
+    ];
+
+    const groups = [{ $group: { _id: null, exams: { $push: '$exams' } } }];
+
+    return await paginate(
+      this.lessonRepo,
+      {
+        filterOptions,
+        groups,
+        pageOptions,
+        lookups: null,
+      },
+      searchIndexes(pageOptions.keyword),
+    );
   }
 
   async create(data: CreateLessonDto): Promise<LessonEntity[]> {
