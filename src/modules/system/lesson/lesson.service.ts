@@ -22,7 +22,6 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { paginate } from '~/helpers/paginate/paginate';
-import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
 import { ExamPaperPageOptions } from '~/modules/system/exam/dtos/exam-req.dto.';
 
 const defaultLookup = [
@@ -267,6 +266,16 @@ export class LessonService {
       where: {
         'exams.id': {
           $in: [examId],
+        },
+      },
+    });
+  }
+
+  async findExamsByQuiz(quizId: string): Promise<LessonEntity[]> {
+    return await this.lessonRepo.find({
+      where: {
+        'exams.questions.id': {
+          $in: [quizId],
         },
       },
     });

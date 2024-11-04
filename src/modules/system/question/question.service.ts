@@ -27,7 +27,6 @@ import { ExamService } from '~/modules/system/exam/exam.service';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
-import { v4 as uuid } from 'uuid';
 import { shuffle } from '~/utils/shuffle';
 
 export interface IClassifyQuestion {
@@ -161,7 +160,7 @@ export class QuestionService {
         );
 
         if (!isReplaced) {
-          correctAnswers.push({ ...answer, id: uuid() });
+          correctAnswers.push(new AnswerEntity({ ...answer }));
         }
       } else {
         const isReplaced = wrongAnswers.find(
@@ -169,7 +168,7 @@ export class QuestionService {
         );
 
         if (!isReplaced) {
-          wrongAnswers.push(answer);
+          wrongAnswers.push(new AnswerEntity({ ...answer }));
         }
       }
     }
@@ -177,7 +176,7 @@ export class QuestionService {
     return { wrongAnswers, correctAnswers };
   }
 
-  maxFillInAnswers(correctAnswer: AnswerBaseDto): number {
+  maxFillInAnswerValue(correctAnswer: AnswerBaseDto): number {
     const listCorrectValue = this.handleFillInAnswerValue(correctAnswer.value);
     const total = listCorrectValue.length;
     return factorial(total) / factorial(total - total);
@@ -204,7 +203,7 @@ export class QuestionService {
 
   handleFillInContent(content: string): number {
     const listValue = content.split('[__]');
-    if (listValue.length === 0)
+    if (listValue.length <= 1)
       throw new BusinessException(
         '400:Nội dung phải có ít nhất 1 ô trống ([__])',
       );
@@ -212,9 +211,9 @@ export class QuestionService {
   }
 
   randFillInWrongAnswers(quantity: number, correctAnswer: AnswerBaseDto) {
-    if (quantity > this.maxFillInAnswers(correctAnswer) - 1)
+    if (quantity > this.maxFillInAnswerValue(correctAnswer) - 1)
       throw new BusinessException(
-        `400:${this.maxFillInAnswers(correctAnswer) - 1} là số đáp án nhiễu tối đa`,
+        `400:${this.maxFillInAnswerValue(correctAnswer) - 1} là số đáp án nhiễu tối đa`,
       );
 
     const listAnswers: any[] = [];
@@ -232,17 +231,51 @@ export class QuestionService {
       );
 
       if (!isDuplicate && wrongValue !== correctAnswer.value) {
-        listAnswers.push({
-          isCorrect: false,
-          enable: correctAnswer.enable,
-          value: wrongValue,
-          remark: null,
-          score: null,
-        });
+        listAnswers.push(
+          new AnswerEntity({
+            score: null,
+            isCorrect: false,
+            value: wrongValue,
+            enable: correctAnswer.enable,
+          }),
+        );
       }
     }
 
     return { correctAnswers: [correctAnswer], wrongAnswers: listAnswers };
+  }
+
+  checkFillInQuiz(content: string, answerValue: string) {
+    const quantityValue = this.handleFillInContent(content);
+    if (quantityValue !== this.handleFillInAnswerValue(answerValue).length)
+      throw new BusinessException(
+        `400:Đáp án vượt quá ${quantityValue} giá trị ([__])!`,
+      );
+  }
+
+  handleFillinAnswers(
+    answers: AnswerBaseDto[],
+    content: string,
+    quantityWrongAnswer: number,
+  ): { correctAnswers: AnswerBaseDto[]; wrongAnswers: AnswerBaseDto[] } {
+    const classifyAnswer = this.classifyAnswers(answers);
+
+    this.checkFillInQuiz(content, classifyAnswer.correctAnswers[0].value);
+
+    const isStart = classifyAnswer.correctAnswers[0].value.startsWith('[__]');
+    const isEnd = !classifyAnswer.correctAnswers[0].value.endsWith('[__]');
+
+    if (isStart || isEnd)
+      throw new BusinessException(
+        '400:Đáp án điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
+      );
+
+    const { correctAnswers, wrongAnswers } = this.randFillInWrongAnswers(
+      quantityWrongAnswer,
+      classifyAnswer.correctAnswers[0],
+    );
+
+    return { correctAnswers, wrongAnswers };
   }
 
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
@@ -267,40 +300,26 @@ export class QuestionService {
           throw new BusinessException('400:Phải có ít nhất 1 đáp án đúng!');
 
         if (questionData.category === CategoryEnum.FILL_IN) {
-          const quantityValue = this.handleFillInContent(questionData.content);
+          this.checkFillInQuiz(
+            questionData.content,
+            answers.correctAnswers[0].value,
+          );
+
+          const maxAnswerValue = this.maxFillInAnswerValue(
+            answers.correctAnswers[0],
+          );
+
+          if (answers.wrongAnswers.length > maxAnswerValue)
+            throw new BusinessException(
+              `400:${this.maxFillInAnswerValue(answers.correctAnswers[0])} là số đáp án tối đa`,
+            );
 
           if (!_.isNil(questionData.quantityWrongAnswers)) {
-            if (
-              answers.correctAnswers[0].value.startsWith('[__]') ||
-              !answers.correctAnswers[0].value.endsWith('[__]')
-            )
-              throw new BusinessException(
-                '400:Đáp án đúng câu hỏi điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
-              );
-
-            if (
-              quantityValue !==
-              this.handleFillInAnswerValue(answers.correctAnswers[0].value)
-                .length
-            ) {
-              throw new BusinessException(
-                `400:Đáp án không được quá ${quantityValue} giá trị ([__])!`,
-              );
-            }
-
-            answers = this.randFillInWrongAnswers(
+            answers = this.handleFillinAnswers(
+              questionData.answers,
+              questionData.content,
               questionData.quantityWrongAnswers,
-              answers.correctAnswers[0],
             );
-          } else {
-            if (
-              answers.wrongAnswers.length >
-              this.maxFillInAnswers(answers.correctAnswers[0])
-            ) {
-              throw new BusinessException(
-                `400:${this.maxFillInAnswers(answers.correctAnswers[0])} là số đáp án tối đa`,
-              );
-            }
           }
         }
 
@@ -314,7 +333,7 @@ export class QuestionService {
     await Promise.all(
       data.questions.map(async (questionData) => {
         const { answers, chapterId } = questionData;
-        const answerEntitties = answers.map(
+        const listAnswer = answers.map(
           (answer) => new AnswerEntity({ ...answer }),
         );
         let picture = '';
@@ -325,7 +344,7 @@ export class QuestionService {
 
         const initial = new QuestionEntity({
           ...questionData,
-          answers: [...new Set(answerEntitties)],
+          answers: [...new Set(listAnswer)],
           ...(!_.isEmpty(questionData.picture) && { picture: picture }),
           create_by: data.createBy,
           update_by: data.createBy,
@@ -388,6 +407,11 @@ export class QuestionService {
       data.updateBy,
     );
     const newQuestion = question;
+    let answers = !_.isEmpty(data.answers) ? data.answers : question.answers;
+    const content = !_.isEmpty(data.content) ? data.content : question.content;
+    const category = !_.isEmpty(data.category)
+      ? data.category
+      : question.category;
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
       const newChapter = await this.chapterService.findAvailable(
@@ -405,70 +429,53 @@ export class QuestionService {
       newQuestions = newChapter.questions.filter((question) => question);
     }
 
-    // if (data.content) {
-    //   const isReplaced = await this.chapterService.findByQuizContent(
-    //     data.content,
-    //   );
-    //
-    //   if (
-    //     isReplaced &&
-    //     isReplaced.id !== isExisted.chapterId &&
-    //     isReplaced.create_by === isExisted.question.create_by
-    //   ) {
-    //     throw new BusinessException(
-    //       ErrorEnum.RECORD_EXISTED,
-    //       `${data.content}`,
-    //     );
-    //   }
-    // }
-    // const category = data.category ? data.category : isExisted.category;
+    if (data.content) {
+      const isReplaced = await this.chapterService.findByQuizContent(content);
 
-    // if (
-    //   category !== CategoryEnum.MULTIPLE_CHOICE &&
-    //   ((data.correctAnswers && data.correctAnswers.length > 1) ||
-    //     isExisted.correctAnswerIds.length > 1)
-    // ) {
-    //   throw new BusinessException(
-    //     '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
-    //   );
-    // }
+      if (
+        isReplaced &&
+        isReplaced.id !== chapterId &&
+        isReplaced.create_by === question.create_by
+      ) {
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
+      }
+    }
 
-    // if (data.answerIds) {
-    //   for (const answerId of data.answerIds) {
-    //     await this.answerService.findOne(answerId);
-    //     const index = listAnswers.findIndex((value) => answerId === value);
-    //     index === -1 && listAnswers.push(answerId);
-    //   }
-    // }
+    if (!_.isEmpty(category)) {
+      if (category !== CategoryEnum.MULTIPLE_CHOICE) {
+        const { correctAnswers } = this.classifyAnswers(answers);
 
-    // if (data.correctAnswers) {
-    //   const answers =
-    //     listAnswers.length > 0 ? listAnswers : isExisted.answerIds;
-    //
-    //   for (const correctAnswer of data.correctAnswers) {
-    //     const hasInAnswers = answers.find(
-    //       (value) => value === correctAnswer.correctAnswerId,
-    //     );
-    //
-    //     if (!hasInAnswers) {
-    //       throw new BusinessException(
-    //         '400:Đáp án phải có trong danh sách câu trả lời!',
-    //       );
-    //     }
-    //
-    //     const index = correctAnswers.findIndex(
-    //       (value) => value.correctAnswerId === correctAnswer.correctAnswerId,
-    //     );
-    //
-    //     if (index === -1) {
-    //       await this.answerService.findOne(correctAnswer.correctAnswerId);
-    //       correctAnswers.push({
-    //         correctAnswerId: correctAnswer.correctAnswerId,
-    //         score: correctAnswer.score,
-    //       });
-    //     }
-    //   }
-    // }
+        if (correctAnswers.length > 1)
+          throw new BusinessException(
+            '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
+          );
+      }
+
+      if (category === CategoryEnum.FILL_IN) {
+        const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
+        const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
+
+        this.checkFillInQuiz(content, correctAnswers[0].value);
+
+        if (wrongAnswers.length > maxAnswerValue)
+          throw new BusinessException(
+            `400:${this.maxFillInAnswerValue(correctAnswers[0])} là số đáp án nhiễu tối đa`,
+          );
+
+        if (!_.isNil(data.quantityWrongAnswers)) {
+          const fillInAnswers = this.handleFillinAnswers(
+            answers,
+            content,
+            data.quantityWrongAnswers,
+          );
+
+          answers = [
+            ...fillInAnswers.correctAnswers,
+            ...fillInAnswers.wrongAnswers,
+          ];
+        }
+      }
+    }
 
     if (data.picture) {
       if (!_.isEmpty(question.picture)) {
@@ -484,13 +491,12 @@ export class QuestionService {
     if (!_.isEmpty(data.remark)) newQuestion.remark = data.remark;
     if (!_.isEmpty(picture)) newQuestion.picture = picture;
     if (!_.isNil(data?.enable)) newQuestion.enable = data.enable;
-    // ...(data.category && { category: data.category }),
-    // ...(correctAnswers.length > 0 && { correctAnswerIds: correctAnswers }),
-    // ...(listAnswers.length > 0 && { answerIds: listAnswers }),
+    if (!_.isNil(data?.category)) newQuestion.category = data.category;
+    if (!_.isEmpty(data?.answers))
+      newQuestion.answers = answers.map((answer) => new AnswerEntity(answer));
 
     await this.chapterService.updateQuiz(chapterId, newQuestion);
-
-    await this.examService.updateQuiz(id, newQuestions);
+    await this.examService.updateQuiz(id, newQuestion);
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
       await this.chapterService.updateQuizzes(chapterId, oldQuestions);
