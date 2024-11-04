@@ -106,10 +106,10 @@ export class ClassService {
 
   async create(data: CreateClassDto): Promise<ClassEntity> {
     const lessons: LessonEntity[] = [];
-    const isExisted = await this.findByName(data.name);
-
-    if (isExisted && isExisted.create_by === data.createBy)
-      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
+    // const isExisted = await this.findByName(data.name);
+    //
+    // if (isExisted && isExisted.create_by === data.createBy)
+    //   throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
 
     const item = new ClassEntity({
       ...data,
@@ -168,16 +168,16 @@ export class ClassService {
     const isExisted = await this.findAvailable(id, data.updateBy);
     const lessons: LessonEntity[] = [];
 
-    if (!_.isEmpty(data.name)) {
-      const isReplaced = await this.findByName(data.name);
-
-      if (
-        isReplaced &&
-        isExisted.id !== isReplaced.id &&
-        isExisted.create_by === data.updateBy
-      )
-        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
-    }
+    // if (!_.isEmpty(data.name)) {
+    //   const isReplaced = await this.findByName(data.name);
+    //
+    //   if (
+    //     isReplaced &&
+    //     isExisted.id !== isReplaced.id &&
+    //     isExisted.create_by === data.updateBy
+    //   )
+    //     throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
+    // }
 
     if (!_.isEmpty(data.code)) {
       const isReplaced = await this.findByCode(data.code);
