@@ -26,8 +26,8 @@ class LessonBaseDto extends BaseDto {
   @Field(() => Boolean)
   enable: boolean;
 
-  @Field(() => [String], { nullable: true })
-  classIds?: string[] = [];
+  @Field(() => [String])
+  classIds: string[];
 
   @Field(() => StatusShareEnum)
   status: StatusShareEnum;
@@ -44,10 +44,10 @@ export class CreateLessonDto {
 
 @InputType('EnableLessonArgs')
 class EnableLessonDto {
-  @Field(() => String, {description: 'Mã học phần'})
+  @Field(() => String, { description: 'Mã học phần' })
   lessonId: string;
 
-  @Field(() => Boolean, {description: 'Trạng thái kích  hoạt'})
+  @Field(() => Boolean, { description: 'Trạng thái kích  hoạt' })
   enable: boolean;
 }
 
@@ -61,8 +61,8 @@ export class EnableLessonsDto {
 
 @InputType('UpdateLessonArgs')
 export class UpdateLessonDto extends PartialType(LessonBaseDto) {
-  @Field(() => [String], { nullable: true })
-  chapterIds?: string[] = [];
+  // @Field(() => [String], { nullable: true })
+  // chapterIds?: string[] = [];
 
   @HideField()
   updateBy: string;

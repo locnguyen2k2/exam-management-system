@@ -86,7 +86,7 @@ export class ChapterResolver {
     @Args('chapterId') id: string,
     @CurrentUser() user: IAuthPayload,
   ): Promise<ChapterDetailDto> {
-    return this.chapterService.findAvailable(id, user.id);
+    return this.chapterService.detail(id, user.id);
   }
 
   @Permissions(PermissionEnum.ADD_CHAPTER)

@@ -6,17 +6,14 @@ import { ExamResolver } from '~/modules/system/exam/exam.resolver';
 import { QuestionModule } from '~/modules/system/question/question.module';
 import { ChapterModule } from '~/modules/system/chapter/chapter.module';
 import { LessonModule } from '~/modules/system/lesson/lesson.module';
-// import { AnswerModule } from '~/modules/system/answer/answer.module';
 
 @Module({
   imports: [
-    forwardRef(() => LessonModule),
     TypeOrmModule.forFeature([ExamEntity]),
-    forwardRef(() => QuestionModule),
     QuestionModule,
-    // AnswerModule,
     ChapterModule,
     LessonModule,
+    forwardRef(() => QuestionModule),
   ],
   providers: [ExamResolver, ExamService],
   exports: [ExamService],

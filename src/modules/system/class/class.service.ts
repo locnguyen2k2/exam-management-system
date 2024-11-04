@@ -61,33 +61,32 @@ export class ClassService {
 
   async findOne(id: string): Promise<ClassEntity> {
     const isExisted = await this.classRepo.findOneBy({ id });
+
     if (isExisted) return isExisted;
+
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  async findByName(name: string): Promise<ClassEntity> {
-    const handleContent = name
-      .replace(regSpecialChars, '\\$&')
-      .replace(regWhiteSpace, '\\s*');
-
-    const isExisted = await this.classRepo.findOneBy({
-      name: { $regex: handleContent, $options: 'i' },
-    });
-
-    if (isExisted) return isExisted;
-  }
+  // async findByName(name: string): Promise<ClassEntity> {
+  //   const handleContent = name
+  //     .replace(regSpecialChars, '\\$&')
+  //     .replace(regWhiteSpace, '\\s*');
+  //
+  //   const isExisted = await this.classRepo.findOneBy({
+  //     name: { $regex: handleContent, $options: 'i' },
+  //   });
+  //
+  //   if (isExisted) return isExisted;
+  // }
 
   async findByLesson(lessonId: string): Promise<ClassEntity[]> {
     return await this.classRepo.find({ 'lessons.id': { $in: [lessonId] } });
   }
 
-  async findAvailable(id: string, uid: string): Promise<ClassEntity> {
+  async findAvailable(id: string, uid: string = null): Promise<ClassEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by === uid) return isExisted;
-
-    if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
-      return isExisted;
+    if (!uid || (uid && isExisted.create_by === uid)) return isExisted;
 
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
@@ -152,7 +151,8 @@ export class ClassService {
     );
   }
 
-  async updateLessonExams(lessonId: string, exams: ExamEntity[]) {
+  // Cập nhật danh sách đề thi với mã học phần
+  async updateExamsByLessonId(lessonId: string, exams: ExamEntity[]) {
     const listClass = await this.findByLesson(lessonId);
 
     await Promise.all(
@@ -260,18 +260,7 @@ export class ClassService {
     return await this.findOne(id);
   }
 
-  async updateClassLessons(
-    id: string,
-    lessonIds: string[],
-  ): Promise<ClassEntity> {
-    const lessons: LessonEntity[] = [];
-
-    await Promise.all(
-      lessonIds.map(async (id) => {
-        lessons.push(await this.lessonService.findOne(id));
-      }),
-    );
-
+  async addLessons(id: string, lessons: LessonEntity[]): Promise<ClassEntity> {
     for (const lesson of lessons) {
       await this.classRepo.findOneAndUpdate(
         { id },
@@ -281,6 +270,28 @@ export class ClassService {
     }
 
     return await this.findOne(id);
+  }
+
+  async deleteLesson(classIds: string[], lessonId: string) {
+    for (const classId of classIds) {
+      await this.classRepo.findOneAndUpdate(
+        {
+          id: classId,
+          lessons: {
+            $elemMatch: {
+              id: lessonId,
+            },
+          },
+        },
+        {
+          $pull: {
+            lessons: { id: lessonId },
+          },
+        },
+      );
+    }
+
+    return true;
   }
 
   async deleteMany(ids: string[], uid: string): Promise<string> {

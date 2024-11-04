@@ -11,11 +11,10 @@ import * as _ from 'lodash';
 import { LessonDetailDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { searchIndexes } from '~/utils/search';
 import { BusinessException } from '~/common/exceptions/biz.exception';
-import {
-  regSpecialChars,
-  regWhiteSpace,
-} from '~/common/constants/regex.constant';
-import { ExamService } from '~/modules/system/exam/exam.service';
+// import {
+//   regSpecialChars,
+//   regWhiteSpace,
+// } from '~/common/constants/regex.constant';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { ClassService } from '~/modules/system/class/class.service';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
@@ -43,8 +42,6 @@ const defaultLookup = [
 @Injectable()
 export class LessonService {
   constructor(
-    @Inject(forwardRef(() => ExamService))
-    private readonly examService: ExamService,
     @Inject(forwardRef(() => ChapterService))
     private readonly chapterService: ChapterService,
     @Inject(forwardRef(() => ClassService))
@@ -100,17 +97,17 @@ export class LessonService {
     return { data: detailLessons, meta: paginated.meta };
   }
 
-  async findByName(name: string): Promise<LessonEntity> {
-    const handleContent = name
-      .replace(regSpecialChars, '\\$&')
-      .replace(regWhiteSpace, '\\s*');
-
-    const isExisted = await this.lessonRepo.findOneBy({
-      name: { $regex: handleContent, $options: 'i' },
-    });
-
-    if (isExisted) return isExisted;
-  }
+  // async findByName(name: string): Promise<LessonEntity> {
+  //   const handleContent = name
+  //     .replace(regSpecialChars, '\\$&')
+  //     .replace(regWhiteSpace, '\\s*');
+  //
+  //   const isExisted = await this.lessonRepo.findOneBy({
+  //     name: { $regex: handleContent, $options: 'i' },
+  //   });
+  //
+  //   if (isExisted) return isExisted;
+  // }
 
   async findAvailable(id: string, uid: string): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
@@ -149,17 +146,17 @@ export class LessonService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  async findByChapter(chapterId: string): Promise<LessonEntity[]> {
-    return await this.lessonRepo.find({
+  async findByChapter(chapterId: string): Promise<LessonEntity> {
+    return await this.lessonRepo.findOne({
       where: {
         chapterIds: {
-          $all: [chapterId],
+          $in: [chapterId],
         },
       },
     });
   }
 
-  async findExams(
+  async paginateExams(
     lessonId: string,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
     uid: string,
@@ -211,14 +208,13 @@ export class LessonService {
 
   async create(data: CreateLessonDto): Promise<LessonEntity[]> {
     let listLessons: LessonEntity[] = [];
-    const classLessons: { classId: string; lessonIds: string[] }[] = [];
+    // Danh sách lớp học có học phần
+    const classLessons: { classId: string; lessons: LessonEntity[] }[] = [];
 
     await Promise.all(
       data.items.map(async (lesson) => {
-        const isExisted = await this.findByName(lesson.name);
-
-        if (isExisted && isExisted.create_by === data.createBy)
-          throw new BusinessException(ErrorEnum.RECORD_EXISTED, lesson.name);
+        if (_.isEmpty(lesson.classIds))
+          throw new BusinessException('400:Vui lòng thêm mã lớp!');
 
         const newLesson = new LessonEntity({
           ...lesson,
@@ -226,20 +222,21 @@ export class LessonService {
           update_by: data.createBy,
         });
 
-        if (!_.isEmpty(lesson.classIds)) {
-          for (const classId of lesson.classIds) {
-            await this.classService.findAvailable(classId, data.createBy);
-            const index = classLessons.findIndex(
-              (classLesson) => classLesson.classId === classId,
-            );
-            if (index !== -1) {
-              classLessons[index].lessonIds.push(newLesson.id);
-            } else {
-              classLessons.push({
-                classId: classId,
-                lessonIds: [newLesson.id],
-              });
-            }
+        for (const classId of lesson.classIds) {
+          // Kiểm tra lớp học phải tồn tại và được tạo bởi người dùng
+          await this.classService.findAvailable(classId, data.createBy);
+
+          const index = classLessons.findIndex(
+            (item) => item.classId === classId,
+          );
+
+          if (index !== -1) {
+            classLessons[index].lessons.push(newLesson);
+          } else {
+            classLessons.push({
+              classId: classId,
+              lessons: [newLesson],
+            });
           }
         }
 
@@ -252,9 +249,9 @@ export class LessonService {
     listLessons = await this.lessonRepo.save(newLessons);
 
     for (const classLesson of classLessons) {
-      await this.classService.updateClassLessons(
+      await this.classService.addLessons(
         classLesson.classId,
-        classLesson.lessonIds,
+        classLesson.lessons,
       );
     }
 
@@ -262,13 +259,18 @@ export class LessonService {
   }
 
   async findByExamId(examId: string): Promise<LessonEntity> {
-    return await this.lessonRepo.findOne({
+    const isLesson = await this.lessonRepo.findOne({
       where: {
         'exams.id': {
           $in: [examId],
         },
       },
     });
+
+    if (!isLesson)
+      throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, examId);
+
+    return isLesson;
   }
 
   async findExamsByQuiz(quizId: string): Promise<LessonEntity[]> {
@@ -281,9 +283,8 @@ export class LessonService {
     });
   }
 
-  async updateExam(exam: any) {
+  async updateExam(exam: ExamEntity) {
     const isLesson = await this.findByExamId(exam.id);
-
     const newExams = isLesson.exams.filter(({ id }) => id !== exam.id);
 
     await this.lessonRepo.update(
@@ -295,30 +296,44 @@ export class LessonService {
       },
     );
 
-    await this.classService.updateLessonExams(isLesson.id, [...newExams, exam]);
+    await this.classService.updateExamsByLessonId(isLesson.id, [
+      ...newExams,
+      exam,
+    ]);
+  }
+
+  async deleteExam(lessonId: string, examId: string) {
+    const isLesson = await this.findOne(lessonId);
+    const newExams = isLesson.exams.filter((exam) => exam.id !== examId);
+
+    await this.lessonRepo.findOneAndUpdate(
+      {
+        id: lessonId,
+        exams: {
+          $elemMatch: {
+            id: examId,
+          },
+        },
+      },
+      {
+        $pull: {
+          exams: { id: examId },
+        },
+      },
+    );
+
+    await this.classService.updateExamsByLessonId(lessonId, newExams);
+
+    return true;
   }
 
   async update(id: string, data: any): Promise<LessonDetailDto> {
-    const isExisted = await this.findOne(id);
+    await this.findAvailable(id, data.updateBy);
+
+    const exams: ExamEntity[] = [];
     const newClassIds: string[] = [];
     const oldClassIds: string[] = [];
-    const exams: ExamEntity[] = [];
-
-    if (isExisted.create_by !== data.updateBy) {
-      throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
-    }
-
-    if (!_.isNil(data.name)) {
-      const isReplaced = await this.findByName(data.name);
-
-      if (
-        isReplaced &&
-        isReplaced.id !== id &&
-        isReplaced.create_by === data.updateBy
-      ) {
-        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
-      }
-    }
+    const chapters: ChapterEntity[] = [];
 
     if (!_.isNil(data.examIds)) {
       await Promise.all(
@@ -328,8 +343,6 @@ export class LessonService {
         }),
       );
     }
-
-    const chapters: ChapterEntity[] = [];
 
     if (!_.isNil(data.chapterIds)) {
       await Promise.all(
@@ -347,21 +360,27 @@ export class LessonService {
 
     if (!_.isNil(data.classIds) && data.classIds.length > 0) {
       await Promise.all(
-        data.classIds.map(async (classId) => {
+        data.classIds.map(async (classId: string) => {
           const newClass = await this.classService.findAvailable(
             classId,
             data.updateBy,
           );
+
           if (!newClass.lessons.find((lesson) => lesson.id === id)) {
             const isReplaced = newClassIds.some((itemId) => itemId === classId);
             !isReplaced && newClassIds.push(classId);
           }
         }),
       );
+
+      const oldClasses = await this.classService.findByLesson(id);
+      oldClasses.map((oldClass) => {
+        !data.classIds.includes(oldClass.id) && oldClassIds.push(oldClass.id);
+      });
     }
 
     if (!_.isNil(data.examIds)) {
-      await this.classService.updateLessonExams(id, exams);
+      await this.classService.updateExamsByLessonId(id, exams);
     }
 
     await this.lessonRepo.update(
@@ -378,17 +397,19 @@ export class LessonService {
       },
     );
 
-    const result = await this.detailLesson(id, data.updateBy);
+    const newLesson = await this.findOne(id);
 
     if (!_.isEmpty(data.classIds)) {
+      await this.classService.deleteLesson(oldClassIds, newLesson.id);
+
       await Promise.all(
         newClassIds.map(async (classId) => {
-          await this.classService.updateClassLessons(classId, [id]);
+          await this.classService.addLessons(classId, [newLesson]);
         }),
       );
     }
 
-    return result;
+    return await this.detailLesson(id, data.updateBy);
   }
 
   async addExams(lessonId: string, exams: ExamEntity[]): Promise<boolean> {
@@ -447,5 +468,24 @@ export class LessonService {
     return true;
   }
 
-  async deleteMany(ids: string[]) {}
+  async deleteMany(ids: string[], uid: string) {
+    await Promise.all(
+      ids.map(async (lessonId) => {
+        await this.findAvailable(lessonId, uid);
+
+        const listClass = await this.classService.findByLesson(lessonId);
+        const classIds = listClass.map(({ id }) => id);
+
+        await this.classService.deleteLesson(classIds, lessonId);
+      }),
+    );
+
+    await this.lessonRepo.deleteMany({
+      id: {
+        $in: ids,
+      },
+    });
+
+    return '200:Xóa thành công!';
+  }
 }

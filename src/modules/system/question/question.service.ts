@@ -78,7 +78,7 @@ export class QuestionService {
   }
 
   async findOne(id: string, uid: string): Promise<QuestionEntity> {
-    const { question } = await this.chapterService.getQuiz(id, uid);
+    const { question } = await this.chapterService.findAvailableQuiz(id, uid);
     if (question) return question;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
@@ -401,7 +401,7 @@ export class QuestionService {
     let picture = '';
     let newQuestions = [];
     let oldQuestions = [];
-    const { chapterId, question } = await this.chapterService.getQuiz(
+    const { chapterId, question } = await this.chapterService.findAvailableQuiz(
       id,
       data.updateBy,
     );
@@ -505,7 +505,7 @@ export class QuestionService {
       ]);
     }
 
-    const newQuiz = await this.chapterService.getQuiz(
+    const newQuiz = await this.chapterService.findAvailableQuiz(
       question.id,
       data.updateBy,
     );
@@ -517,10 +517,11 @@ export class QuestionService {
     const listQuestions: { chapterId: string; question: QuestionEntity }[] = [];
     await Promise.all(
       data.questionsEnable.map(async ({ questionId, enable }: any) => {
-        const { chapterId, question } = await this.chapterService.getQuiz(
-          questionId,
-          data.updateBy,
-        );
+        const { chapterId, question } =
+          await this.chapterService.findAvailableQuiz(
+            questionId,
+            data.updateBy,
+          );
         if (question) {
           if (question.create_by !== data.updateBy) {
             throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
@@ -545,10 +546,11 @@ export class QuestionService {
 
     await Promise.all(
       data.questionsStatus.map(async ({ questionId, status }) => {
-        const { chapterId, question } = await this.chapterService.getQuiz(
-          questionId,
-          data.updateBy,
-        );
+        const { chapterId, question } =
+          await this.chapterService.findAvailableQuiz(
+            questionId,
+            data.updateBy,
+          );
         if (question) {
           if (question.create_by !== data.updateBy) {
             throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
@@ -573,25 +575,19 @@ export class QuestionService {
 
     await Promise.all(
       ids.map(async (id) => {
+        if (await this.examService.examHasQuiz(id))
+          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
+
         const index = listQuestions.findIndex(
           ({ question }) => question.id === id,
         );
 
         if (index === -1) {
-          const { chapterId, question } = await this.chapterService.getQuiz(
-            id,
-            uid,
-          );
+          const { chapterId, question } =
+            await this.chapterService.findAvailableQuiz(id, uid);
+
           listQuestions.push({ chapterId, question });
         }
-      }),
-    );
-
-    await Promise.all(
-      listQuestions.map(async ({ question }) => {
-        const isExisted = await this.examService.findByQuestionId(question.id);
-        if (isExisted.length !== 0)
-          throw new BusinessException(ErrorEnum.RECORD_IN_USED, question.id);
       }),
     );
 
@@ -604,10 +600,7 @@ export class QuestionService {
       await this.chapterService.updateQuizzes(chapterId, newQuestions);
     }
 
-    await this.questionRepo.deleteMany({
-      id: { $in: listQuestions.map(({ question }) => question.id) },
-    });
-    throw new BusinessException('200:Xoá thành công!');
+    return '200:Xóa câu hỏi thành công!';
   }
 
   async randQuestsByScales(

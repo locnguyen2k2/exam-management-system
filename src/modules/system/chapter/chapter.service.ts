@@ -74,7 +74,7 @@ export class ChapterService {
         const lesson = await this.lessonService.findByChapter(chapter.id);
         const isData = {
           ...chapter,
-          lesson: lesson[0],
+          lesson: lesson,
         };
         detailChapters.push(isData);
       }),
@@ -83,12 +83,23 @@ export class ChapterService {
     return { data: detailChapters, meta: paginated.meta };
   }
 
-  async findAvailable(id: string, uid?: string): Promise<any> {
+  async findAvailable(id: string, uid?: string): Promise<ChapterEntity> {
     const chapter = await this.findOne(id);
 
-    if (chapter && (!uid || (uid && chapter.create_by === uid)))
-      return chapter[0];
+    if (chapter && (!uid || (uid && chapter.create_by === uid))) return chapter;
+
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
+  }
+
+  async detail(id: string, uid?: string): Promise<ChapterDetailDto> {
+    const chapter = await this.findAvailable(id, uid);
+    const lesson = await this.lessonService.findByChapter(chapter.id);
+    const detail: any = {
+      ...chapter,
+      lesson: lesson,
+    };
+
+    return detail;
   }
 
   async findOne(id: string): Promise<ChapterEntity> {
@@ -235,7 +246,7 @@ export class ChapterService {
       );
 
       if (!isReplaced) {
-        oldLesson = (await this.lessonService.findByChapter(isExisted.id))[0];
+        oldLesson = await this.lessonService.findByChapter(isExisted.id);
 
         if (oldLesson?.id) {
           if (oldLesson.chapterIds && oldLesson.chapterIds.length > 0) {
@@ -330,15 +341,12 @@ export class ChapterService {
         if ((await this.questionService.findByChapter(id)).length !== 0)
           throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
 
-        const lessons = await this.lessonService.findByChapter(id);
-        await Promise.all(
-          lessons.map(async (lesson) => {
-            const newChapters = lesson.chapterIds.filter(
-              (chapterId) => chapterId !== id,
-            );
-            await this.lessonService.updateChapters(lesson.id, newChapters);
-          }),
+        const lesson = await this.lessonService.findByChapter(id);
+        const newChapterIds = lesson.chapterIds.filter(
+          (chapterId) => chapterId !== id,
         );
+
+        await this.lessonService.updateChapters(lesson.id, newChapterIds);
         listChapterIds.push(id);
       }),
     );
@@ -402,7 +410,7 @@ export class ChapterService {
     );
   }
 
-  async getQuiz(
+  async findAvailableQuiz(
     questionId: string,
     uid: string,
   ): Promise<{ chapterId: string; question: QuestionEntity }> {

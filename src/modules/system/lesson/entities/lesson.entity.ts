@@ -7,7 +7,7 @@ import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 @ObjectType('LessonDefaultFields')
 @Entity('lesson_entity')
 export class LessonEntity extends ExtendedEntity {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column('string', { default: '' })
   label: string;
 
@@ -15,7 +15,7 @@ export class LessonEntity extends ExtendedEntity {
   @Column('string')
   name: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column('string', { default: '' })
   description: string;
 

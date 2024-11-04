@@ -343,9 +343,9 @@ type LessonDefaultFields {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String!
+  label: String
   name: String!
-  description: String!
+  description: String
   status: StatusShareEnum!
   chapterIds: [String!]!
   exams: [ExamModel!]!
@@ -492,6 +492,12 @@ type Query {
   """Chi tiết học phần"""
   lesson(lessonId: String!): LessonModel!
 
+  """Lấy danh sách câu hỏi"""
+  questions(chapterId: String!, questionPageOptions: QuestionPageOptions): QuestionPagination!
+
+  """Chi tiết câu hỏi"""
+  questionDetail(questionId: String!): QuestionModel!
+
   """Lấy danh sách đề thi"""
   exams(
     lessonId: String!
@@ -502,12 +508,6 @@ type Query {
 
   """Chi tiết đề thi"""
   examDetail(id: String!): ExamModel!
-
-  """Lấy danh sách câu hỏi"""
-  questions(chapterId: String!, questionPageOptions: QuestionPageOptions): QuestionPagination!
-
-  """Chi tiết câu hỏi"""
-  questionDetail(questionId: String!): QuestionModel!
 
   """Lấy danh sách lớp"""
   classes(classPageOptions: ClassPageOptions): ClassPagination!
@@ -600,20 +600,6 @@ input LessonPageOptions {
   lessonStatus: [StatusShareEnum!]
 }
 
-input ExamPaperPageOptions {
-  keyword: String = ""
-
-  """Trường sắp xếp (Mặc định ngày tạo)"""
-  sort: String = "created_at"
-
-  """Thứ tự sắp xếp (Mặc định giảm dần)"""
-  sorted: Boolean = false
-  enable: Boolean
-  page: Int = 1
-  take: Int = 10
-  examStatus: [StatusShareEnum!]
-}
-
 input QuestionPageOptions {
   keyword: String = ""
 
@@ -628,6 +614,20 @@ input QuestionPageOptions {
   questionStatus: [StatusShareEnum!]
   questionLevel: [LevelEnum!]
   questionCategory: [CategoryEnum!]
+}
+
+input ExamPaperPageOptions {
+  keyword: String = ""
+
+  """Trường sắp xếp (Mặc định ngày tạo)"""
+  sort: String = "created_at"
+
+  """Thứ tự sắp xếp (Mặc định giảm dần)"""
+  sorted: Boolean = false
+  enable: Boolean
+  page: Int = 1
+  take: Int = 10
+  examStatus: [StatusShareEnum!]
 }
 
 input ClassPageOptions {
@@ -724,20 +724,8 @@ type Mutation {
   """Kích hoạt học phần"""
   enableLessons(enableLessonsArgs: EnableLessonsArgs!): [LessonDefaultFields!]!
 
-  """Tạo đề thi"""
-  createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamModel!]!
-
-  """Khởi tạo đề thi từ ngân hàng câu hỏi"""
-  generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamModel!]!
-
-  """Kích hoạt danh sách dề thi"""
-  enableExams(enableExamsArgs: EnableExamsArgs!): [ExamModel!]!
-
-  """Cập nhật đề thi"""
-  updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamModel!
-
-  """Xóa danh sách đề thi"""
-  deleteExamPapers(examPaperIds: [String!]!): String!
+  """Xóa học phần"""
+  deleteLessons(lessonIds: [String!]!): String!
 
   """Khởi tạo câu hỏi"""
   createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionModel!]!
@@ -753,6 +741,21 @@ type Mutation {
 
   """Xóa danh sách câu hỏi"""
   deleteQuestions(questionIds: [String!]!): String!
+
+  """Tạo đề thi"""
+  createExamPapers(createExamPaperArgs: CreateExamPaperArgs!): [ExamModel!]!
+
+  """Khởi tạo đề thi từ ngân hàng câu hỏi"""
+  generateExamPapers(generateExamPaperArgs: GenerateExamPaperArgs!): [ExamModel!]!
+
+  """Kích hoạt danh sách dề thi"""
+  enableExams(enableExamsArgs: EnableExamsArgs!): [ExamModel!]!
+
+  """Cập nhật đề thi"""
+  updateExamPaper(examId: String!, updateExamPaperArgs: UpdateExamPaperArgs!): ExamModel!
+
+  """Xóa danh sách đề thi"""
+  deleteExamPapers(examPaperIds: [String!]!): String!
 
   """Tạo lớp"""
   createClass(createClassArgs: CreateClassArgs!): ClassModel!
@@ -984,7 +987,7 @@ input LessonBaseDto {
   name: String!
   description: String
   enable: Boolean!
-  classIds: [String!] = []
+  classIds: [String!]!
   status: StatusShareEnum!
 }
 
@@ -993,9 +996,8 @@ input UpdateLessonArgs {
   name: String
   description: String
   enable: Boolean
-  classIds: [String!] = []
+  classIds: [String!]
   status: StatusShareEnum
-  chapterIds: [String!] = []
 }
 
 input EnableLessonsArgs {
@@ -1008,6 +1010,86 @@ input EnableLessonArgs {
 
   """Trạng thái kích  hoạt"""
   enable: Boolean!
+}
+
+input CreateQuestionsArgs {
+  questions: [QuestionArgs!]!
+}
+
+input QuestionArgs {
+  sku: String
+  content: String!
+  picture: Upload
+  remark: String
+  chapterId: String!
+  level: LevelEnum!
+  enable: Boolean
+  status: StatusShareEnum
+  category: CategoryEnum!
+
+  """
+  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
+  """
+  quantityWrongAnswers: Int
+
+  """
+  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
+  """
+  answers: [CreateAnswerArgs!]!
+}
+
+input CreateAnswerArgs {
+  enable: Boolean
+
+  """
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
+  """
+  value: String!
+  isCorrect: Boolean = false
+  score: Float
+
+  """Chú thích"""
+  remark: String
+}
+
+input UpdateQuestionArgs {
+  sku: String
+  content: String
+  picture: Upload
+  remark: String
+  chapterId: String
+  level: LevelEnum
+  enable: Boolean
+  status: StatusShareEnum
+  category: CategoryEnum
+
+  """
+  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
+  """
+  quantityWrongAnswers: Int
+
+  """
+  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
+  """
+  answers: [CreateAnswerArgs!]
+}
+
+input EnableQuestionsArgs {
+  questionsEnable: [EnableQuestionDto!]!
+}
+
+input EnableQuestionDto {
+  questionId: String!
+  enable: Boolean!
+}
+
+input UpdateQuestionStatusArgs {
+  questionsStatus: [QuestionStatusDto!]!
+}
+
+input QuestionStatusDto {
+  questionId: String!
+  status: StatusShareEnum!
 }
 
 input CreateExamPaperArgs {
@@ -1093,86 +1175,6 @@ input UpdateExamPaperArgs {
   maxScore: Float = 10
   enable: Boolean = false
   status: StatusShareEnum = PRIVATE
-}
-
-input CreateQuestionsArgs {
-  questions: [QuestionArgs!]!
-}
-
-input QuestionArgs {
-  sku: String
-  content: String!
-  picture: Upload
-  remark: String
-  chapterId: String!
-  level: LevelEnum!
-  enable: Boolean
-  status: StatusShareEnum
-  category: CategoryEnum!
-
-  """
-  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
-  """
-  quantityWrongAnswers: Int
-
-  """
-  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
-  """
-  answers: [CreateAnswerArgs!]!
-}
-
-input CreateAnswerArgs {
-  enable: Boolean
-
-  """
-  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
-  """
-  value: String!
-  isCorrect: Boolean = false
-  score: Float
-
-  """Chú thích"""
-  remark: String
-}
-
-input UpdateQuestionArgs {
-  sku: String
-  content: String
-  picture: Upload
-  remark: String
-  chapterId: String
-  level: LevelEnum
-  enable: Boolean
-  status: StatusShareEnum
-  category: CategoryEnum
-
-  """
-  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
-  """
-  quantityWrongAnswers: Int
-
-  """
-  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
-  """
-  answers: [CreateAnswerArgs!]
-}
-
-input EnableQuestionsArgs {
-  questionsEnable: [EnableQuestionDto!]!
-}
-
-input EnableQuestionDto {
-  questionId: String!
-  enable: Boolean!
-}
-
-input UpdateQuestionStatusArgs {
-  questionsStatus: [QuestionStatusDto!]!
-}
-
-input QuestionStatusDto {
-  questionId: String!
-  status: StatusShareEnum!
 }
 
 input CreateClassArgs {

@@ -94,4 +94,16 @@ export class LessonResolver {
     data.updateBy = user.id;
     return await this.lessonService.enableLessons(data);
   }
+
+  @Permissions(PermissionEnum.DELETE_LESSON)
+  @Mutation(() => String, {
+    name: 'deleteLessons',
+    description: 'Xóa học phần',
+  })
+  async delete(
+    @CurrentUser() user: IAuthPayload,
+    @Args('lessonIds', { type: () => [String] }) lessonIds: string[],
+  ): Promise<string> {
+    return await this.lessonService.deleteMany(lessonIds, user.id);
+  }
 }

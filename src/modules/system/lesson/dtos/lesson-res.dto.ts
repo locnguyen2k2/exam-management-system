@@ -1,6 +1,4 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { IsArray } from 'class-validator';
-import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';

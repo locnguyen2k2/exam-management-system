@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { MongoRepository } from 'typeorm';
@@ -35,12 +35,11 @@ export interface IChapterQuestion {
 @Injectable()
 export class ExamService {
   constructor(
-    @Inject(forwardRef(() => LessonService))
-    private readonly lessonService: LessonService,
     @InjectRepository(ExamEntity)
     private readonly examRepo: MongoRepository<ExamEntity>,
-    private readonly questionService: QuestionService,
+    private readonly lessonService: LessonService,
     private readonly chapterService: ChapterService,
+    private readonly questionService: QuestionService,
   ) {}
 
   async findAll(
@@ -48,7 +47,7 @@ export class ExamService {
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
     lessonId: string,
   ) {
-    const paginated = await this.lessonService.findExams(
+    const paginated = await this.lessonService.paginateExams(
       lessonId,
       pageOptions,
       uid,
@@ -70,9 +69,10 @@ export class ExamService {
 
   async findOne(id: string): Promise<ExamEntity> {
     const isExisted = await this.lessonService.findByExamId(id);
-    const isExam = isExisted.exams.find((exam) => exam.id === id);
-    if (isExam) return isExam;
-    throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
+
+    if (!isExisted) throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
+
+    return isExisted.exams.find((exam) => exam.id === id);
   }
 
   async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
@@ -85,6 +85,13 @@ export class ExamService {
       ErrorEnum.RECORD_NOT_FOUND,
       `Question ${questionId}`,
     );
+  }
+
+  async examHasQuiz(questionId: string): Promise<boolean> {
+    const isExisted = await this.lessonService.findExamsByQuiz(questionId);
+    const isExams = isExisted.map(({ exams }) => exams).flat();
+
+    return !_.isEmpty(isExams);
   }
 
   handleAnswersLabel(ids: string[], answerLabel: string) {
@@ -135,10 +142,11 @@ export class ExamService {
 
     const chapter: IChapterQuestion[] = await Promise.all(
       data.questionIds.map(async (questionId) => {
-        const { chapterId, question } = await this.chapterService.getQuiz(
-          questionId,
-          data.createBy,
-        );
+        const { chapterId, question } =
+          await this.chapterService.findAvailableQuiz(
+            questionId,
+            data.createBy,
+          );
 
         return { chapterId, question };
       }),
@@ -357,10 +365,11 @@ export class ExamService {
   async getScale(questions: ExamQuestionDto[]) {
     const chapter: IChapterQuestion[] = await Promise.all(
       questions.map(async ({ id }) => {
-        const { chapterId, question } = await this.chapterService.getQuiz(
-          id,
-          questions[0].create_by,
-        );
+        const { chapterId, question } =
+          await this.chapterService.findAvailableQuiz(
+            id,
+            questions[0].create_by,
+          );
 
         return { chapterId, question };
       }),
@@ -416,7 +425,7 @@ export class ExamService {
       const questions: any[] = Array(isExisted.questions.length);
       await Promise.all(
         isExisted.questions.map(async (question, index) => {
-          const isQuestion = await this.chapterService.getQuiz(
+          const isQuestion = await this.chapterService.findAvailableQuiz(
             question.id,
             question.create_by,
           );
@@ -502,14 +511,8 @@ export class ExamService {
     );
 
     for (const itemId of ids) {
-      const { exams, id } = await this.lessonService.findByExamId(itemId);
-      if (exams && exams.length > 0) {
-        const newExams = exams.filter((exam) => exam.id !== itemId);
-        await this.lessonService.update(id, {
-          examIds: newExams.map((exam) => exam.id),
-          updateBy: uid,
-        });
-      }
+      const { id } = await this.lessonService.findByExamId(itemId);
+      await this.lessonService.deleteExam(id, itemId);
     }
 
     return '200:Xóa thành công';
