@@ -476,7 +476,7 @@ export class QuestionService {
       }
     }
 
-    if (data.picture) {
+    if (!_.isNil(data.picture)) {
       if (!_.isEmpty(question.picture)) {
         await this.imageService.deleteImage(question.picture);
       }

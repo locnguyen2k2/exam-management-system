@@ -7,8 +7,8 @@ import {
   EnableLessonsDto,
   LessonPageOptions,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
-import { LessonDetailDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import * as _ from 'lodash';
+import { LessonDetailDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { searchIndexes } from '~/utils/search';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import {
@@ -447,19 +447,5 @@ export class LessonService {
     return true;
   }
 
-  // async updateLessonClasses(
-  //   id: string,
-  //   classIds: string[],
-  // ): Promise<LessonEntity> {
-  //   const isExisted = await this.findOne(id);
-  //
-  //   const { affected } = await this.lessonRepo.update(
-  //     { id },
-  //     {
-  //       ...{ classIds: classIds },
-  //     },
-  //   );
-  //
-  //   return affected === 0 ? isExisted : await this.findOne(id);
-  // }
+  async deleteMany(ids: string[]) {}
 }
