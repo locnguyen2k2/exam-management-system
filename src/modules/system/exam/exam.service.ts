@@ -68,19 +68,22 @@ export class ExamService {
   }
 
   async findOne(id: string): Promise<ExamEntity> {
-    const isExisted = await this.examRepo.findOne({ where: { id } });
-    if (isExisted) return isExisted;
+    const isExisted = await this.lessonService.findByExamId(id);
+    const isExam = isExisted.exams.find((exam) => exam.id === id);
+    if (isExam) return isExam;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
   async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
-    return await this.examRepo.find({
-      where: {
-        'questions.id': {
-          $all: [questionId],
-        },
-      },
-    });
+    const isExisted = await this.lessonService.findExamsByQuiz(questionId);
+    const isExams = isExisted.map(({ exams }) => exams).flat();
+
+    if (isExams) return isExams;
+
+    throw new BusinessException(
+      ErrorEnum.RECORD_NOT_FOUND,
+      `Question ${questionId}`,
+    );
   }
 
   handleAnswersLabel(ids: string[], answerLabel: string) {
@@ -347,25 +350,25 @@ export class ExamService {
     return createExams;
   }
 
-  async updateQuiz(quizId: string, data: any) {
-    const exams = await this.findByQuestionId(quizId);
-    console.log(exams);
-    await Promise.all(
-      exams.map(async (exam) => {
-        const newQuiz = data;
-        const quizzes = exam.questions.filter((quiz) => {
-          if (quiz.id === quizId) {
-            newQuiz['label'] = quiz.label;
-          } else {
-            return quiz;
-          }
-        });
-
-        console.log(quizzes, newQuiz);
-      }),
-    );
-    return true;
-  }
+  // async updateQuiz(quizId: string, data: any) {
+  //   const exams = await this.findByQuestionId(quizId);
+  //
+  //   await Promise.all(
+  //     exams.map(async (exam) => {
+  //       const newQuiz = data;
+  //       const quizzes = exam.questions.filter((quiz) => {
+  //         if (quiz.id === quizId) {
+  //           newQuiz['label'] = quiz.label;
+  //         } else {
+  //           return quiz;
+  //         }
+  //       });
+  //       console.log(newQuiz);
+  //       console.log(quizzes.find((quiz) => quiz.id === quizId));
+  //     }),
+  //   );
+  //   return true;
+  // }
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
@@ -389,8 +392,10 @@ export class ExamService {
           if (!answerLabel) {
             answerLabel = question.answers[0].label;
           }
-          isQuestion['answers'] = question.answers.map((answer) => answer);
-          questions[index] = isQuestion;
+          isQuestion.question['answers'] = question.answers.map(
+            (answer) => answer,
+          );
+          questions[index] = isQuestion.question;
         }),
       );
       listQuestions = this.handleQuestionLabel(
@@ -400,38 +405,29 @@ export class ExamService {
       );
     }
 
-    await this.examRepo.update(
-      { id },
-      {
-        ...(!_.isNil(data.label) && { label: data.label }),
-        ...(!_.isNil(data.time) && { time: data.time }),
-        ...(!_.isNil(data.questionLabel) && {
-          questions: listQuestions.map((question) => {
-            return {
-              ...question,
-              label: question.label,
-            };
-          }),
+    const newExam = new ExamEntity({
+      ...isExisted,
+      ...(!_.isNil(data.label) && { label: data.label }),
+      ...(!_.isNil(data.time) && { time: data.time }),
+      ...(!_.isNil(data.questionLabel) && {
+        questions: listQuestions.map((question) => {
+          return {
+            ...question,
+            label: question.label,
+          };
         }),
-        ...(!_.isNil(data.maxScore) && { maxScore: data.maxScore }),
-        ...(!_.isNil(data.status) && {
-          status: data.status,
-        }),
-        ...(!_.isNil(data.enable) && { enable: data.enable }),
-        update_by: data.updateBy,
-      },
-    );
-
-    const result = await this.findOne(id);
-
-    const lesson = await this.lessonService.findByExamId(result.id);
-
-    await this.lessonService.update(lesson.id, {
-      examIds: lesson.exams.map((exam) => exam.id),
-      updateBy: data.updateBy,
+      }),
+      ...(!_.isNil(data.maxScore) && { maxScore: data.maxScore }),
+      ...(!_.isNil(data.status) && {
+        status: data.status,
+      }),
+      ...(!_.isNil(data.enable) && { enable: data.enable }),
+      update_by: data.updateBy,
     });
 
-    return result;
+    await this.lessonService.updateExam(newExam);
+
+    return await this.findOne(id);
   }
 
   async enableExams(data: EnableExamsDto): Promise<ExamEntity[]> {

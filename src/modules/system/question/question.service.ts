@@ -496,7 +496,7 @@ export class QuestionService {
       newQuestion.answers = answers.map((answer) => new AnswerEntity(answer));
 
     await this.chapterService.updateQuiz(chapterId, newQuestion);
-    await this.examService.updateQuiz(id, newQuestion);
+    // await this.examService.updateQuiz(id, newQuestion);
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
       await this.chapterService.updateQuizzes(chapterId, oldQuestions);

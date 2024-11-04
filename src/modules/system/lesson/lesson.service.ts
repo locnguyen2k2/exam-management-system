@@ -281,6 +281,23 @@ export class LessonService {
     });
   }
 
+  async updateExam(exam: any) {
+    const isLesson = await this.findByExamId(exam.id);
+
+    const newExams = isLesson.exams.filter(({ id }) => id !== exam.id);
+
+    await this.lessonRepo.update(
+      {
+        id: isLesson.id,
+      },
+      {
+        exams: [...newExams, exam],
+      },
+    );
+
+    await this.classService.updateLessonExams(isLesson.id, [...newExams, exam]);
+  }
+
   async update(id: string, data: any): Promise<LessonDetailDto> {
     const isExisted = await this.findOne(id);
     const newClassIds: string[] = [];

@@ -4,7 +4,7 @@ import { Field, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Expose, Transform } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
-import { Max, Min, Validate } from 'class-validator';
+import { IsOptional, Max, Min, Validate } from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { IsValidString } from '~/common/decorators/string.decorator';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -119,6 +119,7 @@ export class GenerateExamPaperDto extends BaseExamDto {
 @InputType('UpdateExamPaperArgs')
 export class UpdateExamPaperDto extends BaseDto {
   @Field(() => String, { nullable: true })
+  @IsOptional()
   @Validate(IsValidString)
   label: string;
 
