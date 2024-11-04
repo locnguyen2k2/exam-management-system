@@ -25,6 +25,7 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { shuffle } from '~/utils/shuffle';
+import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
 
 export interface IChapterQuestion {
   chapterId: string;
@@ -240,7 +241,10 @@ export class ExamService {
   }
 
   async getQuestionRate(data: IClassifyQuestion[]): Promise<IScale[]> {
-    const totalQuestions = data.length;
+    const totalQuestions = data
+      .map(({ info }) => info.map(({ questions }) => questions).flat())
+      .flat().length;
+
     const scales: IScale[] = [];
 
     data.map(({ chapterId, info }) => {
@@ -350,25 +354,53 @@ export class ExamService {
     return createExams;
   }
 
-  // async updateQuiz(quizId: string, data: any) {
-  //   const exams = await this.findByQuestionId(quizId);
-  //
-  //   await Promise.all(
-  //     exams.map(async (exam) => {
-  //       const newQuiz = data;
-  //       const quizzes = exam.questions.filter((quiz) => {
-  //         if (quiz.id === quizId) {
-  //           newQuiz['label'] = quiz.label;
-  //         } else {
-  //           return quiz;
-  //         }
-  //       });
-  //       console.log(newQuiz);
-  //       console.log(quizzes.find((quiz) => quiz.id === quizId));
-  //     }),
-  //   );
-  //   return true;
-  // }
+  async getScale(questions: ExamQuestionDto[]) {
+    const chapter: IChapterQuestion[] = await Promise.all(
+      questions.map(async ({ id }) => {
+        const { chapterId, question } = await this.chapterService.getQuiz(
+          id,
+          questions[0].create_by,
+        );
+
+        return { chapterId, question };
+      }),
+    );
+    const classify = this.classifyQuestions(chapter);
+    return this.getQuestionRate(classify);
+  }
+
+  async updateQuiz(quizId: string, data: QuestionEntity) {
+    const exams = await this.findByQuestionId(quizId);
+
+    await Promise.all(
+      exams.map(async (exam) => {
+        const newExam: ExamEntity = exam;
+        let quizLabel = '';
+        let quizzes: any = exam.questions.filter((quiz) => {
+          if (quiz.id === quizId) {
+            quizLabel = quiz.label;
+          } else {
+            return quiz;
+          }
+        });
+
+        const handleQuestion = this.randomQuestions([data]);
+        const quiz = this.handleQuestionLabel(
+          handleQuestion,
+          exam.questions[0].label,
+          exam.questions[0].answers[0].label,
+        )[0];
+        quiz['label'] = quizLabel;
+        quizzes = _.orderBy([quiz, ...quizzes], ['label'], ['asc']);
+
+        newExam.scales = await this.getScale(quizzes);
+        newExam.questions = quizzes;
+
+        await this.lessonService.updateExam(newExam);
+      }),
+    );
+    return true;
+  }
 
   async update(id: string, data: UpdateExamPaperDto): Promise<ExamEntity> {
     const isExisted = await this.findOne(id);
@@ -377,9 +409,8 @@ export class ExamService {
       ? data.answerLabel
       : null;
 
-    if (isExisted.create_by !== data.updateBy) {
+    if (isExisted.create_by !== data.updateBy)
       throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
-    }
 
     if (data.questionLabel) {
       const questions: any[] = Array(isExisted.questions.length);

@@ -9,7 +9,6 @@ import {
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
 } from '~/modules/system/question/dtos/question-req.dto';
-// import { AnswerService } from '~/modules/system/answer/answer.service';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
@@ -496,7 +495,7 @@ export class QuestionService {
       newQuestion.answers = answers.map((answer) => new AnswerEntity(answer));
 
     await this.chapterService.updateQuiz(chapterId, newQuestion);
-    // await this.examService.updateQuiz(id, newQuestion);
+    await this.examService.updateQuiz(id, newQuestion);
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
       await this.chapterService.updateQuizzes(chapterId, oldQuestions);
