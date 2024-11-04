@@ -36,9 +36,9 @@ export class AuthService {
 
     if (isValid) return 'Vui lòng nhập mã xác nhận đã gửi qua email!';
 
-    await this.tokenService.resetAllUserTokens(email);
+    await this.userService.resetTokens(email);
 
-    const { value } = await this.tokenService.createUserUuidToken(
+    const { value } = await this.tokenService.generateUuidToken(
       id,
       TokenEnum.CONFIRM_TOKEN,
     );
@@ -58,7 +58,7 @@ export class AuthService {
 
     if (!isValid) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
-    await this.tokenService.deleteUserTokenByVal(confirm_token.value);
+    await this.userService.deleteUserToken(confirm_token.value);
     await this.userService.update(id, {
       id: id,
       status: true,
@@ -78,14 +78,14 @@ export class AuthService {
     if (!user.status) throw new BusinessException(ErrorEnum.USER_UNAVAILABLE);
     if (isValid) return 'Vui lòng nhập mã xác thực đã gửi qua email!';
 
-    const { value } = await this.tokenService.createUserUuidToken(
+    const { value } = await this.tokenService.generateUuidToken(
       user.id,
       TokenEnum.RESET_PASSWORD,
     );
 
     await this.mailService.sendResetPasswordEmail(email, value);
     repass_token &&
-      (await this.tokenService.deleteUserTokenByVal(repass_token.value));
+      (await this.userService.deleteUserToken(repass_token.value));
 
     return 'Mã xác thực để đổi lại mật khẩu đã được gửi vào email!';
   }
@@ -102,7 +102,7 @@ export class AuthService {
     if (!isValid) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
     await this.userService.updatePassword(id, data.newPassword);
-    await this.tokenService.resetAllUserTokens(data.email);
+    await this.userService.resetTokens(data.email);
 
     return 'Mật khẩu của bạn dã được cập nhật!';
   }
@@ -119,7 +119,7 @@ export class AuthService {
       throw new BusinessException(ErrorEnum.USER_IS_EXISTED);
 
     if (user && !user.password) {
-      await this.tokenService.resetAllUserTokens(email);
+      await this.userService.resetTokens(email);
       await this.userService.update(user.id, { ...data, status: false });
       await this.userService.updatePassword(user.id, data.password);
     } else {
@@ -133,7 +133,7 @@ export class AuthService {
       });
     }
 
-    const { value } = await this.tokenService.createUserUuidToken(
+    const { value } = await this.tokenService.generateUuidToken(
       user.id,
       TokenEnum.CONFIRM_TOKEN,
     );
@@ -202,7 +202,7 @@ export class AuthService {
     } else {
       const { confirm_token } = await this.userService.getTokens(email);
       confirm_token &&
-        (await this.tokenService.deleteUserTokenByVal(confirm_token.value));
+        (await this.userService.deleteUserToken(confirm_token.value));
 
       await this.userService.updateStatus(user.id, true);
     }

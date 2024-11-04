@@ -29,10 +29,7 @@ export class TokenService {
   ) {}
 
   async findOne(value: string): Promise<TokenEntity> {
-    const token = await this.tokenRepository.findOneBy({ value });
-
-    if (!token) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
-    return token;
+    return await this.userService.findTokenByValue(value);
   }
 
   /**
@@ -48,7 +45,8 @@ export class TokenService {
       await this.verifyAccessToken(accessToken?.value);
       return accessToken;
     } catch {
-      accessToken && (await this.deleteUserTokenByVal(accessToken.value));
+      accessToken &&
+        (await this.userService.deleteUserToken(accessToken.value));
 
       return await this.createUserAT({
         uid: user.id,
@@ -71,9 +69,10 @@ export class TokenService {
 
     const checkRT = refreshToken?.expired_at >= new Date();
     if (!checkRT) {
-      refreshToken && (await this.deleteUserTokenByVal(refreshToken.value));
+      refreshToken &&
+        (await this.userService.deleteUserToken(refreshToken.value));
 
-      return await this.createUserUuidToken(user.id, TokenEnum.REFRESH_TOKEN);
+      return await this.generateUuidToken(user.id, TokenEnum.REFRESH_TOKEN);
     } else {
       return refreshToken;
     }
@@ -82,26 +81,19 @@ export class TokenService {
   /**
    * Tạo Uuid Token (Confirm, refresh, repass) và thêm vào User
    * */
-  async createUserUuidToken(
-    uid: string,
-    type: TokenEnum,
-  ): Promise<TokenEntity> {
+  async generateUuidToken(uid: string, type: TokenEnum): Promise<TokenEntity> {
     const token =
       type === TokenEnum.CONFIRM_TOKEN || type === TokenEnum.RESET_PASSWORD
         ? uuid().split('-')[0]
         : uuid();
 
-    const newToken = await this.createUuidToken({ token, type });
-
-    await this.userService.createUserToken(uid, newToken);
-
-    return newToken;
+    return await this.createUuidToken(uid, { token, type });
   }
 
   /**
    * Tạo UUid Tokens (Confirm, refresh, repass)
    * */
-  async createUuidToken(data: IToken): Promise<TokenEntity> {
+  async createUuidToken(uid: string, data: IToken): Promise<TokenEntity> {
     const currentTime = new Date();
     const expire =
       data.type === TokenEnum.CONFIRM_TOKEN ||
@@ -117,34 +109,12 @@ export class TokenService {
         expired_at: new Date(expire),
       }),
     });
-    const initToken = this.tokenRepository.create(token);
 
-    return await this.tokenRepository.save(initToken);
-  }
+    const newToken = this.tokenRepository.create(token);
 
-  /*
-   * Xóa Access token và Refresh token của User
-   * */
-  async deleteAuthTokensByUid(email: string): Promise<boolean> {
-    const { access_token, refresh_token } =
-      await this.userService.getTokens(email);
+    await this.userService.createUserToken(uid, newToken);
 
-    access_token && (await this.deleteUserTokenByVal(access_token.value));
-    refresh_token && (await this.deleteUserTokenByVal(refresh_token.value));
-    return true;
-  }
-
-  /**
-   * Xóa token trong token entity và user entity bằng value
-   * */
-  async deleteUserTokenByVal(value: string): Promise<boolean> {
-    try {
-      await this.delToken(value);
-      await this.userService.deleteUserToken(value);
-    } catch (err) {
-      throw new BusinessException(`400:${err.message}`);
-    }
-    return true;
+    return newToken;
   }
 
   /*
@@ -169,53 +139,32 @@ export class TokenService {
    * IToken: token, type
    * */
   async checkToken(data: IToken) {
+    const token = await this.userService.findTokenByValue(
+      data.token,
+      data.type,
+    );
+
     try {
-      const token = await this.findOne(data.token);
-
-      if (token.type !== data.type) return false;
-
       if (token.type !== TokenEnum.ACCESS_TOKEN) {
         return await this.verifyUuidToken(token);
       } else {
-        await this.verifyAccessToken(token.value);
-        return Boolean(token);
+        return await this.verifyAccessToken(token.value);
       }
     } catch (error) {
-      return false;
+      throw new BusinessException(ErrorEnum.INVALID_TOKEN);
     }
   }
 
-  async resetAllUserTokens(email: string): Promise<boolean> {
-    const { access_token, repass_token, refresh_token, confirm_token } =
-      await this.userService.getTokens(email);
-
-    await this.userService.resetTokens(email);
-
-    await this.tokenRepository.deleteMany({
-      value: {
-        $in: [
-          access_token && access_token.value,
-          refresh_token && refresh_token.value,
-          confirm_token && confirm_token.value,
-          repass_token && repass_token.value,
-        ],
-      },
-    });
-
-    return true;
-  }
-
   async confirmRefreshToken(token: string): Promise<string | boolean> {
-    const isValid = await this.checkToken({
+    await this.checkToken({
       token: token,
       type: TokenEnum.REFRESH_TOKEN,
     });
 
-    if (!isValid) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
-
     const user = await this.userService.getByToken(token);
     const { access_token } = await this.userService.getTokens(user.email);
-    access_token && (await this.deleteUserTokenByVal(access_token.value));
+    access_token &&
+      (await this.userService.deleteUserToken(access_token.value));
 
     const payload = {
       id: user.id,
@@ -225,12 +174,12 @@ export class TokenService {
       roles: this.userService.getUserPermissions(user),
     };
 
-    const newAT = await this.createUuidToken({
+    const newAT = await this.createUuidToken(user.id, {
       token: await this.generateAT(payload),
       type: TokenEnum.ACCESS_TOKEN,
     });
 
-    return await this.userService.createUserToken(user.id, newAT);
+    return newAT.value;
   }
 
   /**
@@ -245,14 +194,10 @@ export class TokenService {
       roles: data.roles,
     });
 
-    const accessToken = await this.createUuidToken({
+    return await this.createUuidToken(data.uid, {
       token: newAT,
       type: TokenEnum.ACCESS_TOKEN,
     });
-
-    await this.userService.createUserToken(data.uid, accessToken);
-
-    return accessToken;
   }
 
   async verifyUuidToken(token: TokenEntity): Promise<boolean> {
@@ -265,14 +210,5 @@ export class TokenService {
 
   async generateAT(payload: IAuthPayload): Promise<string> {
     return await this.jwtService.signAsync(payload);
-  }
-
-  async delToken(value: string): Promise<boolean> {
-    let result = false;
-    try {
-      await this.tokenRepository.delete({ value });
-      result = true;
-    } catch {}
-    return result;
   }
 }

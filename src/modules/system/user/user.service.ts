@@ -182,19 +182,15 @@ export class UserService {
     return 'Xóa thành công!';
   }
 
-  async deleteUserToken(token: string): Promise<boolean> {
-    const userToken = await this.userRepository.findOne({
-      where: { 'tokens.value': token },
-    });
-
-    if (!userToken) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
+  async deleteUserToken(value: string): Promise<boolean> {
+    await this.findTokenByValue(value);
 
     await this.userRepository.findOneAndUpdate(
-      { 'tokens.value': token },
+      { 'tokens.value': value },
       {
         $pull: {
           tokens: {
-            value: token,
+            value: value,
           },
         },
       },
@@ -319,15 +315,21 @@ export class UserService {
     return true;
   }
 
-  async userHasToken(
-    uid: string,
+  async findTokenByValue(
     value: string,
     type?: TokenEnum,
   ): Promise<TokenEntity> {
-    const user = await this.findOne(uid);
-    const index = user.tokens.findIndex(
-      (token) => token.value === value && token.type === type,
-    );
-    return user.tokens[index];
+    const isExisted = await this.userRepository.findOneBy({
+      'tokens.value': value,
+    });
+
+    if (!isExisted) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
+
+    const isToken = isExisted.tokens.find((token) => token.value === value);
+
+    if (!_.isNil(type) && isToken.type !== type)
+      throw new BusinessException(ErrorEnum.INVALID_TOKEN);
+
+    return isToken;
   }
 }

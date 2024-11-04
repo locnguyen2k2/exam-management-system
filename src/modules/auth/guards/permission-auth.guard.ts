@@ -37,18 +37,10 @@ export class PermissionAuthGuard implements CanActivate {
     if (!user) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
     // Kiểm tra token
-    const checkAT = await this.tokenService.checkToken({
+    await this.tokenService.checkToken({
       token: req.accessToken,
       type: TokenEnum.ACCESS_TOKEN,
     });
-    const isUserAT = await this.userService.userHasToken(
-      user.id,
-      req.accessToken,
-      TokenEnum.ACCESS_TOKEN,
-    );
-
-    if (!checkAT) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
-    if (!isUserAT) throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
     const requirePerVals = this.reflector.getAllAndOverride<string | string[]>(
       PERMISSION_KEYS,

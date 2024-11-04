@@ -56,13 +56,10 @@ export class JwtAuthGuard extends AuthGuard(AuthTypes.JWT) {
         throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
       // Kiểm tra token
-      if (
-        !(await this.tokenService.checkToken({
-          token,
-          type: TokenEnum.ACCESS_TOKEN,
-        }))
-      )
-        throw new BusinessException(ErrorEnum.INVALID_TOKEN);
+      await this.tokenService.checkToken({
+        token,
+        type: TokenEnum.ACCESS_TOKEN,
+      });
     }
     return result;
   }
