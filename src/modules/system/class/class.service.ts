@@ -111,6 +111,11 @@ export class ClassService {
     // if (isExisted && isExisted.create_by === data.createBy)
     //   throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
 
+    const isReplaced = await this.findByCode(data.code);
+
+    if (isReplaced && isReplaced.create_by === data.createBy)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.code);
+
     const item = new ClassEntity({
       ...data,
       create_by: data.createBy,
@@ -182,7 +187,11 @@ export class ClassService {
     if (!_.isEmpty(data.code)) {
       const isReplaced = await this.findByCode(data.code);
 
-      if (isReplaced && isExisted.id !== isReplaced.id)
+      if (
+        isReplaced &&
+        isExisted.id !== isReplaced.id &&
+        isReplaced.create_by === data.updateBy
+      )
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.code);
     }
 
