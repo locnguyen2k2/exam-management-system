@@ -11,14 +11,8 @@ import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 
 import * as _ from 'lodash';
-import { searchIndexes } from '~/utils/search';
-import {
-  regSpecialChars,
-  regWhiteSpace,
-} from '~/common/constants/regex.constant';
 import { RoleService } from '~/modules/system/role/role.service';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
-import { paginate } from '~/helpers/paginate/paginate';
 
 @Injectable()
 export class PermissionService {
@@ -30,34 +24,18 @@ export class PermissionService {
   ) {}
 
   async findAll(
+    roleId: string,
     pageOptions: PermissionPageOptions = new PermissionPageOptions(),
   ) {
-    const filterOptions = [
-      {
-        $match: {
-          ...(!_.isEmpty(pageOptions.value) && {
-            value: {
-              $regex: pageOptions.value
-                .replace(regSpecialChars, '\\$&')
-                .replace(regWhiteSpace, '\\s*'),
-              $options: 'i',
-            },
-          }),
-          ...(!_.isNil(pageOptions.enable) && {
-            enable: pageOptions.enable,
-          }),
-          ...(!_.isNil(pageOptions.permissionStatus) && {
-            status: pageOptions.permissionStatus,
-          }),
-        },
-      },
-    ];
-
-    return paginate(
-      this.permissionRepository,
-      { pageOptions, filterOptions },
-      searchIndexes(pageOptions.keyword),
+    const paginated = await this.roleService.findPermissions(
+      roleId,
+      pageOptions,
     );
+
+    return {
+      data: paginated.data[0] ? paginated.data[0].permissions : [],
+      meta: paginated.meta,
+    };
   }
 
   async findOne(id: string): Promise<PermissionEntity> {

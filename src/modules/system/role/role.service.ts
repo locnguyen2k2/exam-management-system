@@ -22,6 +22,11 @@ import { searchIndexes } from '~/utils/search';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { UserService } from '~/modules/system/user/user.service';
 import { paginate } from '~/helpers/paginate/paginate';
+import { PermissionPageOptions } from '~/modules/system/permission/dtos/permission-req.dto';
+import {
+  regSpecialChars,
+  regWhiteSpace,
+} from '~/common/constants/regex.constant';
 
 @Injectable()
 export class RoleService {
@@ -29,6 +34,7 @@ export class RoleService {
     @InjectRepository(RoleEntity)
     private readonly roleRepository: MongoRepository<RoleEntity>,
     @Inject(forwardRef(() => UserService))
+    @Inject(forwardRef(() => PermissionService))
     private readonly userService: UserService,
     private readonly permissionService: PermissionService,
   ) {}
@@ -182,5 +188,57 @@ export class RoleService {
     });
 
     throw new BusinessException('200:Thao tác thành công');
+  }
+
+  async findPermissions(
+    roleId: string,
+    pageOptions: PermissionPageOptions = new PermissionPageOptions(),
+  ) {
+    const filterOptions = [
+      {
+        $unwind: '$permissions',
+      },
+      {
+        $match: {
+          id: roleId,
+          ...(!_.isEmpty(pageOptions.value) && {
+            'permissions.value': {
+              $regex: pageOptions.value
+                .replace(regSpecialChars, '\\$&')
+                .replace(regWhiteSpace, '\\s*'),
+              $options: 'i',
+            },
+          }),
+          ...(!_.isNil(pageOptions.enable) && {
+            'permissions.enable': pageOptions.enable,
+          }),
+          ...(!_.isNil(pageOptions.permissionStatus) && {
+            'permissions.status': pageOptions.permissionStatus,
+          }),
+        },
+      },
+      { $skip: pageOptions.skip },
+      { $limit: pageOptions.take },
+      {
+        $sort: {
+          [`permissions.${pageOptions.sort}`]: !pageOptions.sorted ? -1 : 1,
+        },
+      },
+    ];
+
+    const groups = [
+      { $group: { _id: null, permissions: { $push: '$permissions' } } },
+    ];
+
+    return await paginate(
+      this.roleRepository,
+      {
+        filterOptions,
+        groups,
+        pageOptions,
+        lookups: null,
+      },
+      searchIndexes(pageOptions.keyword),
+    );
   }
 }

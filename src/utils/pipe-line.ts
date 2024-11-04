@@ -1,5 +1,3 @@
-import * as _ from 'lodash';
-
 export interface IPipeLine {
   filterOptions: any[];
   groups?: any[];
@@ -13,13 +11,11 @@ export function pipeLine({
   pageOptions,
   lookups,
 }: IPipeLine) {
-  const paginate = !_.isNull(groups)
-    ? [
-        { $skip: pageOptions.skip },
-        { $limit: pageOptions.take },
-        { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
-      ]
-    : null;
+  const paginate = [
+    { $skip: pageOptions.skip },
+    { $limit: pageOptions.take },
+    { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
+  ];
 
   return [
     {
@@ -30,7 +26,12 @@ export function pipeLine({
           ...(Array.isArray(lookups) ? lookups : []),
           ...(Array.isArray(groups) ? groups : []),
         ],
-        pageInfo: [...filterOptions, { $count: 'numberRecords' }],
+        pageInfo: [
+          ...(Array.isArray(groups)
+            ? [...paginate, filterOptions[0], filterOptions[1]]
+            : filterOptions),
+          { $count: 'numberRecords' },
+        ],
       },
     },
   ];
