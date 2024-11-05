@@ -1110,6 +1110,9 @@ input CreateExamPaperArgs {
   """Số lượng đề muốn random từ đề gốc đã nhập"""
   numberExams: Float = 1
   questionIds: [String!]!
+
+  """Trộn ngẫu nhiên danh sách câu hỏi"""
+  mixQuestions: Boolean! = false
 }
 
 enum QuestionLabelEnum {

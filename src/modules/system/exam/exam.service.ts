@@ -168,7 +168,9 @@ export class ExamService {
     const listQuestions = chapter.map(({ question }) => question);
 
     for (let i = 0; i < data.numberExams; i++) {
-      const randQuestions = this.randomQuestions(listQuestions);
+      const randQuestions = data.mixQuestions
+        ? this.randomQuestions(listQuestions)
+        : listQuestions;
       const questions: any[] = this.handleQuestionLabel(
         randQuestions,
         data.questionLabel,

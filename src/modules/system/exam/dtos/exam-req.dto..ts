@@ -98,6 +98,12 @@ export class CreateExamPaperDto extends BaseExamDto {
   @Field(() => [String])
   questionIds: string[];
 
+  @Field(() => Boolean, {
+    defaultValue: false,
+    description: 'Trộn ngẫu nhiên danh sách câu hỏi',
+  })
+  mixQuestions: boolean;
+
   @HideField()
   createBy: string;
 }
