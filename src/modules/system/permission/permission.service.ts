@@ -13,6 +13,12 @@ import { ErrorEnum } from '~/common/enums/error.enum';
 import * as _ from 'lodash';
 import { RoleService } from '~/modules/system/role/role.service';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
+import {
+  regSpecialChars,
+  regWhiteSpace,
+} from '~/common/constants/regex.constant';
+import { paginate } from '~/helpers/paginate/paginate';
+import { searchIndexes } from '~/utils/search';
 
 @Injectable()
 export class PermissionService {
@@ -24,18 +30,38 @@ export class PermissionService {
   ) {}
 
   async findAll(
-    roleId: string,
     pageOptions: PermissionPageOptions = new PermissionPageOptions(),
   ) {
-    const paginated = await this.roleService.findPermissions(
-      roleId,
-      pageOptions,
-    );
+    const filterOptions = [
+      {
+        $match: {
+          ...(!_.isEmpty(pageOptions.value) && {
+            value: {
+              $regex: pageOptions.value
+                .replace(regSpecialChars, '\\$&')
+                .replace(regWhiteSpace, '\\s*'),
+              $options: 'i',
+            },
+          }),
+          ...(!_.isNil(pageOptions.enable) && {
+            enable: pageOptions.enable,
+          }),
+          ...(!_.isNil(pageOptions.permissionStatus) && {
+            status: pageOptions.permissionStatus,
+          }),
+        },
+      },
+    ];
 
-    return {
-      data: paginated.data[0] ? paginated.data[0].permissions : [],
-      meta: paginated.meta,
-    };
+    return await paginate(
+      this.permissionRepository,
+      {
+        filterOptions,
+        pageOptions,
+        lookups: null,
+      },
+      searchIndexes(pageOptions.keyword),
+    );
   }
 
   async findOne(id: string): Promise<PermissionEntity> {

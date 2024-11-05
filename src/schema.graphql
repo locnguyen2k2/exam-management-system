@@ -467,8 +467,6 @@ type Query {
 
   """Lấy danh sách phân quyên"""
   permissions(
-    roleId: String!
-
     """Bộ lọc danh sách phân quyền"""
     permissionPageOptions: PermissionPageOptions
   ): PermissionPagination!

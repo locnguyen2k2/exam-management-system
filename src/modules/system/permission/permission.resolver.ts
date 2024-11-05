@@ -23,14 +23,13 @@ export class PermissionResolver {
     description: 'Lấy danh sách phân quyên',
   })
   async permissions(
-    @Args('roleId') roleId: string,
     @Args('permissionPageOptions', {
       description: 'Bộ lọc danh sách phân quyền',
       nullable: true,
     })
     permissionPageOptions: PermissionPageOptions = new PermissionPageOptions(),
   ) {
-    return await this.permissionService.findAll(roleId, permissionPageOptions);
+    return await this.permissionService.findAll(permissionPageOptions);
   }
 
   @Permissions(PermissionEnum.ADD_PERMISSION)
