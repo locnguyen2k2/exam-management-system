@@ -5,8 +5,8 @@ import { PageMetaDto } from '~/common/dtos/pagination/page-meta.dto';
 
 export interface IPaginate {
   filterOptions: any[];
+  pageOptions: any;
   groups?: any[];
-  pageOptions?: any;
   lookups?: any[];
 }
 
@@ -15,13 +15,8 @@ export const paginate = async <T extends ObjectLiteral>(
   options: IPaginate,
   searchOption: any,
 ): Promise<PageDto<T>> => {
-  const { pageOptions, filterOptions, lookups, groups } = options;
-
-  const pipes = [
-    searchOption,
-    ...pipeLine({ filterOptions, groups, pageOptions, lookups }),
-  ];
-
+  const { pageOptions } = options;
+  const pipes = [searchOption, ...pipeLine(options)];
   const [{ data, pageInfo }]: any[] = await repository
     .aggregate(pipes)
     .toArray();

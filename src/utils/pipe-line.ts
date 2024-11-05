@@ -1,16 +1,11 @@
-export interface IPipeLine {
-  filterOptions: any[];
-  groups?: any[];
-  pageOptions: any;
-  lookups?: any[];
-}
+import { IPaginate } from '~/helpers/paginate/paginate';
 
 export function pipeLine({
   filterOptions,
   groups,
   pageOptions,
   lookups,
-}: IPipeLine) {
+}: IPaginate) {
   const paginate = [
     { $skip: pageOptions.skip },
     { $limit: pageOptions.take },
@@ -28,7 +23,7 @@ export function pipeLine({
         ],
         pageInfo: [
           ...(Array.isArray(groups)
-            ? [...paginate, filterOptions[0], filterOptions[1]]
+            ? [filterOptions[0], filterOptions[1]]
             : filterOptions),
           { $count: 'numberRecords' },
         ],

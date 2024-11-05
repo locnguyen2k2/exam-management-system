@@ -25,7 +25,7 @@ import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
-import { searchIndexes } from '~/utils/search';
+import { searchAtlas, searchIndexes } from '~/utils/search';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Injectable()
