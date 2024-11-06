@@ -271,6 +271,7 @@ export class ChapterService {
         ...(data?.label && { label: data.label }),
         ...(data?.updateBy && { update_by: data.updateBy }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
+        ...(!_.isNil(data?.status) && { status: data.status }),
         ...(data?.description && { description: data.description }),
         update_by: data.updateBy,
       },
