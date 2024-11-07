@@ -36,10 +36,12 @@ export class PageMetaDto {
   constructor({ pageOptions, numberRecords }: IPagination) {
     this.keyword = pageOptions.keyword;
     this.page = pageOptions.page;
-    this.take = pageOptions.take;
+    this.take = !pageOptions.all ? pageOptions.take : numberRecords;
     this.sort = pageOptions.sort;
     this.numberRecords = numberRecords;
-    this.pages = Math.ceil(this.numberRecords / this.take);
+    this.pages = Math.ceil(this.numberRecords / this.take)
+      ? Math.ceil(this.numberRecords / this.take)
+      : 0;
     this.hasPrev = this.page > 1;
     this.hasNext = this.page < this.pages;
   }

@@ -8,9 +8,13 @@ export function pipeLine({
 }: IPaginate) {
   const paginate = [
     { $skip: pageOptions.skip },
-    { $limit: pageOptions.take },
+    ...(!pageOptions.all ? [{ $limit: pageOptions.take }] : []),
     { $sort: { [pageOptions.sort]: !pageOptions.sorted ? -1 : 1 } },
   ];
+
+  if (Array.isArray(groups) && pageOptions.all) {
+    filterOptions.splice(filterOptions.length - 2, 1);
+  }
 
   return [
     {

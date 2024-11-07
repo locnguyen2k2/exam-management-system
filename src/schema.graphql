@@ -521,6 +521,9 @@ input UserPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -544,6 +547,9 @@ input RolePageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -565,6 +571,9 @@ input PermissionPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -580,6 +589,9 @@ input ChapterPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -594,6 +606,9 @@ input LessonPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -608,6 +623,9 @@ input QuestionPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -624,6 +642,9 @@ input ExamPaperPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10
@@ -638,6 +659,9 @@ input ClassPageOptions {
 
   """Thứ tự sắp xếp (Mặc định giảm dần)"""
   sorted: Boolean = false
+
+  """Lấy tất cả bản ghi (Mặc định false)"""
+  all: Boolean = false
   enable: Boolean
   page: Int = 1
   take: Int = 10

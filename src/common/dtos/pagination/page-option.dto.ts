@@ -19,6 +19,13 @@ export class PageOptionDto {
   })
   readonly sorted?: boolean = false;
 
+  @Field(() => Boolean, {
+    nullable: true,
+    defaultValue: false,
+    description: 'Lấy tất cả bản ghi (Mặc định false)',
+  })
+  readonly all?: boolean = false;
+
   @Field(() => Boolean, { nullable: true })
   readonly enable?: boolean;
 
