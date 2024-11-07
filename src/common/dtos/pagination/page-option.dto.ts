@@ -1,6 +1,5 @@
-import { IsOptional, Max, Min, Validate } from 'class-validator';
+import { IsOptional, Max, Min } from 'class-validator';
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsValidString } from '~/common/decorators/string.decorator';
 
 @InputType('pageOptionArgs')
 export class PageOptionDto {
@@ -11,7 +10,6 @@ export class PageOptionDto {
     nullable: true,
     description: 'Trường sắp xếp (Mặc định ngày tạo)',
   })
-  @Validate(IsValidString)
   readonly sort?: string = 'created_at';
 
   @Field(() => Boolean, {

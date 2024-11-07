@@ -19,6 +19,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Chapters')
 export class ChapterResolver {
@@ -49,8 +50,8 @@ export class ChapterResolver {
     description: 'Lấy danh sách chương theo học phần',
   })
   async getByLesson(
+    @Args('lessonId') @IdParam() lessonId: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('lessonId') lessonId: string,
     @Args('chapterPageOptions', { nullable: true })
     chapterPageOptions: ChapterPageOptions = new ChapterPageOptions(),
   ): Promise<PageDto<ChapterDetailDto>> {
@@ -83,9 +84,9 @@ export class ChapterResolver {
     description: 'Lấy chi tiết chương',
   })
   async chapter(
-    @Args('chapterId') id: string,
+    @Args('chapterId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<ChapterDetailDto> {
+  ) {
     return this.chapterService.detail(id, user.id);
   }
 
@@ -109,8 +110,8 @@ export class ChapterResolver {
     description: 'Cập nhật chương',
   })
   async update(
+    @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('id') id: string,
     @Args('updateChapterArgs') dto: UpdateChapterDto,
   ): Promise<ChapterEntity> {
     const data = plainToClass(UpdateChapterDto, dto);
@@ -153,8 +154,10 @@ export class ChapterResolver {
     description: 'Xóa danh sách các chương',
   })
   async deleteMany(
+    @Args('chapterIds', { type: () => [String] })
+    @IdParam()
+    chapterIds: string[],
     @CurrentUser() user: IAuthPayload,
-    @Args('chapterIds', { type: () => [String] }) chapterIds: string[],
   ): Promise<string> {
     return await this.chapterService.deleteMany(chapterIds, user.id);
   }

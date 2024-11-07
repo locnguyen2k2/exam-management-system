@@ -38,7 +38,8 @@ const modules = [
 
     ThrottlerModule.forRootAsync({
       useFactory: () => ({
-        errorMessage: 'Phát hiện hành động đáng ngờ vui lòng thực hiện lại sau',
+        errorMessage:
+          'Phát hiện hành động đáng ngờ vui lòng thực hiện lại sau 10 giây',
         throttlers: [{ ttl: seconds(10), limit: 5 }],
       }),
     }),

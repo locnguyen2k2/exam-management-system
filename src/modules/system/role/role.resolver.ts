@@ -13,6 +13,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { plainToClass } from 'class-transformer';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Roles')
 export class RoleResolver {
@@ -50,9 +51,9 @@ export class RoleResolver {
     description: 'Cập nhật vai trò',
   })
   async update(
-    @CurrentUser() user: IAuthPayload,
-    @Args('id') id: string,
+    @Args('id') @IdParam() id: string,
     @Args('updateRoleArgs') args: UpdateRoleDto,
+    @CurrentUser() user: IAuthPayload,
   ): Promise<RoleEntity> {
     args.updateBy = user.id ? user.id : null;
     const data = plainToClass(UpdateRoleDto, args);
@@ -65,7 +66,7 @@ export class RoleResolver {
     description: 'Xóa danh sách các vai trò',
   })
   async deleteRoles(
-    @Args('roleIds', { type: () => [String] }) roleIds: string[],
+    @Args('roleIds', { type: () => [String] }) @IdParam() roleIds: string[],
   ): Promise<string> {
     return await this.roleService.deleteMany(roleIds);
   }

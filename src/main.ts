@@ -17,7 +17,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix(globalPrefix);
   app.enableCors({ origin: '*', credentials: true });
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  // Transform và chuyển đổi các validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
   app.use(
     '/graphql',

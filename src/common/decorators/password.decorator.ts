@@ -5,7 +5,7 @@ import {
 } from 'class-validator';
 
 export function IsPassword(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: any, propertyName: string) {
     registerDecorator({
       name: propertyName,
       target: object.constructor,
@@ -20,7 +20,7 @@ export function IsPassword(validationOptions?: ValidationOptions) {
           return typeof value === 'string' && passwordRegex.test(value);
         },
         defaultMessage(args: ValidationArguments) {
-          return 'Password format is incorrect';
+          return 'Mật khẩu ít nhất 6 ký tự, phải có chữ cái và số';
         },
       },
     });

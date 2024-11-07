@@ -2,17 +2,23 @@ import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsScale } from '~/common/decorators/scale.decorator';
-import { IsOptional, Max, Min, Validate } from 'class-validator';
+import {
+  IsOptional,
+  Max,
+  Min,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { IsValidString } from '~/common/decorators/string.decorator';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import {
   AnswerLabelEnum,
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
+import { IsValidId } from '~/common/decorators/id.decorator';
 
 @InputType('ExamPaperPageOptions')
 export class ExamPaperPageOptions extends PageOptionDto {
@@ -22,18 +28,10 @@ export class ExamPaperPageOptions extends PageOptionDto {
   readonly examStatus?: StatusShareEnum[];
 }
 
-@InputType('QuestionInfoArgs')
-export class QuestionInfoDto {
-  @Field(() => String)
-  chapterId: string;
-
-  @Field(() => [String])
-  questionIds: string[];
-}
-
 @InputType('ScaleArgs')
 class Scale implements IScale {
   @Field(() => String)
+  @Validate(IsValidId)
   chapterId: string;
 
   @Field(() => Number)
@@ -47,8 +45,7 @@ class Scale implements IScale {
 
 @InputType()
 class BaseExamDto extends BaseDto {
-  @Field(() => String, { nullable: true })
-  @Validate(IsValidString)
+  @Field(() => String, { nullable: true, defaultValue: '' })
   label: string;
 
   @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
@@ -64,7 +61,7 @@ class BaseExamDto extends BaseDto {
   answerLabel: AnswerLabelEnum;
 
   @Field(() => String)
-  @Validate(IsValidString)
+  @Validate(IsValidId)
   lessonId: string;
 
   @Field(() => String, { nullable: true })
@@ -96,6 +93,7 @@ export class CreateExamPaperDto extends BaseExamDto {
   scales: Scale[];
 
   @Field(() => [String])
+  @Validate(IsValidId)
   questionIds: string[];
 
   @Field(() => Boolean, {
@@ -113,6 +111,8 @@ export class GenerateExamPaperDto extends BaseExamDto {
   @Field(() => [Scale])
   @IsScale()
   @Expose()
+  @ValidateNested({ each: true })
+  @Type(() => Scale)
   scales: Scale[];
 
   @Field(() => Number)
@@ -126,7 +126,6 @@ export class GenerateExamPaperDto extends BaseExamDto {
 export class UpdateExamPaperDto extends BaseDto {
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @Validate(IsValidString)
   label: string;
 
   @Field(() => Number, {
@@ -163,6 +162,7 @@ export class UpdateExamPaperDto extends BaseDto {
 @InputType('EnableExamArgs')
 class EnableExamDto {
   @Field(() => String)
+  @Validate(IsValidId)
   examId: string;
 
   @Field(() => Boolean)
@@ -172,7 +172,10 @@ class EnableExamDto {
 @InputType('EnableExamsArgs')
 export class EnableExamsDto {
   @Field(() => [EnableExamDto])
+  @ValidateNested({ each: true })
+  @Type(() => EnableExamDto)
   examsEnable: EnableExamDto[];
+
   @HideField()
   updateBy: string;
 }

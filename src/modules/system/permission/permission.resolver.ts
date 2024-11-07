@@ -12,6 +12,7 @@ import { PermissionEnum } from '~/modules/system/permission/permission.constant'
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { plainToClass } from 'class-transformer';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Permissions')
 export class PermissionResolver {
@@ -52,8 +53,8 @@ export class PermissionResolver {
     description: 'Cập nhật phân quyền',
   })
   async update(
+    @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('id') id: string,
     @Args('updatePermissionArgs') args: UpdatePermissionDto,
   ): Promise<any> {
     args.updateBy = user?.id ? user.id : null;
@@ -67,7 +68,9 @@ export class PermissionResolver {
     description: 'Xóa danh sách phân quyền',
   })
   async deletePermissions(
-    @Args('permissionIds', { type: () => [String] }) perIds: string[],
+    @Args('permissionIds', { type: () => [String] })
+    @IdParam()
+    perIds: string[],
   ): Promise<string> {
     return await this.permissionService.deleteMany(perIds);
   }

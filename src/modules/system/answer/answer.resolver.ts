@@ -13,6 +13,7 @@ import { PermissionEnum } from '~/modules/system/permission/permission.constant'
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { AnswerPagination } from '~/modules/system/answer/dtos/answer-res.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver()
 export class AnswerResolver {
@@ -24,7 +25,7 @@ export class AnswerResolver {
     description: 'Lấy chi tiết đáp án',
   })
   async answer(
-    @Args('answerId') id: string,
+    @Args('answerId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
   ): Promise<AnswerEntity> {
     return this.answerService.findAvailableById(id, user.id);
@@ -69,8 +70,8 @@ export class AnswerResolver {
     description: 'Cập nhật câu hỏi',
   })
   async update(
+    @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('id') id: string,
     @Args('updateAnswerArgs') dto: UpdateAnswerDto,
   ): Promise<AnswerEntity> {
     dto.updateBy = user.id;
@@ -85,8 +86,8 @@ export class AnswerResolver {
     description: 'Xóa danh sách các câu hỏi',
   })
   async deleteAnswers(
+    @Args('answerIds', { type: () => [String] }) @IdParam() answerIds: [string],
     @CurrentUser() user: IAuthPayload,
-    @Args('answerIds', { type: () => [String] }) answerIds: [string],
   ): Promise<string> {
     return await this.answerService.deleteMany(answerIds, user.id);
   }

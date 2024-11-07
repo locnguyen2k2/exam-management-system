@@ -1,11 +1,4 @@
-import {
-  Field,
-  HideField,
-  InputType,
-  Int,
-  PartialType,
-  PickType,
-} from '@nestjs/graphql';
+import { Field, HideField, InputType, Int, PartialType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -14,6 +7,9 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
+import { Validate, ValidateNested } from 'class-validator';
+import { IsValidId } from '~/common/decorators/id.decorator';
+import { Type } from 'class-transformer';
 
 @InputType('QuestionPageOptions')
 export class QuestionPageOptions extends PageOptionDto {
@@ -42,6 +38,7 @@ class QuestionBaseDto extends BaseDto {
   remark: string;
 
   @Field(() => String)
+  @Validate(IsValidId)
   chapterId: string;
 
   @Field(() => LevelEnum)
@@ -87,6 +84,7 @@ export class CreateQuestionsDto {
 @InputType()
 class EnableQuestionDto {
   @Field(() => String)
+  @Validate(IsValidId)
   questionId: string;
 
   @Field(() => Boolean)
@@ -96,7 +94,10 @@ class EnableQuestionDto {
 @InputType('EnableQuestionsArgs')
 export class EnableQuestionsDto {
   @Field(() => [EnableQuestionDto])
+  @ValidateNested({ each: true })
+  @Type(() => EnableQuestionDto)
   questionsEnable: EnableQuestionDto[];
+
   @HideField()
   updateBy: string;
 }
@@ -110,7 +111,10 @@ export class UpdateQuestionDto extends PartialType(QuestionBaseDto) {
 @InputType('UpdateQuestionStatusArgs')
 export class UpdateQuestionStatusDto {
   @Field(() => [QuestionStatusDto])
+  @ValidateNested({ each: true })
+  @Type(() => QuestionStatusDto)
   questionsStatus: QuestionStatusDto[];
+
   @HideField()
   updateBy: string;
 }
@@ -118,6 +122,7 @@ export class UpdateQuestionStatusDto {
 @InputType()
 class QuestionStatusDto {
   @Field(() => String)
+  @Validate(IsValidId)
   questionId: string;
 
   @Field(() => StatusShareEnum)

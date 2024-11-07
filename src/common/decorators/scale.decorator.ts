@@ -6,7 +6,7 @@ import {
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 
 export function IsScale(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: any, propertyName: string) {
     registerDecorator({
       name: propertyName,
       target: object.constructor,
@@ -22,7 +22,7 @@ export function IsScale(validationOptions?: ValidationOptions) {
           return total === 100;
         },
         defaultMessage(args: ValidationArguments) {
-          return 'Scale phải bằng 100';
+          return 'Tỷ lệ phải bằng 100';
         },
       },
     });

@@ -8,12 +8,10 @@ import {
   IsOptional,
   IsPhoneNumber,
   MaxLength,
-  Validate,
 } from 'class-validator';
 import { GenderEnum } from '~/modules/system/user/user.constant';
 import { TokenEnum } from '~/modules/auth/auth.constant';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
-import { IsValidString } from '~/common/decorators/string.decorator';
 
 @InputType('ConfirmEmailArgs')
 export class ConfirmEmailDto extends BaseDto {
@@ -33,7 +31,6 @@ export class ResetPasswordDto extends BaseDto {
 
   @Field(() => String)
   @IsPassword()
-  @Validate(IsValidString)
   @Expose()
   newPassword: string;
 

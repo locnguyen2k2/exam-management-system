@@ -2,6 +2,9 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
+import { Validate, ValidateNested } from 'class-validator';
+import { IsValidId } from '~/common/decorators/id.decorator';
+import { Type } from 'class-transformer';
 
 @InputType('LessonPageOptions')
 export class LessonPageOptions extends PageOptionDto {
@@ -27,6 +30,7 @@ class LessonBaseDto extends BaseDto {
   enable: boolean;
 
   @Field(() => [String])
+  @Validate(IsValidId)
   classIds: string[];
 
   @Field(() => StatusShareEnum)
@@ -36,6 +40,8 @@ class LessonBaseDto extends BaseDto {
 @InputType('CreateLessonArgs')
 export class CreateLessonDto {
   @Field(() => [LessonBaseDto])
+  @ValidateNested({ each: true })
+  @Type(() => LessonBaseDto)
   items: LessonBaseDto[];
 
   @HideField()
@@ -45,6 +51,7 @@ export class CreateLessonDto {
 @InputType('EnableLessonArgs')
 class EnableLessonDto {
   @Field(() => String, { description: 'Mã học phần' })
+  @Validate(IsValidId)
   lessonId: string;
 
   @Field(() => Boolean, { description: 'Trạng thái kích  hoạt' })
@@ -54,6 +61,8 @@ class EnableLessonDto {
 @InputType('EnableLessonsArgs')
 export class EnableLessonsDto {
   @Field(() => [EnableLessonDto])
+  @ValidateNested({ each: true })
+  @Type(() => EnableLessonDto)
   lessonsEnable: EnableLessonDto[];
   @HideField()
   updateBy: string;

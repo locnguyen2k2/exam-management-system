@@ -25,7 +25,7 @@ import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
-import { searchAtlas, searchIndexes } from '~/utils/search';
+import { searchIndexes } from '~/utils/search';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 
 @Injectable()
@@ -67,16 +67,14 @@ export class ChapterService {
       { pageOptions, filterOptions },
       searchIndexes(pageOptions.keyword),
     );
-    const detailChapters = [];
+    const detailChapters = new Array(paginated.data.length);
 
     await Promise.all(
-      paginated.data.map(async (chapter) => {
-        const lesson = await this.lessonService.findByChapter(chapter.id);
-        const isData = {
+      paginated.data.map(async (chapter, index) => {
+        detailChapters[index] = {
           ...chapter,
-          lesson: lesson,
+          lesson: await this.lessonService.findByChapter(chapter.id),
         };
-        detailChapters.push(isData);
       }),
     );
 
@@ -91,15 +89,13 @@ export class ChapterService {
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
-  async detail(id: string, uid?: string): Promise<ChapterDetailDto> {
+  async detail(id: string, uid?: string) {
     const chapter = await this.findAvailable(id, uid);
-    const lesson = await this.lessonService.findByChapter(chapter.id);
-    const detail: any = {
-      ...chapter,
-      lesson: lesson,
-    };
 
-    return detail;
+    return {
+      ...chapter,
+      lesson: await this.lessonService.findByChapter(chapter.id),
+    };
   }
 
   async findOne(id: string): Promise<ChapterEntity> {

@@ -57,6 +57,7 @@ export class AuthResolver {
   @Mutation(() => String, { description: 'Đăng ký tài khoản mới' })
   async registerUser(@Args('registerUserArgs') dto: RegisterDto): Promise<any> {
     const data = RegisterDto.plainToClass(dto);
+
     return await this.authService.register(data);
   }
 }

@@ -1093,7 +1093,7 @@ input QuestionStatusDto {
 }
 
 input CreateExamPaperArgs {
-  label: String
+  label: String = ""
 
   """Thời gian làm bài (phút)"""
   time: Float!
@@ -1131,7 +1131,7 @@ enum AnswerLabelEnum {
 }
 
 input GenerateExamPaperArgs {
-  label: String
+  label: String = ""
 
   """Thời gian làm bài (phút)"""
   time: Float!

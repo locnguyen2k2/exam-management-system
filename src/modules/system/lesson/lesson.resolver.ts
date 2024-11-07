@@ -18,6 +18,7 @@ import {
 } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Lessons')
 export class LessonResolver {
@@ -49,9 +50,9 @@ export class LessonResolver {
     description: 'Chi tiết học phần',
   })
   async lesson(
-    @Args('lessonId') id: string,
+    @Args('lessonId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<LessonDetailDto> {
+  ) {
     return await this.lessonService.detailLesson(id, user.id);
   }
 
@@ -72,8 +73,8 @@ export class LessonResolver {
     description: 'Cập nhật học phân',
   })
   async update(
+    @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('id') id: string,
     @Args('updateLessonArgs') dto: UpdateLessonDto,
   ): Promise<LessonDetailDto> {
     const data = plainToClass(UpdateLessonDto, dto);
@@ -102,7 +103,7 @@ export class LessonResolver {
   })
   async delete(
     @CurrentUser() user: IAuthPayload,
-    @Args('lessonIds', { type: () => [String] }) lessonIds: string[],
+    @Args('lessonIds', { type: () => [String] }) @IdParam() lessonIds: string[],
   ): Promise<string> {
     return await this.lessonService.deleteMany(lessonIds, user.id);
   }

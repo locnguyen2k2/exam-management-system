@@ -15,6 +15,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { QuestionPagination } from '~/modules/system/question/dtos/question-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Questions')
 export class QuestionResolver {
@@ -26,8 +27,8 @@ export class QuestionResolver {
     description: 'Lấy danh sách câu hỏi',
   })
   async questions(
+    @Args('chapterId') @IdParam() chapterId: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('chapterId') chapterId: string,
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
@@ -48,7 +49,7 @@ export class QuestionResolver {
     description: 'Chi tiết câu hỏi',
   })
   async question(
-    @Args('questionId') id: string,
+    @Args('questionId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
   ): Promise<QuestionEntity> {
     return this.questionService.detailQuestion(id, user.id);
@@ -73,7 +74,7 @@ export class QuestionResolver {
     description: 'Cập nhật câu hỏi',
   })
   async update(
-    @Args('id') id: string,
+    @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
     @Args('updateQuestionArgs') dto: UpdateQuestionDto,
   ): Promise<QuestionEntity> {
@@ -116,8 +117,10 @@ export class QuestionResolver {
     description: 'Xóa danh sách câu hỏi',
   })
   async deleteQuestions(
+    @Args('questionIds', { type: () => [String] })
+    @IdParam()
+    questionIds: string[],
     @CurrentUser() user: IAuthPayload,
-    @Args('questionIds', { type: () => [String] }) questionIds: string[],
   ): Promise<string> {
     return await this.questionService.deleteMany(questionIds, user.id);
   }

@@ -80,17 +80,14 @@ export class LessonService {
       searchIndexes(pageOptions.keyword),
     );
 
-    const detailLessons = [];
+    const detailLessons = new Array(paginated.data.length);
 
     await Promise.all(
-      paginated.data.map(async (lesson) => {
-        const listClass = await this.classService.findByLesson(lesson.id);
-
-        const detailLesson = {
+      paginated.data.map(async (lesson, index) => {
+        detailLessons[index] = {
           ...lesson,
-          classes: listClass,
+          classes: await this.classService.findByLesson(lesson.id),
         };
-        detailLessons.push(detailLesson);
       }),
     );
 

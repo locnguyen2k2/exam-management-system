@@ -15,6 +15,7 @@ import { PermissionEnum } from '~/modules/system/permission/permission.constant'
 import { ExamPaginationDto } from '~/modules/system/exam/dtos/exam-res.dto';
 import { plainToClass } from 'class-transformer';
 import { RoleEnum } from '~/modules/system/role/role.constant';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Exams')
 export class ExamResolver {
@@ -26,8 +27,8 @@ export class ExamResolver {
     description: 'Lấy danh sách đề thi',
   })
   async exams(
+    @Args('lessonId') @IdParam() lessonId: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('lessonId') lessonId: string,
     @Args('examPageOptions', {
       nullable: true,
       description: 'Bộ lọc danh sách đề',
@@ -49,7 +50,10 @@ export class ExamResolver {
     name: 'examDetail',
     description: 'Chi tiết đề thi',
   })
-  async detail(@Args('id') id: string, @CurrentUser() user: IAuthPayload) {
+  async detail(
+    @Args('id') @IdParam() id: string,
+    @CurrentUser() user: IAuthPayload,
+  ) {
     return await this.examService.getExamDetail(id, user.id);
   }
 
@@ -101,8 +105,8 @@ export class ExamResolver {
     description: 'Cập nhật đề thi',
   })
   async update(
+    @Args('examId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('examId') id: string,
     @Args('updateExamPaperArgs') dto: UpdateExamPaperDto,
   ): Promise<ExamEntity> {
     const data = plainToClass(UpdateExamPaperDto, dto);
@@ -116,8 +120,8 @@ export class ExamResolver {
     description: 'Xóa danh sách đề thi',
   })
   async delete(
+    @Args('examPaperIds', { type: () => [String] }) @IdParam() ids: string[],
     @CurrentUser() user: IAuthPayload,
-    @Args('examPaperIds', { type: () => [String] }) ids: string[],
   ): Promise<string> {
     return await this.examService.deleteMany(ids, user.id);
   }

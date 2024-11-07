@@ -16,6 +16,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { plainToClass } from 'class-transformer';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('User')
 export class UserResolver {
@@ -38,7 +39,7 @@ export class UserResolver {
     name: 'userDetail',
     description: 'Chi tiết người dùng',
   })
-  async detail(@Args('id') id: string): Promise<UserProfile> {
+  async detail(@Args('id') @IdParam() id: string): Promise<UserProfile> {
     return await this.userService.getProfile(id);
   }
 
@@ -62,20 +63,19 @@ export class UserResolver {
     description: 'Cập nhật người dùng',
   })
   async update(
-    @CurrentUser() user: IAuthPayload,
-    @Args('userId', { type: () => String! }) userId: string,
+    @Args('userId') @IdParam() userId: string,
     @Args('updateUserArgs') args: UpdateUserDto,
+    @CurrentUser() user: IAuthPayload,
   ): Promise<UserProfile> {
     args.updateBy = user?.id ? user.id : null;
     const data = plainToClass(UpdateUserDto, args);
+    console.log(data);
     return await this.userService.update(userId, data);
   }
 
   @Permissions(PermissionEnum.DELETE_USER)
   @Mutation(() => String, { name: 'deleteUser', description: 'Xóa người dùng' })
-  async delete(
-    @Args('userId', { type: () => String }) uid: string,
-  ): Promise<string> {
+  async delete(@Args('userId') @IdParam() uid: string): Promise<string> {
     return await this.userService.deleteUser(uid);
   }
 }

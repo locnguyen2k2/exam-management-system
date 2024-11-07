@@ -14,6 +14,7 @@ import { ClassPaginationDto } from '~/modules/system/class/dtos/class-res.dto';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import { plainToClass } from 'class-transformer';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Class Resolver')
 export class ClassResolver {
@@ -59,8 +60,8 @@ export class ClassResolver {
     description: 'Cập nhật lớp',
   })
   async update(
+    @Args('classId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('classId', { type: () => String! }) id: string,
     @Args('updateClassArgs') dto: UpdateClassDto,
   ): Promise<ClassEntity> {
     const data = plainToClass(UpdateClassDto, dto);
@@ -71,8 +72,8 @@ export class ClassResolver {
   @Permissions(PermissionEnum.DELETE_CLASS)
   @Mutation(() => String, { name: 'deleteClasses' })
   async deleteClasses(
+    @Args('classIds', { type: () => [String] }) @IdParam() classIds: string[],
     @CurrentUser() user: IAuthPayload,
-    @Args('classIds', { type: () => [String] }) classIds: string[],
   ): Promise<string> {
     return await this.classServicee.deleteMany(classIds, user.id);
   }
