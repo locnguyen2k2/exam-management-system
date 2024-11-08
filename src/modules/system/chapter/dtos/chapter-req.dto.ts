@@ -3,7 +3,7 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { IsEnum, Validate, ValidateNested } from 'class-validator';
-import { IsValidId } from '~/common/decorators/id.decorator';
+import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Type } from 'class-transformer';
 
 @InputType('ChapterPageOptions')
@@ -21,7 +21,7 @@ export class ChapterBaseDto extends BaseDto {
   name: string;
 
   @Field(() => String, { description: 'Mã học phần' })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   lessonId: string;
 
   @Field(() => String, { nullable: true, description: 'Mô tả' })
@@ -59,7 +59,7 @@ export class UpdateChapterDto extends PartialType(ChapterBaseDto) {
 @InputType()
 class EnableChapterDto {
   @Field(() => String, { description: 'Mã chương ' })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   chapterId: string;
 
   @Field(() => Boolean, { description: 'Trạng thái kích hoạt' })
@@ -69,7 +69,7 @@ class EnableChapterDto {
 @InputType()
 class ChapterStatusDto {
   @Field(() => String, { description: 'Mã chương ' })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   chapterId: string;
 
   @Field(() => StatusShareEnum)

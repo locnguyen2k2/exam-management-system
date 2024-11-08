@@ -8,7 +8,7 @@ import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { Validate, ValidateNested } from 'class-validator';
-import { IsValidId } from '~/common/decorators/id.decorator';
+import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Type } from 'class-transformer';
 
 @InputType('QuestionPageOptions')
@@ -38,7 +38,7 @@ class QuestionBaseDto extends BaseDto {
   remark: string;
 
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   chapterId: string;
 
   @Field(() => LevelEnum)
@@ -84,7 +84,7 @@ export class CreateQuestionsDto {
 @InputType()
 class EnableQuestionDto {
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   questionId: string;
 
   @Field(() => Boolean)
@@ -122,7 +122,7 @@ export class UpdateQuestionStatusDto {
 @InputType()
 class QuestionStatusDto {
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   questionId: string;
 
   @Field(() => StatusShareEnum)

@@ -611,7 +611,7 @@ export class QuestionService {
     return await Promise.all(
       scales.map(async (scale) => {
         const { chapterId, percent, level } = scale;
-        const questionQty = (percent * totalQuestions) / 100;
+        const questionQty = Math.ceil((percent * totalQuestions) / 100);
         // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
         const { questions, chapter } = await this.randQuestsByChap(
           chapterId,

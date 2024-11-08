@@ -3,7 +3,7 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsScale } from '~/common/decorators/scale.decorator';
+import { IsValidScale } from '~/common/decorators/scale.decorator';
 import {
   IsOptional,
   Max,
@@ -18,7 +18,7 @@ import {
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
-import { IsValidId } from '~/common/decorators/id.decorator';
+import { IsValidStringId } from '~/common/decorators/id.decorator';
 
 @InputType('ExamPaperPageOptions')
 export class ExamPaperPageOptions extends PageOptionDto {
@@ -31,7 +31,7 @@ export class ExamPaperPageOptions extends PageOptionDto {
 @InputType('ScaleArgs')
 class Scale implements IScale {
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   chapterId: string;
 
   @Field(() => Number)
@@ -61,7 +61,7 @@ class BaseExamDto extends BaseDto {
   answerLabel: AnswerLabelEnum;
 
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   lessonId: string;
 
   @Field(() => String, { nullable: true })
@@ -93,7 +93,7 @@ export class CreateExamPaperDto extends BaseExamDto {
   scales: Scale[];
 
   @Field(() => [String])
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   questionIds: string[];
 
   @Field(() => Boolean, {
@@ -109,7 +109,7 @@ export class CreateExamPaperDto extends BaseExamDto {
 @InputType('GenerateExamPaperArgs')
 export class GenerateExamPaperDto extends BaseExamDto {
   @Field(() => [Scale])
-  @IsScale()
+  @Validate(IsValidScale)
   @Expose()
   @ValidateNested({ each: true })
   @Type(() => Scale)
@@ -162,7 +162,7 @@ export class UpdateExamPaperDto extends BaseDto {
 @InputType('EnableExamArgs')
 class EnableExamDto {
   @Field(() => String)
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   examId: string;
 
   @Field(() => Boolean)

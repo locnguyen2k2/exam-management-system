@@ -481,35 +481,38 @@ export class ChapterService {
     quantity: number,
     uid: string,
   ) {
-    const { questions } = (
-      await this.chapterRepo
-        .aggregate([
-          {
-            $match: {
-              id: chapterId,
-              create_by: uid,
-              'questions.level': level,
-            },
+    const data = await this.chapterRepo
+      .aggregate([
+        {
+          $match: {
+            id: chapterId,
+            create_by: uid,
+            'questions.level': level,
           },
-          {
-            $project: {
-              questions: {
-                $filter: {
-                  input: '$questions',
-                  as: 'question',
-                  cond: {
-                    $and: [{ $eq: ['$$question.level', level] }],
-                  },
+        },
+        {
+          $project: {
+            questions: {
+              $filter: {
+                input: '$questions',
+                as: 'question',
+                cond: {
+                  $and: [
+                    { $eq: ['$$question.level', level] },
+                    { $eq: ['$$question.enable', true] },
+                  ],
                 },
               },
             },
           },
-          { $unwind: '$questions' },
-          { $sample: { size: quantity } },
-          { $group: { _id: '$id', questions: { $push: '$questions' } } },
-        ])
-        .toArray()
-    )[0];
+        },
+        { $unwind: '$questions' },
+        { $sample: { size: quantity } },
+        { $group: { _id: '$id', questions: { $push: '$questions' } } },
+      ])
+      .toArray();
+
+    const questions = data[0]?.questions ? data[0].questions : [];
 
     return questions;
   }

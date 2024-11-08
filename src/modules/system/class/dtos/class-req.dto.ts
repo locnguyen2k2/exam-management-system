@@ -3,7 +3,7 @@ import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { MaxLength, Validate } from 'class-validator';
-import { IsValidId } from '~/common/decorators/id.decorator';
+import { IsValidStringId } from '~/common/decorators/id.decorator';
 
 @InputType('ClassPageOptions')
 export class ClassPageOptions extends PageOptionDto {
@@ -11,7 +11,7 @@ export class ClassPageOptions extends PageOptionDto {
   classStatus: StatusShareEnum[];
 
   @Field(() => [String], { description: 'Mã lớp', nullable: true })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   lessonIds: string[];
 }
 
@@ -41,7 +41,7 @@ class ClassBaseDto extends BaseDto {
   status: StatusShareEnum;
 
   @Field(() => [String], { nullable: true })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   lessonIds: string[];
 }
 

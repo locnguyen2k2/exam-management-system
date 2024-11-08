@@ -3,7 +3,7 @@ import { BaseDto } from '~/common/dtos/base.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { Validate, ValidateNested } from 'class-validator';
-import { IsValidId } from '~/common/decorators/id.decorator';
+import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Type } from 'class-transformer';
 
 @InputType('LessonPageOptions')
@@ -30,7 +30,7 @@ class LessonBaseDto extends BaseDto {
   enable: boolean;
 
   @Field(() => [String])
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   classIds: string[];
 
   @Field(() => StatusShareEnum)
@@ -51,7 +51,7 @@ export class CreateLessonDto {
 @InputType('EnableLessonArgs')
 class EnableLessonDto {
   @Field(() => String, { description: 'Mã học phần' })
-  @Validate(IsValidId)
+  @Validate(IsValidStringId)
   lessonId: string;
 
   @Field(() => Boolean, { description: 'Trạng thái kích  hoạt' })

@@ -4,11 +4,10 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-
-const isValidString = /^(?!-)[a-z0-9-]+(?<!-)$/;
+import { regValidStringId } from '~/common/constants/regex.constant';
 
 const checkId = (id: string) => {
-  if (!isValidString.test(id)) {
+  if (!regValidStringId.test(id)) {
     throw new BadRequestException(`Id '${id}' không hợp lệ!`);
   }
 };
@@ -24,8 +23,8 @@ const IdParam = createParamDecorator((data, req) => {
   return ids;
 });
 
-@ValidatorConstraint({ name: 'IsValidId', async: false })
-class IsValidId implements ValidatorConstraintInterface {
+@ValidatorConstraint({ name: 'IsValidStringId', async: false })
+class IsValidStringId implements ValidatorConstraintInterface {
   validate(args: ValidationArguments) {
     const ids = Array.isArray(args) ? args : [args];
     try {
@@ -41,4 +40,4 @@ class IsValidId implements ValidatorConstraintInterface {
   }
 }
 
-export { IdParam, IsValidId };
+export { IdParam, IsValidStringId };

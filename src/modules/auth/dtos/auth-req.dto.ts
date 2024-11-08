@@ -1,13 +1,14 @@
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { Expose } from 'class-transformer';
-import { IsPassword } from '~/common/decorators/password.decorator';
+import { IsValidPassword } from '~/common/decorators/password.decorator';
 import {
   IsEmail,
   IsEnum,
   IsOptional,
   IsPhoneNumber,
   MaxLength,
+  Validate,
 } from 'class-validator';
 import { GenderEnum } from '~/modules/system/user/user.constant';
 import { TokenEnum } from '~/modules/auth/auth.constant';
@@ -30,7 +31,7 @@ export class ResetPasswordDto extends BaseDto {
   confirmToken: string;
 
   @Field(() => String)
-  @IsPassword()
+  @Validate(IsValidPassword)
   @Expose()
   newPassword: string;
 
@@ -48,7 +49,7 @@ export class LoginDto extends BaseDto {
   email: string;
 
   @Field(() => String)
-  @IsPassword()
+  @Validate(IsValidPassword)
   @Expose()
   password: string;
 }
@@ -101,7 +102,7 @@ export class BaseRegisterDto extends BaseDto {
 @InputType('RegisterArgs')
 export class RegisterDto extends BaseRegisterDto {
   @Field(() => String)
-  @IsPassword()
+  @Validate(IsValidPassword)
   @Expose()
   password: string;
 }
