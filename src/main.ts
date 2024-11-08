@@ -12,22 +12,19 @@ async function bootstrap() {
   const app = await NestFactory.create<INestApplication>(AppModule);
   const configService = app.get(ConfigService<ConfigKeyPaths>);
   const { port, globalPrefix } = configService.get('app', { infer: true });
+  const imgConfigs = { maxFileSize: 1000000, maxFiles: 51 };
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.setGlobalPrefix(globalPrefix);
   app.enableCors({ origin: '*', credentials: true });
+  app.use('/graphql', graphqlUploadExpress(imgConfigs));
   // Transform và chuyển đổi các validation
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
-  );
-
-  app.use(
-    '/graphql',
-    graphqlUploadExpress({ maxFileSize: 1000000, maxFiles: 5 }),
   );
 
   await app.listen(port, '0.0.0.0', async () => {

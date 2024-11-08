@@ -137,12 +137,15 @@ export class UserService {
   }
 
   async update(id: string, args: any): Promise<UserProfile> {
-    await this.findOne(id);
+    const user = await this.findOne(id);
     let listRole: RoleEntity[] = [];
 
     let photo = '';
 
     if (!_.isNil(args.photo)) {
+      !_.isEmpty(user.photo) &&
+        (await this.imageService.deleteImage(user.photo));
+
       photo += await this.imageService.uploadImage(args.photo);
     }
 
@@ -175,7 +178,9 @@ export class UserService {
   }
 
   async deleteUser(uid: string): Promise<string> {
-    await this.findOne(uid);
+    const user = await this.findOne(uid);
+
+    !_.isEmpty(user.photo) && (await this.imageService.deleteImage(user.photo));
 
     await this.userRepository.deleteOne({ id: uid });
 

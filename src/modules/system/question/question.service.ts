@@ -12,10 +12,10 @@ import {
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
-import {
-  regSpecialChars,
-  regWhiteSpace,
-} from '~/common/constants/regex.constant';
+// import {
+//   regSpecialChars,
+//   regWhiteSpace,
+// } from '~/common/constants/regex.constant';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
@@ -83,23 +83,23 @@ export class QuestionService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  async isReplacedContent(
-    content: string,
-    uid: string,
-  ): Promise<QuestionEntity> {
-    const handleContent = content
-      .replace(regSpecialChars, '\\$&')
-      .replace(regWhiteSpace, '\\s*');
-
-    const isExisted = await this.questionRepo.findOneBy({
-      content: { $regex: handleContent, $options: 'i' },
-    });
-
-    if (isExisted && isExisted.create_by === uid)
-      throw new BusinessException(ErrorEnum.RECORD_EXISTED, content);
-
-    if (isExisted) return isExisted;
-  }
+  // async isReplacedContent(
+  //   content: string,
+  //   uid: string,
+  // ): Promise<QuestionEntity> {
+  //   const handleContent = content
+  //     .replace(regSpecialChars, '\\$&')
+  //     .replace(regWhiteSpace, '\\s*');
+  //
+  //   const isExisted = await this.questionRepo.findOneBy({
+  //     content: { $regex: handleContent, $options: 'i' },
+  //   });
+  //
+  //   if (isExisted && isExisted.create_by === uid)
+  //     throw new BusinessException(ErrorEnum.RECORD_EXISTED, content);
+  //
+  //   if (isExisted) return isExisted;
+  // }
 
   async beforeAddQuestion(data: any) {
     const listQuestion = [];
@@ -341,10 +341,12 @@ export class QuestionService {
           picture += await this.imageService.uploadImage(questionData.picture);
         }
 
+        delete questionData.picture;
+
         const initial = new QuestionEntity({
           ...questionData,
           answers: [...new Set(listAnswer)],
-          ...(!_.isEmpty(questionData.picture) && { picture: picture }),
+          ...(!_.isEmpty(picture) && { picture: picture }),
           create_by: data.createBy,
           update_by: data.createBy,
         });
@@ -477,9 +479,9 @@ export class QuestionService {
     }
 
     if (!_.isNil(data.picture)) {
-      if (!_.isEmpty(question.picture)) {
-        await this.imageService.deleteImage(question.picture);
-      }
+      !_.isEmpty(question.picture) &&
+        (await this.imageService.deleteImage(question.picture));
+
       picture += await this.imageService.uploadImage(data.picture);
     }
 
@@ -596,6 +598,9 @@ export class QuestionService {
       const newQuestions = chapter.questions.filter(
         ({ id }) => id !== question.id,
       );
+
+      !_.isEmpty(question.picture) &&
+        (await this.imageService.deleteImage(question.picture));
 
       await this.chapterService.updateQuizzes(chapterId, newQuestions);
     }
