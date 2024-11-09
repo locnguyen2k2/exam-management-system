@@ -41,7 +41,7 @@ export class QuestionService {
     @Inject(forwardRef(() => ExamService))
     private readonly examService: ExamService,
     // private readonly answerService: AnswerService,
-    private readonly chapterService: ChapterService,
+    private readonly chapService: ChapterService,
     private readonly imageService: ImageService,
   ) {}
 
@@ -50,7 +50,7 @@ export class QuestionService {
     chapterId: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
-    const paginated = await this.chapterService.findQuizzes(
+    const paginated = await this.chapService.findQuizzes(
       chapterId,
       pageOptions,
       uid,
@@ -78,53 +78,31 @@ export class QuestionService {
   }
 
   async findOne(id: string, uid: string): Promise<QuestionEntity> {
-    const { question } = await this.chapterService.findAvailableQuiz(id, uid);
+    const { question } = await this.chapService.findAvailableQuiz(id, uid);
     if (question) return question;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  // async isReplacedContent(
-  //   content: string,
-  //   uid: string,
-  // ): Promise<QuestionEntity> {
-  //   const handleContent = content
-  //     .replace(regSpecialChars, '\\$&')
-  //     .replace(regWhiteSpace, '\\s*');
-  //
-  //   const isExisted = await this.questionRepo.findOneBy({
-  //     content: { $regex: handleContent, $options: 'i' },
-  //   });
-  //
-  //   if (isExisted && isExisted.create_by === uid)
-  //     throw new BusinessException(ErrorEnum.RECORD_EXISTED, content);
-  //
-  //   if (isExisted) return isExisted;
-  // }
+  async checkCreateQuestion(data: any) {
+    await this.chapService.findAvailable(data.chapterId, data.createBy);
 
-  async beforeAddQuestion(data: any) {
     const listQuestion = [];
-
-    await this.chapterService.findAvailable(data.chapterId, data.createBy);
-
-    const isReplaced = await this.chapterService.findByQuizContent(
-      data.content,
-    );
+    const isReplaced = await this.chapService.findByQuizContent(data.content);
 
     if (isReplaced && isReplaced.id === data.chapterId)
       throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${data.content}`);
 
-    const countCorrectAnswers = data.answers.filter(
+    const totalCorrectAnswer = data.answers.filter(
       (answer: AnswerEntity) => answer.isCorrect,
     );
 
     if (
       data.category !== CategoryEnum.MULTIPLE_CHOICE &&
-      countCorrectAnswers.length > 1
-    ) {
+      totalCorrectAnswer.length > 1
+    )
       throw new BusinessException(
-        '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng (isCorrect = true)!',
+        '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng!',
       );
-    }
 
     if (
       listQuestion.find(
@@ -132,11 +110,10 @@ export class QuestionService {
           quest.content.toLowerCase().replace(/\s/g, '') ===
           data.content.toLowerCase().replace(/\s/g, ''),
       )
-    ) {
+    )
       throw new BusinessException(
         `400:Nội dung câu hỏi ${data.content} bị trùng!`,
       );
-    }
 
     listQuestion.push(data);
   }
@@ -176,12 +153,11 @@ export class QuestionService {
   }
 
   maxFillInAnswerValue(correctAnswer: AnswerBaseDto): number {
-    const listCorrectValue = this.handleFillInAnswerValue(correctAnswer.value);
-    const total = listCorrectValue.length;
-    return factorial(total);
+    const listCorrectValue = this.listFillInAnswerValue(correctAnswer.value);
+    return factorial(listCorrectValue.length);
   }
 
-  handleFillInAnswerValue(value: string): string[] {
+  listFillInAnswerValue(value: string): string[] {
     const listValue = value.split('[__]');
     let isDeleted = 0;
     for (let i = listValue.length - 1; i >= 0; i--) {
@@ -200,25 +176,44 @@ export class QuestionService {
     return listValue;
   }
 
-  handleFillInContent(content: string): number {
+  isValidFillInQuiz(content: string, answerValue: string) {
     const listValue = content.split('[__]');
+    const quantityValue = listValue.length - 1;
+
     if (listValue.length <= 1)
       throw new BusinessException(
         '400:Nội dung phải có ít nhất 1 ô trống ([__])',
       );
-    return listValue.length - 1;
+
+    if (quantityValue !== this.listFillInAnswerValue(answerValue).length)
+      throw new BusinessException(
+        `400:Đáp án phải có ${quantityValue} giá trị ([__])!`,
+      );
   }
 
-  randFillInWrongAnswers(quantity: number, correctAnswer: AnswerBaseDto) {
-    if (quantity > this.maxFillInAnswerValue(correctAnswer) - 1)
+  randFillInAnswer(
+    answers: AnswerBaseDto[],
+    quantityWrongAnswer: number,
+  ): { correctAnswers: AnswerBaseDto[]; wrongAnswers: AnswerBaseDto[] } {
+    const listAnswers: any[] = [];
+    const classifyAnswer = this.classifyAnswers(answers);
+    const correctAnswer = classifyAnswer.correctAnswers[0];
+    const maxWrongAnswer = this.maxFillInAnswerValue(correctAnswer) - 1;
+    const isStart = correctAnswer.value.startsWith('[__]');
+    const isEnd = !correctAnswer.value.endsWith('[__]');
+    const listCorrectValue = this.listFillInAnswerValue(correctAnswer.value);
+
+    if (isStart || isEnd)
       throw new BusinessException(
-        `400:${this.maxFillInAnswerValue(correctAnswer) - 1} là số đáp án nhiễu tối đa`,
+        '400:Đáp án điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
       );
 
-    const listAnswers: any[] = [];
-    const listCorrectValue = this.handleFillInAnswerValue(correctAnswer.value);
+    if (quantityWrongAnswer > maxWrongAnswer)
+      throw new BusinessException(
+        `400:${maxWrongAnswer} là số đáp án nhiễu tối đa`,
+      );
 
-    while (listAnswers.length < quantity) {
+    while (listAnswers.length < quantityWrongAnswer) {
       const shuffledValues = shuffle(listCorrectValue);
       const wrongValue = shuffledValues.reduce(
         (acc: string, curr: string) => acc + `${curr}[__]`,
@@ -241,40 +236,10 @@ export class QuestionService {
       }
     }
 
-    return { correctAnswers: [correctAnswer], wrongAnswers: listAnswers };
-  }
-
-  checkFillInQuiz(content: string, answerValue: string) {
-    const quantityValue = this.handleFillInContent(content);
-    if (quantityValue !== this.handleFillInAnswerValue(answerValue).length)
-      throw new BusinessException(
-        `400:Đáp án phải có ${quantityValue} giá trị ([__])!`,
-      );
-  }
-
-  handleFillinAnswers(
-    answers: AnswerBaseDto[],
-    content: string,
-    quantityWrongAnswer: number,
-  ): { correctAnswers: AnswerBaseDto[]; wrongAnswers: AnswerBaseDto[] } {
-    const classifyAnswer = this.classifyAnswers(answers);
-
-    this.checkFillInQuiz(content, classifyAnswer.correctAnswers[0].value);
-
-    const isStart = classifyAnswer.correctAnswers[0].value.startsWith('[__]');
-    const isEnd = !classifyAnswer.correctAnswers[0].value.endsWith('[__]');
-
-    if (isStart || isEnd)
-      throw new BusinessException(
-        '400:Đáp án điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
-      );
-
-    const { correctAnswers, wrongAnswers } = this.randFillInWrongAnswers(
-      quantityWrongAnswer,
-      classifyAnswer.correctAnswers[0],
-    );
-
-    return { correctAnswers, wrongAnswers };
+    return {
+      correctAnswers: [correctAnswer],
+      wrongAnswers: listAnswers,
+    };
   }
 
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
@@ -284,7 +249,7 @@ export class QuestionService {
     await Promise.all(
       data.questions.map(
         async (questionData: any) =>
-          await this.beforeAddQuestion({
+          await this.checkCreateQuestion({
             ...questionData,
             createBy: data.createBy,
           }),
@@ -293,13 +258,14 @@ export class QuestionService {
 
     await Promise.all(
       data.questions.map(async (questionData, index) => {
+        // Phân loại câu hỏi
         let answers = this.classifyAnswers(questionData.answers);
 
         if (answers.correctAnswers.length === 0)
           throw new BusinessException('400:Phải có ít nhất 1 đáp án đúng!');
 
         if (questionData.category === CategoryEnum.FILL_IN) {
-          this.checkFillInQuiz(
+          this.isValidFillInQuiz(
             questionData.content,
             answers.correctAnswers[0].value,
           );
@@ -310,13 +276,12 @@ export class QuestionService {
 
           if (answers.wrongAnswers.length > maxAnswerValue)
             throw new BusinessException(
-              `400:${this.maxFillInAnswerValue(answers.correctAnswers[0])} là số đáp án tối đa`,
+              `400:${maxAnswerValue} là số đáp án tối đa`,
             );
 
           if (!_.isNil(questionData.quantityWrongAnswers)) {
-            answers = this.handleFillinAnswers(
+            answers = this.randFillInAnswer(
               questionData.answers,
-              questionData.content,
               questionData.quantityWrongAnswers,
             );
           }
@@ -365,47 +330,15 @@ export class QuestionService {
     await Promise.all(
       questionsInfo.map(
         async ({ chapterId, question }) =>
-          await this.chapterService.addQuizzes(chapterId, [question]),
+          await this.chapService.addQuizzes(chapterId, [question]),
       ),
     );
 
     return questionsInfo.map(({ question }) => question);
   }
 
-  // async validateQuestions(
-  //   lessonId: string,
-  //   data: QuestionInfoDto,
-  //   uid: string,
-  // ): Promise<any> {
-  //   const { chapterId, questionIds } = data;
-  //   const questions: QuestionEntity[] = [];
-  //   const chapter = await this.chapterService.findAvailableChapterById(
-  //     chapterId,
-  //     uid,
-  //   );
-  //
-  //   await Promise.all(
-  //     questionIds.map(async (id) => {
-  //       const question = await this.findAvailable(id, uid);
-  //       if (question.chapter.id !== chapterId)
-  //         throw new BusinessException(
-  //           `400:Câu hỏi ${id} không có trong chương ${chapterId}`,
-  //         );
-  //
-  //       if (!(await this.chapterService.lessonHasChapter(lessonId, chapterId)))
-  //         throw new BusinessException(
-  //           `400:Học phần ${lessonId} không có ${chapterId}`,
-  //         );
-  //
-  //       questions.push(question);
-  //     }),
-  //   );
-  //
-  //   return { chapter, questions };
-  // }
-
   async findAnswer(quizId: string, answerId: string): Promise<AnswerEntity> {
-    const isQuiz = await this.chapterService.findAvailableQuiz(quizId);
+    const isQuiz = await this.chapService.findAvailableQuiz(quizId);
     const answer = isQuiz.question.answers.find(({ id }) => id === answerId);
     if (!answer)
       throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, answerId);
@@ -416,7 +349,7 @@ export class QuestionService {
     let picture = '';
     let newQuestions = [];
     let oldQuestions = [];
-    const { chapterId, question } = await this.chapterService.findAvailableQuiz(
+    const { chapterId, question } = await this.chapService.findAvailableQuiz(
       id,
       data.updateBy,
     );
@@ -443,11 +376,11 @@ export class QuestionService {
     }
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
-      const newChapter = await this.chapterService.findAvailable(
+      const newChapter = await this.chapService.findAvailable(
         data.chapterId,
         data.updateBy,
       );
-      const oldChapter = await this.chapterService.findAvailable(
+      const oldChapter = await this.chapService.findAvailable(
         chapterId,
         data.updateBy,
       );
@@ -459,7 +392,7 @@ export class QuestionService {
     }
 
     if (data.content) {
-      const isReplaced = await this.chapterService.findByQuizContent(content);
+      const isReplaced = await this.chapService.findByQuizContent(content);
 
       if (
         isReplaced &&
@@ -484,7 +417,7 @@ export class QuestionService {
         const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
         const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
 
-        this.checkFillInQuiz(content, correctAnswers[0].value);
+        this.isValidFillInQuiz(content, correctAnswers[0].value);
 
         if (wrongAnswers.length > maxAnswerValue)
           throw new BusinessException(
@@ -492,9 +425,8 @@ export class QuestionService {
           );
 
         if (!_.isNil(data.quantityWrongAnswers)) {
-          const fillInAnswers = this.handleFillinAnswers(
+          const fillInAnswers = this.randFillInAnswer(
             answers,
-            content,
             data.quantityWrongAnswers,
           );
 
@@ -524,18 +456,18 @@ export class QuestionService {
     if (!_.isEmpty(data?.answers))
       newQuestion.answers = answers.map((answer) => new AnswerEntity(answer));
 
-    await this.chapterService.updateQuiz(chapterId, newQuestion);
+    await this.chapService.updateQuiz(chapterId, newQuestion);
     await this.examService.updateQuiz(id, newQuestion);
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
-      await this.chapterService.updateQuizzes(chapterId, oldQuestions);
-      await this.chapterService.updateQuizzes(data.chapterId, [
+      await this.chapService.updateQuizzes(chapterId, oldQuestions);
+      await this.chapService.updateQuizzes(data.chapterId, [
         ...newQuestions,
         newQuestion,
       ]);
     }
 
-    const newQuiz = await this.chapterService.findAvailableQuiz(
+    const newQuiz = await this.chapService.findAvailableQuiz(
       question.id,
       data.updateBy,
     );
@@ -548,10 +480,7 @@ export class QuestionService {
     await Promise.all(
       data.questionsEnable.map(async ({ questionId, enable }: any) => {
         const { chapterId, question } =
-          await this.chapterService.findAvailableQuiz(
-            questionId,
-            data.updateBy,
-          );
+          await this.chapService.findAvailableQuiz(questionId, data.updateBy);
         if (question) {
           if (question.create_by !== data.updateBy) {
             throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
@@ -564,7 +493,7 @@ export class QuestionService {
 
     await Promise.all(
       listQuestions.map(async ({ chapterId, question }) => {
-        await this.chapterService.updateQuiz(chapterId, question);
+        await this.chapService.updateQuiz(chapterId, question);
       }),
     );
 
@@ -577,10 +506,7 @@ export class QuestionService {
     await Promise.all(
       data.questionsStatus.map(async ({ questionId, status }) => {
         const { chapterId, question } =
-          await this.chapterService.findAvailableQuiz(
-            questionId,
-            data.updateBy,
-          );
+          await this.chapService.findAvailableQuiz(questionId, data.updateBy);
         if (question) {
           if (question.create_by !== data.updateBy) {
             throw new BusinessException(ErrorEnum.NO_PERMISSON, question.id);
@@ -593,7 +519,7 @@ export class QuestionService {
 
     await Promise.all(
       listQuestions.map(async ({ chapterId, question }) => {
-        await this.chapterService.updateQuiz(chapterId, question);
+        await this.chapService.updateQuiz(chapterId, question);
       }),
     );
 
@@ -614,7 +540,7 @@ export class QuestionService {
 
         if (index === -1) {
           const { chapterId, question } =
-            await this.chapterService.findAvailableQuiz(id, uid);
+            await this.chapService.findAvailableQuiz(id, uid);
 
           listQuestions.push({ chapterId, question });
         }
@@ -622,7 +548,7 @@ export class QuestionService {
     );
 
     for (const { chapterId, question } of listQuestions) {
-      const chapter = await this.chapterService.findOne(chapterId);
+      const chapter = await this.chapService.findOne(chapterId);
       const newQuestions = chapter.questions.filter(
         ({ id }) => id !== question.id,
       );
@@ -630,7 +556,7 @@ export class QuestionService {
       !_.isEmpty(question.picture) &&
         (await this.imageService.deleteImage(question.picture));
 
-      await this.chapterService.updateQuizzes(chapterId, newQuestions);
+      await this.chapService.updateQuizzes(chapterId, newQuestions);
     }
 
     return '200:Xóa câu hỏi thành công!';
@@ -673,8 +599,8 @@ export class QuestionService {
     quantity: number,
     uid: string,
   ): Promise<IDetailChapter> {
-    const chapter = await this.chapterService.findAvailable(chapterId, uid);
-    const questions = await this.chapterService.randQuizzes(
+    const chapter = await this.chapService.findAvailable(chapterId, uid);
+    const questions = await this.chapService.randQuizzes(
       chapterId,
       level,
       quantity,
