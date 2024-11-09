@@ -224,9 +224,9 @@ export class ChapterService {
       throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
     }
 
-    if (!_.isNil(data.name) && !_.isEmpty(data.name)) {
+    if (!_.isEmpty(data.name)) {
       const isReplaced = await this.findByName(data.name);
-      if (isReplaced && isReplaced.create_by === data.updateBy) {
+      if (isReplaced && isReplaced.create_by !== data.updateBy) {
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
       }
     }
