@@ -27,16 +27,13 @@ export class ChapterBaseDto extends BaseDto {
   @Field(() => String, { nullable: true, description: 'Mô tả' })
   description: string = '';
 
-  @Field(() => Boolean, { nullable: true, description: 'Trạng thái kích hoạt' })
-  enable: boolean;
-
   @Field(() => StatusShareEnum, {
     nullable: true,
     defaultValue: StatusShareEnum.PRIVATE,
     description: 'Trạng thái chia sẻ',
   })
   @IsEnum(StatusShareEnum)
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  status: StatusShareEnum;
 }
 
 @InputType('CreateChaptersArgs')

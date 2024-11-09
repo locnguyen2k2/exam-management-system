@@ -3,10 +3,11 @@ import {
   plainToClass as NestPlainToClass,
   Transform,
 } from 'class-transformer';
-import { Field, HideField } from '@nestjs/graphql';
+import { Field, HideField, InputType } from '@nestjs/graphql';
 import { v4 as uuid } from 'uuid';
 
-export abstract class BaseDto {
+@InputType()
+export class BaseDto {
   @HideField()
   @Expose()
   @Transform(() => uuid())

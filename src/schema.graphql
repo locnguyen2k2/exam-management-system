@@ -790,6 +790,7 @@ type Mutation {
 }
 
 input CreateAdminArgs {
+  enable: Boolean
   firstName: String!
   lastName: String!
   gender: GenderEnum
@@ -806,6 +807,7 @@ input CreateAdminArgs {
 scalar Upload
 
 input UpdateUserArgs {
+  enable: Boolean
   firstName: String
   lastName: String
   gender: GenderEnum
@@ -816,26 +818,26 @@ input UpdateUserArgs {
 }
 
 input CreateRoleArgs {
+  enable: Boolean
   name: String!
   value: String!
   remark: String
-  enable: Boolean
   permissionIds: [String!]!
 }
 
 input UpdateRoleArgs {
+  enable: Boolean
   name: String
   value: String
   remark: String
-  enable: Boolean
   permissionIds: [String!]
 }
 
 input createPermissionArgs {
+  enable: Boolean
   name: String!
   value: PermissionEnum!
   remark: String
-  enable: Boolean
   status: Boolean
 }
 
@@ -893,30 +895,34 @@ enum PermissionEnum {
 }
 
 input updatePermissionArgs {
+  enable: Boolean
   name: String
   value: PermissionEnum
   remark: String
-  enable: Boolean
   status: Boolean
 }
 
 input ConfirmEmailArgs {
+  enable: Boolean
   confirmToken: String!
   email: String!
 }
 
 input ResetPasswordArgs {
+  enable: Boolean
   confirmToken: String!
   newPassword: String!
   email: String!
 }
 
 input LoginArgs {
+  enable: Boolean
   email: String!
   password: String!
 }
 
 input RegisterArgs {
+  enable: Boolean
   firstName: String!
   lastName: String!
   email: String!
@@ -928,6 +934,7 @@ input RegisterArgs {
 }
 
 input UpdateInfoArgs {
+  enable: Boolean
   firstName: String
   lastName: String
   gender: GenderEnum
@@ -941,6 +948,8 @@ input CreateChaptersArgs {
 }
 
 input ChapterBaseDto {
+  enable: Boolean
+
   """Đầu mục"""
   label: String!
 
@@ -953,14 +962,13 @@ input ChapterBaseDto {
   """Mô tả"""
   description: String = ""
 
-  """Trạng thái kích hoạt"""
-  enable: Boolean
-
   """Trạng thái chia sẻ"""
   status: StatusShareEnum = PRIVATE
 }
 
 input UpdateChapterArgs {
+  enable: Boolean
+
   """Đầu mục"""
   label: String
 
@@ -972,9 +980,6 @@ input UpdateChapterArgs {
 
   """Mô tả"""
   description: String = ""
-
-  """Trạng thái kích hoạt"""
-  enable: Boolean
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum = PRIVATE
@@ -1007,19 +1012,19 @@ input CreateLessonArgs {
 }
 
 input LessonBaseDto {
+  enable: Boolean
   label: String
   name: String!
   description: String
-  enable: Boolean!
   classIds: [String!]!
   status: StatusShareEnum!
 }
 
 input UpdateLessonArgs {
+  enable: Boolean
   label: String
   name: String
   description: String
-  enable: Boolean
   classIds: [String!]
   status: StatusShareEnum
 }
@@ -1041,13 +1046,13 @@ input CreateQuestionsArgs {
 }
 
 input QuestionArgs {
+  enable: Boolean
   sku: String
   content: String!
   picture: Upload
   remark: String
   chapterId: String!
   level: LevelEnum!
-  enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum!
 
@@ -1077,13 +1082,12 @@ input CreateAnswerArgs {
 }
 
 input UpdateQuestionArgs {
-  sku: String
+  enable: Boolean
   content: String
   picture: Upload
   remark: String
   chapterId: String
   level: LevelEnum
-  enable: Boolean
   status: StatusShareEnum
   category: CategoryEnum
 
@@ -1091,11 +1095,22 @@ input UpdateQuestionArgs {
   Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
   """
   quantityWrongAnswers: Int
+  answers: [UpdateQuestionAnswerDto!]
+}
+
+input UpdateQuestionAnswerDto {
+  enable: Boolean
+  id: String!
 
   """
-  Với câu hỏi điền khuyết, đáp án đúng là đáp án chứa các giá trị bị khuyết và ngăn cách bởi tổ hợp các ký hiệu: [__]. Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án
+  Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
-  answers: [CreateAnswerArgs!]
+  value: String
+  isCorrect: Boolean
+  score: Float
+
+  """Chú thích"""
+  remark: String
 }
 
 input EnableQuestionsArgs {
@@ -1117,6 +1132,7 @@ input QuestionStatusDto {
 }
 
 input CreateExamPaperArgs {
+  enable: Boolean
   label: String = ""
 
   """Thời gian làm bài (phút)"""
@@ -1128,7 +1144,6 @@ input CreateExamPaperArgs {
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
-  enable: Boolean = false
   status: StatusShareEnum = PRIVATE
 
   """Số lượng đề muốn random từ đề gốc đã nhập"""
@@ -1155,6 +1170,7 @@ enum AnswerLabelEnum {
 }
 
 input GenerateExamPaperArgs {
+  enable: Boolean
   label: String = ""
 
   """Thời gian làm bài (phút)"""
@@ -1166,7 +1182,6 @@ input GenerateExamPaperArgs {
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
-  enable: Boolean = false
   status: StatusShareEnum = PRIVATE
 
   """Số lượng đề muốn random từ đề gốc đã nhập"""
@@ -1191,6 +1206,7 @@ input EnableExamArgs {
 }
 
 input UpdateExamPaperArgs {
+  enable: Boolean
   label: String
 
   """Thời gian làm bài (phút)"""
@@ -1200,11 +1216,12 @@ input UpdateExamPaperArgs {
 
   """10 được đặt mặc định"""
   maxScore: Float = 10
-  enable: Boolean = false
   status: StatusShareEnum = PRIVATE
 }
 
 input CreateClassArgs {
+  enable: Boolean
+
   """Tên lớp"""
   name: String!
 
@@ -1215,12 +1232,13 @@ input CreateClassArgs {
   description: String
   startYear: String!
   endYear: String!
-  enable: Boolean
   status: StatusShareEnum
   lessonIds: [String!]
 }
 
 input UpdateClassArgs {
+  enable: Boolean
+
   """Tên lớp"""
   name: String
 
@@ -1231,7 +1249,6 @@ input UpdateClassArgs {
   description: String
   startYear: String
   endYear: String
-  enable: Boolean
   status: StatusShareEnum
   lessonIds: [String!]
 }

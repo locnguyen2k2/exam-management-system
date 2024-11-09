@@ -1,4 +1,12 @@
-import { Field, HideField, InputType, Int, PartialType } from '@nestjs/graphql';
+import {
+  Field,
+  Float,
+  HideField,
+  InputType,
+  Int,
+  PartialType,
+  PickType,
+} from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
@@ -23,6 +31,35 @@ export class QuestionPageOptions extends PageOptionDto {
   questionCategory: CategoryEnum[];
 }
 
+@InputType()
+class UpdateQuestionAnswerDto extends PickType(BaseDto, [
+  'created_at',
+  'updated_at',
+  'enable',
+] as const) {
+  @Field(() => String)
+  @Validate(IsValidStringId)
+  id: string;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      'Đáp án câu hỏi điền khuyết sẽ ' +
+      'phân cách bằng ký hiệu [__] ' +
+      '(đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)',
+  })
+  value: string;
+
+  @Field(() => Boolean, { nullable: true })
+  isCorrect: boolean;
+
+  @Field(() => Float, { nullable: true })
+  score: number;
+
+  @Field(() => String, { nullable: true, description: 'Chú thích' })
+  remark: string;
+}
+
 @InputType('QuestionArgs')
 class QuestionBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
@@ -43,9 +80,6 @@ class QuestionBaseDto extends BaseDto {
 
   @Field(() => LevelEnum)
   level: LevelEnum;
-
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean;
 
   @Field(() => StatusShareEnum, {
     nullable: true,
@@ -75,6 +109,8 @@ class QuestionBaseDto extends BaseDto {
 @InputType('CreateQuestionsArgs')
 export class CreateQuestionsDto {
   @Field(() => [QuestionBaseDto])
+  @ValidateNested({ each: true })
+  @Type(() => QuestionBaseDto)
   questions: QuestionBaseDto[];
 
   @HideField()
@@ -103,7 +139,24 @@ export class EnableQuestionsDto {
 }
 
 @InputType('UpdateQuestionArgs')
-export class UpdateQuestionDto extends PartialType(QuestionBaseDto) {
+export class UpdateQuestionDto extends PartialType(
+  PickType(QuestionBaseDto, [
+    'content',
+    'picture',
+    'remark',
+    'chapterId',
+    'level',
+    'enable',
+    'status',
+    'category',
+    'quantityWrongAnswers',
+  ] as const),
+) {
+  @Field(() => [UpdateQuestionAnswerDto], { nullable: true })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateQuestionAnswerDto)
+  answers: UpdateQuestionAnswerDto[];
+
   @HideField()
   updateBy: string = null;
 }

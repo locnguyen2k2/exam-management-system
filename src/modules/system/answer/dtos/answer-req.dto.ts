@@ -9,9 +9,6 @@ import { BaseDto } from '~/common/dtos/base.dto';
 
 @InputType('CreateAnswerArgs')
 export class AnswerBaseDto extends BaseDto {
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean;
-
   @Field(() => String, {
     description:
       'Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)',

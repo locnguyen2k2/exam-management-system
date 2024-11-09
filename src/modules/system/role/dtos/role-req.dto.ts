@@ -22,9 +22,6 @@ class RoleBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
   remark: string;
 
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean;
-
   @Field(() => [String])
   permissionIds: string[];
 }

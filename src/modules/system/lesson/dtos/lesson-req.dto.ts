@@ -26,9 +26,6 @@ class LessonBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
   description: string;
 
-  @Field(() => Boolean)
-  enable: boolean;
-
   @Field(() => [String])
   @Validate(IsValidStringId)
   classIds: string[];

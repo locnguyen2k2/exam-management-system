@@ -28,9 +28,6 @@ class PermissionBaseDto extends BaseDto {
   remark: string;
 
   @Field(() => Boolean, { nullable: true })
-  enable: boolean;
-
-  @Field(() => Boolean, { nullable: true })
   status: boolean;
 }
 

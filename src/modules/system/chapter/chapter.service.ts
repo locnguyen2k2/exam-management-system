@@ -409,12 +409,12 @@ export class ChapterService {
 
   async findAvailableQuiz(
     questionId: string,
-    uid: string,
+    uid: string = null,
   ): Promise<{ chapterId: string; question: QuestionEntity }> {
     const isExisted = await this.chapterRepo.findOne({
       where: {
         'questions.id': questionId,
-        create_by: uid,
+        ...(uid && { create_by: uid }),
       },
     });
 

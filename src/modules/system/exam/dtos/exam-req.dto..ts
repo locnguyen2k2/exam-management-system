@@ -74,9 +74,6 @@ class BaseExamDto extends BaseDto {
   })
   maxScore: number = 10;
 
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean = false;
-
   @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
@@ -148,9 +145,6 @@ export class UpdateExamPaperDto extends BaseDto {
     nullable: true,
   })
   maxScore: number = 10;
-
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean = false;
 
   @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;

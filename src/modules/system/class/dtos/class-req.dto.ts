@@ -34,9 +34,6 @@ class ClassBaseDto extends BaseDto {
   @MaxLength(4)
   endYear: string;
 
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean;
-
   @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum;
 

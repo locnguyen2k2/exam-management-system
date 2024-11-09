@@ -178,7 +178,7 @@ export class QuestionService {
   maxFillInAnswerValue(correctAnswer: AnswerBaseDto): number {
     const listCorrectValue = this.handleFillInAnswerValue(correctAnswer.value);
     const total = listCorrectValue.length;
-    return factorial(total) / factorial(total - total);
+    return factorial(total);
   }
 
   handleFillInAnswerValue(value: string): string[] {
@@ -191,7 +191,7 @@ export class QuestionService {
           listValue.splice(i, 1);
         } else {
           throw new BusinessException(
-            '400:Giữa 2 ký hiệu của đáp án [__][__] phải có giá trị!',
+            '400:Trước ký hiệu [__] của đáp án phải có giá trị!',
           );
         }
       }
@@ -248,7 +248,7 @@ export class QuestionService {
     const quantityValue = this.handleFillInContent(content);
     if (quantityValue !== this.handleFillInAnswerValue(answerValue).length)
       throw new BusinessException(
-        `400:Đáp án vượt quá ${quantityValue} giá trị ([__])!`,
+        `400:Đáp án phải có ${quantityValue} giá trị ([__])!`,
       );
   }
 
@@ -333,7 +333,12 @@ export class QuestionService {
       data.questions.map(async (questionData) => {
         const { answers, chapterId } = questionData;
         const listAnswer = answers.map(
-          (answer) => new AnswerEntity({ ...answer }),
+          (answer) =>
+            new AnswerEntity({
+              ...answer,
+              create_by: data.createBy,
+              update_by: data.createBy,
+            }),
         );
         let picture = '';
 
@@ -399,6 +404,14 @@ export class QuestionService {
   //   return { chapter, questions };
   // }
 
+  async findAnswer(quizId: string, answerId: string): Promise<AnswerEntity> {
+    const isQuiz = await this.chapterService.findAvailableQuiz(quizId);
+    const answer = isQuiz.question.answers.find(({ id }) => id === answerId);
+    if (!answer)
+      throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, answerId);
+    return answer;
+  }
+
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     let picture = '';
     let newQuestions = [];
@@ -408,11 +421,26 @@ export class QuestionService {
       data.updateBy,
     );
     const newQuestion = question;
-    let answers = !_.isEmpty(data.answers) ? data.answers : question.answers;
+    // Lấy danh sách câu hỏi không cập nhật
+    let answers: any[] = question.answers.filter(
+      (answer) =>
+        !data.answers.some((dataAnswer) => dataAnswer.id === answer.id),
+    );
     const content = !_.isEmpty(data.content) ? data.content : question.content;
     const category = !_.isEmpty(data.category)
       ? data.category
       : question.category;
+    // Lấy danh sách câu hỏi cập nhật
+    if (!_.isEmpty(data.answers)) {
+      await Promise.all(
+        data.answers.map(async (answer) =>
+          answers.push({
+            ...(await this.findAnswer(id, answer.id)),
+            ...answer,
+          }),
+        ),
+      );
+    }
 
     if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
       const newChapter = await this.chapterService.findAvailable(
