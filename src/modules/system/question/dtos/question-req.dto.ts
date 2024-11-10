@@ -69,7 +69,7 @@ class QuestionBaseDto extends BaseDto {
   content: string;
 
   @Field(() => GraphQLUpload, { nullable: true })
-  picture: Promise<FileUpload>;
+  picture: FileUpload;
 
   @Field(() => String, { nullable: true })
   remark: string;

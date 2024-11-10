@@ -27,6 +27,7 @@ import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
 import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { shuffle } from '~/utils/shuffle';
+import { FileUpload } from '~/modules/system/image/image.interface';
 
 export interface IClassifyQuestion {
   chapterId: string;
@@ -308,7 +309,11 @@ export class QuestionService {
         let picture = '';
 
         if (questionData.picture) {
-          picture += await this.imageService.uploadImage(questionData.picture);
+          const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+            resolve(questionData.picture),
+          );
+
+          picture += await this.imageService.uploadImage(image);
         }
 
         delete questionData.picture;
@@ -441,8 +446,10 @@ export class QuestionService {
     if (!_.isNil(data.picture)) {
       !_.isEmpty(question.picture) &&
         (await this.imageService.deleteImage(question.picture));
-
-      picture += await this.imageService.uploadImage(data.picture);
+      const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+        resolve(data.picture),
+      );
+      picture += await this.imageService.uploadImage(image);
     }
 
     newQuestion.update_by = data.updateBy;

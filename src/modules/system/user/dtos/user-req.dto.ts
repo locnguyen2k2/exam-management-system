@@ -40,7 +40,7 @@ class UserBaseDto extends BaseDto {
   gender: GenderEnum;
 
   @Field(() => GraphQLUpload, { nullable: true })
-  photo: Promise<FileUpload>;
+  photo: FileUpload;
 
   @Field(() => String, { nullable: true })
   address: string;

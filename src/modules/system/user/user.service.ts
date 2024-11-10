@@ -16,6 +16,7 @@ import { searchIndexes } from '~/utils/search';
 import { RoleEntity } from '~/modules/system/role/entities/role.entity';
 import { ImageService } from '~/modules/system/image/image.service';
 import { paginate } from '~/helpers/paginate/paginate';
+import { FileUpload } from '~/modules/system/image/image.interface';
 
 @Injectable()
 export class UserService {
@@ -99,9 +100,17 @@ export class UserService {
       hashPassword = await bcrypt.hashSync(data.password, 10);
       delete data.password;
     }
+    let photo = '';
+    if (data.photo) {
+      const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+        resolve(data.photo),
+      );
+      photo += await this.imageService.uploadImage(image);
+    }
 
     const user = new UserEntity({
       ...data,
+      photo: !_.isEmpty(photo) ? photo : null,
       roles,
       password: hashPassword,
       create_by: data.createBy,
@@ -146,7 +155,11 @@ export class UserService {
       !_.isEmpty(user.photo) &&
         (await this.imageService.deleteImage(user.photo));
 
-      photo += await this.imageService.uploadImage(args.photo);
+      const image: Promise<FileUpload> = new Promise((resolve) =>
+        resolve(args.picture),
+      );
+
+      photo += await this.imageService.uploadImage(image);
     }
 
     if (!_.isEmpty(args.roleIds)) {
