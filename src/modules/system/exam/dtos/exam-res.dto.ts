@@ -1,13 +1,6 @@
-import { Field, Float, ObjectType } from '@nestjs/graphql';
-import {
-  ExamEntity,
-  ScaleDto,
-} from '~/modules/system/exam/entities/exam.entity';
-import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { ExtendedEntity } from '~/common/entity/base.entity';
+import { ObjectType } from '@nestjs/graphql';
+import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
-import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 
 // @ObjectType('ExamModel')
 // export class ExamDetailDto extends ExtendedEntity {

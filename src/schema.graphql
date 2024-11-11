@@ -223,6 +223,7 @@ enum StatusShareEnum {
   PRIVATE
 }
 
+"""Loại câu hỏi"""
 enum CategoryEnum {
   EASSAY
   SINGLE_CHOICE
@@ -278,6 +279,7 @@ type ScaleDto {
   percent: Float
   chapterId: String
   level: LevelEnum!
+  category: CategoryEnum!
 }
 
 type ExamModel {
@@ -1194,6 +1196,7 @@ input ScaleArgs {
   chapterId: String!
   percent: Float!
   level: LevelEnum!
+  category: CategoryEnum!
 }
 
 input EnableExamsArgs {

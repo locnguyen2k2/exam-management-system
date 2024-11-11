@@ -223,29 +223,37 @@ export class ExamService {
   classifyQuestions(data: IChapterQuestion[]): IClassifyQuestion[] {
     const result: IClassifyQuestion[] = [];
 
-    data.map(({ chapterId, question }) => {
-      const idxChap = result.findIndex((info) => info.chapterId === chapterId);
+    for (const { chapterId, question } of data) {
+      const idxChapter = result.findIndex(
+        (info) => info.chapterId === chapterId,
+      );
 
-      if (idxChap > -1) {
-        const idxLv = result[idxChap].info.findIndex(
-          (info) => info.level === question.level,
+      if (idxChapter !== -1) {
+        const idxInfo = result[idxChapter].info.findIndex(
+          ({ level, category }) =>
+            level === question.level && category === question.category,
         );
 
-        if (idxLv > -1) {
-          result[idxChap].info[idxLv].questions.push(question);
-        } else {
-          result[idxChap].info.push({
-            level: question.level,
-            questions: [question],
-          });
-        }
+        idxInfo !== -1
+          ? result[idxChapter].info[idxInfo].questions.push(question)
+          : result[idxChapter].info.push({
+              level: question.level,
+              category: question.category,
+              questions: [question],
+            });
       } else {
         result.push({
           chapterId: chapterId,
-          info: [{ level: question.level, questions: [question] }],
+          info: [
+            {
+              level: question.level,
+              category: question.category,
+              questions: [question],
+            },
+          ],
         });
       }
-    });
+    }
 
     return result;
   }
@@ -258,9 +266,10 @@ export class ExamService {
     const scales: IScale[] = [];
 
     data.map(({ chapterId, info }) => {
-      info.map(({ level, questions }) => {
+      info.map(({ level, category, questions }) => {
         scales.push({
           chapterId,
+          category,
           level,
           percent: Number(
             ((questions.length * 100) / totalQuestions).toFixed(2),
@@ -278,7 +287,9 @@ export class ExamService {
     for (const scale of scales) {
       const index = listScales.findIndex(
         (item: IScale) =>
-          item.chapterId === scale.chapterId && item.level === scale.level,
+          item.chapterId === scale.chapterId &&
+          item.level === scale.level &&
+          item.category === scale.category,
       );
 
       if (index !== -1) {

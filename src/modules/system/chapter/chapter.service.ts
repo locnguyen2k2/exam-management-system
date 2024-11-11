@@ -27,6 +27,7 @@ import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
 import { searchIndexes } from '~/utils/search';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
+import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 @Injectable()
 export class ChapterService {
@@ -478,6 +479,7 @@ export class ChapterService {
   async randQuizzes(
     chapterId: string,
     level: LevelEnum,
+    category: CategoryEnum,
     quantity: number,
     uid: string,
   ) {
@@ -498,6 +500,7 @@ export class ChapterService {
                 as: 'question',
                 cond: {
                   $and: [
+                    { $eq: ['$$question.category', category] },
                     { $eq: ['$$question.level', level] },
                     { $eq: ['$$question.enable', true] },
                   ],

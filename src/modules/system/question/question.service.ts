@@ -31,7 +31,11 @@ import { FileUpload } from '~/modules/system/image/image.interface';
 
 export interface IClassifyQuestion {
   chapterId: string;
-  info: { level: LevelEnum; questions: QuestionEntity[] }[];
+  info: {
+    level: LevelEnum;
+    category: CategoryEnum;
+    questions: QuestionEntity[];
+  }[];
 }
 
 @Injectable()
@@ -309,7 +313,7 @@ export class QuestionService {
         let picture = '';
 
         if (questionData.picture) {
-          const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+          const image: Promise<FileUpload> = new Promise((resolve) =>
             resolve(questionData.picture),
           );
 
@@ -360,10 +364,13 @@ export class QuestionService {
     );
     const newQuestion = question;
     // Lấy danh sách câu hỏi không cập nhật
-    let answers: any[] = question.answers.filter(
-      (answer) =>
-        !data.answers.some((dataAnswer) => dataAnswer.id === answer.id),
-    );
+    let answers: any[] = !_.isEmpty(data.answers)
+      ? question.answers.filter(
+          (answer) =>
+            !data.answers.some((dataAnswer) => dataAnswer.id === answer.id),
+        )
+      : [];
+
     const content = !_.isEmpty(data.content) ? data.content : question.content;
     const category = !_.isEmpty(data.category)
       ? data.category
@@ -446,7 +453,7 @@ export class QuestionService {
     if (!_.isNil(data.picture)) {
       !_.isEmpty(question.picture) &&
         (await this.imageService.deleteImage(question.picture));
-      const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+      const image: Promise<FileUpload> = new Promise((resolve) =>
         resolve(data.picture),
       );
       picture += await this.imageService.uploadImage(image);
@@ -576,19 +583,22 @@ export class QuestionService {
   ) {
     return await Promise.all(
       scales.map(async (scale) => {
-        const { chapterId, percent, level } = scale;
+        const { chapterId, percent, level, category } = scale;
         const questionQty = Math.ceil((percent * totalQuestions) / 100);
         // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
         const { questions, chapter } = await this.randQuestsByChap(
           chapterId,
           level,
+          category,
           questionQty,
           uid,
         );
 
         if (questions.length - questionQty < 0)
           throw new BusinessException(
-            `400:Tỉ lệ câu hỏi chuong ${chapter.id} không hợp lệ(${questions.length}/${questionQty}) câu ${LevelEnum[`${level.toUpperCase()}`]}`,
+            `400:Chương ${chapter.id}, tỷ lệ( ${questions.length}/${questionQty}) ` +
+              `câu ${LevelEnum[`${level.toUpperCase()}`]} ` +
+              `thuộc ${CategoryEnum[`${category.toUpperCase()}`]}`,
           );
 
         return {
@@ -603,6 +613,7 @@ export class QuestionService {
   async randQuestsByChap(
     chapterId: string,
     level: LevelEnum,
+    category: CategoryEnum,
     quantity: number,
     uid: string,
   ): Promise<IDetailChapter> {
@@ -610,6 +621,7 @@ export class QuestionService {
     const questions = await this.chapService.randQuizzes(
       chapterId,
       level,
+      category,
       quantity,
       uid,
     );

@@ -5,6 +5,7 @@ import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
+import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 @ObjectType()
 export class ScaleDto {
@@ -14,6 +15,8 @@ export class ScaleDto {
   chapterId: string;
   @Field(() => LevelEnum)
   level: LevelEnum;
+  @Field(() => CategoryEnum)
+  category: CategoryEnum;
 }
 
 @ObjectType('ExamModel')
