@@ -369,7 +369,7 @@ export class QuestionService {
           (answer) =>
             !data.answers.some((dataAnswer) => dataAnswer.id === answer.id),
         )
-      : [];
+      : question.answers;
 
     const content = !_.isEmpty(data.content) ? data.content : question.content;
     const category = !_.isEmpty(data.category)
