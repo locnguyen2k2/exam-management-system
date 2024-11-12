@@ -29,11 +29,12 @@ const modules = [
 
 @Module({
   imports: [
+    // Tải và phân tích các cập key - value trong file .env và hợp nhất vào process.env
     ConfigModule.forRoot({
-      isGlobal: true,
+      isGlobal: true, // Sử dụng toàn cục ConfigModule
       expandVariables: true,
-      envFilePath: [`.env.local`, `.env.${process.env.NODE_ENV}`, '.env'],
-      load: [...Object.values(config)],
+      envFilePath: [`.env.local`, `.env.${process.env.NODE_ENV}`, '.env'], // Thiết lập thêm các file biến môi trường
+      load: [...Object.values(config)], // Load các configuration objects
     }),
 
     ThrottlerModule.forRootAsync({

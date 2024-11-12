@@ -1,40 +1,40 @@
 import {
   DatabaseConfig,
-  databaseKey,
+  dbConfigKey,
   IDatabaseConfig,
-} from '~/config/database/database.config';
-import { AppConfig, appKey, IAppConfig } from '~/config/app/app.config';
+} from '~/config/database.config';
+import { AppConfig, appConfigKey, IAppConfig } from '~/config/app.config';
 import {
   GraphqlConfig,
-  graphqlKey,
+  gplConfigKey,
   IGraphqlConfig,
-} from '~/config/graphql/graphql.config';
+} from '~/config/graphql.config';
 import {
   IMailerConfig,
   MailerConfig,
-  mailerKey,
-} from '~/config/mailer/mailer.config';
-import { IJwtConfig, JwtConfig, jwtKey } from '~/config/jwt/jwt.config';
+  mailerConfigKey,
+} from '~/config/mailer.config';
+import { IJwtConfig, JwtConfig, jwtConfigKey } from '~/config/jwt.config';
 // import {
 //   FirebaseConfig,
 //   firebaseKey,
 //   IFirebaseConfig,
 // } from '~/config/firebase/firebase.config';
 
-export * from '~/config/app/app.config';
-export * from '~/config/database/database.config';
-export * from '~/config/graphql/graphql.config';
-export * from '~/config/mailer/mailer.config';
-export * from '~/config/jwt/jwt.config';
+export * from '~/config/app.config';
+export * from '~/config/database.config';
+export * from '~/config/graphql.config';
+export * from '~/config/mailer.config';
+export * from '~/config/jwt.config';
 
 // export * from '~/config/firebase/firebase.config';
 
 export interface AllConfigType {
-  [appKey]: IAppConfig;
-  [databaseKey]: IDatabaseConfig;
-  [graphqlKey]: IGraphqlConfig;
-  [mailerKey]: IMailerConfig;
-  [jwtKey]: IJwtConfig;
+  [appConfigKey]: IAppConfig;
+  [dbConfigKey]: IDatabaseConfig;
+  [gplConfigKey]: IGraphqlConfig;
+  [mailerConfigKey]: IMailerConfig;
+  [jwtConfigKey]: IJwtConfig;
   // [firebaseKey]: IFirebaseConfig;
 }
 

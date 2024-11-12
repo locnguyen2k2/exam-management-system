@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
-export const databaseKey = 'database';
+export const dbConfigKey = 'database';
 
 const dataSourceOptions: DataSourceOptions = {
   type: 'mongodb',
@@ -23,8 +23,9 @@ const dataSourceOptions: DataSourceOptions = {
   subscribers: ['dist/src/modules/system/**/*.subscriber{.ts,.js}'],
 };
 
+// Khởi tạo và đặt tên định danh (registerAs) cho Database configuration object
 export const DatabaseConfig = registerAs(
-  databaseKey,
+  dbConfigKey,
   (): DataSourceOptions => dataSourceOptions,
 );
 

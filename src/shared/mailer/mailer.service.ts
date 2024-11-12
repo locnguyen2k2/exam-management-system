@@ -1,15 +1,11 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { MailerService as NestedMailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class MailerService {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly mailService: NestedMailerService,
-  ) {}
+  constructor(private readonly mailService: NestedMailerService) {}
 
   async sendConfirmationEmail(email: string, token: string): Promise<any> {
     const text = `${token}`;
