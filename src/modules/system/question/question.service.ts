@@ -88,6 +88,7 @@ export class QuestionService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
+  // Kiểm tra đầu vào
   async checkCreateQuestion(data: any) {
     await this.chapService.findAvailable(data.chapterId, data.createBy);
 
@@ -123,17 +124,20 @@ export class QuestionService {
     listQuestion.push(data);
   }
 
+  // Phân loại câu hỏi (Đúng/Sai)
   classifyAnswers(answers: any): {
     wrongAnswers: AnswerBaseDto[];
     correctAnswers: AnswerBaseDto[];
   } {
-    const wrongAnswers: AnswerBaseDto[] = [];
-    const correctAnswers: AnswerBaseDto[] = [];
+    const wrongAnswers: AnswerBaseDto[] = []; // Số đáp án đúng
+    const correctAnswers: AnswerBaseDto[] = []; // Số đáp án sai
 
     for (const answer of answers) {
       if (answer.isCorrect) {
-        if (_.isNil(answer.score)) {
-          throw new BusinessException('400:Đáp án đúng phải có điểm');
+        if (_.isNil(answer.score) || answer.score === 0) {
+          throw new BusinessException(
+            `400:Đáp án "${answer.value}" phải có điểm`,
+          );
         }
 
         const isReplaced = correctAnswers.find(
@@ -147,6 +151,11 @@ export class QuestionService {
         const isReplaced = wrongAnswers.find(
           (wrongAnswer) => wrongAnswer.value === answer.value,
         );
+
+        if (!_.isNil(answer.score) && answer.score > 0)
+          throw new BusinessException(
+            `400:Đáp án "${answer.value}" điểm phải bằng 0`,
+          );
 
         if (!isReplaced) {
           wrongAnswers.push(new AnswerEntity({ ...answer }));

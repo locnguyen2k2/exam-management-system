@@ -81,9 +81,7 @@ class QuestionBaseDto extends BaseDto {
   @Field(() => LevelEnum)
   level: LevelEnum;
 
-  @Field(() => StatusShareEnum, {
-    nullable: true,
-  })
+  @Field(() => StatusShareEnum, { defaultValue: StatusShareEnum.PRIVATE })
   status: StatusShareEnum;
 
   @Field(() => CategoryEnum)

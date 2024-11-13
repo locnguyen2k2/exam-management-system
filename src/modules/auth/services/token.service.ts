@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { IJwtConfig, JwtConfig } from '~/config';
+import { Injectable } from '@nestjs/common';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { TokenEntity } from '~/modules/auth/entities/token.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,7 +24,6 @@ export class TokenService {
     private readonly userService: UserService,
     @InjectRepository(TokenEntity)
     private readonly tokenRepository: MongoRepository<TokenEntity>,
-    @Inject(JwtConfig.KEY) private readonly jwtConfig: IJwtConfig,
   ) {}
 
   async findOne(value: string): Promise<TokenEntity> {

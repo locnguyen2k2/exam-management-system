@@ -1055,7 +1055,7 @@ input QuestionArgs {
   remark: String
   chapterId: String!
   level: LevelEnum!
-  status: StatusShareEnum
+  status: StatusShareEnum! = PRIVATE
   category: CategoryEnum!
 
   """
@@ -1076,8 +1076,8 @@ input CreateAnswerArgs {
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
   value: String!
-  isCorrect: Boolean = false
-  score: Float
+  isCorrect: Boolean! = false
+  score: Float! = 0
 
   """Chú thích"""
   remark: String
@@ -1090,7 +1090,7 @@ input UpdateQuestionArgs {
   remark: String
   chapterId: String
   level: LevelEnum
-  status: StatusShareEnum
+  status: StatusShareEnum = PRIVATE
   category: CategoryEnum
 
   """

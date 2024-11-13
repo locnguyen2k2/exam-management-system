@@ -38,7 +38,7 @@ export class ExamEntity extends ExtendedEntity {
   @Column('int', { default: 10.0 })
   maxScore: number = 10.0;
 
-  // IScale: Chapter, Level, Percent
+  // IScale: Chapter, Level, Percent, Catalog
   @Field(() => [ScaleDto])
   @Column('json', { array: true })
   scales: IScale[];

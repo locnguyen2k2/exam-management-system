@@ -15,10 +15,10 @@ export class AnswerBaseDto extends BaseDto {
   })
   value: string;
 
-  @Field(() => Boolean, { nullable: true, defaultValue: false })
+  @Field(() => Boolean, { defaultValue: false })
   isCorrect: boolean;
 
-  @Field(() => Float, { nullable: true })
+  @Field(() => Float, { defaultValue: 0 })
   score: number;
 
   @Field(() => String, { nullable: true, description: 'Chú thích' })
