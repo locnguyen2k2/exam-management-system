@@ -1,3 +1,4 @@
+// Fisher–Yate shuffle
 export function shuffle(arr: any[]): any[] {
   let i = arr.length;
   let j: any;

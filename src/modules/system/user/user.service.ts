@@ -102,7 +102,7 @@ export class UserService {
     }
     let photo = '';
     if (data.photo) {
-      const image: Promise<FileUpload> = new Promise((resolve, reject) =>
+      const image: Promise<FileUpload> = new Promise((resolve) =>
         resolve(data.photo),
       );
       photo += await this.imageService.uploadImage(image);
@@ -201,20 +201,22 @@ export class UserService {
   }
 
   async deleteUserToken(value: string): Promise<boolean> {
-    await this.findTokenByValue(value);
-
-    await this.userRepository.findOneAndUpdate(
-      { 'tokens.value': value },
+    const isExisted = await this.findTokenByValue(value);
+    const isDeleted = await this.userRepository.findOneAndUpdate(
+      { 'tokens.value': isExisted.value },
       {
         $pull: {
           tokens: {
-            value: value,
+            value: isExisted.value,
           },
         },
       },
+      {
+        returnDocument: 'after',
+      },
     );
 
-    return true;
+    return !!isDeleted;
   }
 
   getUserPermissions(user: UserEntity): any[] {
