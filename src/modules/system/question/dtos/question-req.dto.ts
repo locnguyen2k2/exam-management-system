@@ -101,6 +101,8 @@ class QuestionBaseDto extends BaseDto {
       'và ngăn cách bởi tổ hợp các ký hiệu: [__]. ' +
       'Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án',
   })
+  @ValidateNested({ each: true })
+  @Type(() => AnswerBaseDto)
   answers: AnswerBaseDto[];
 }
 
