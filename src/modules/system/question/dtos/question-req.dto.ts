@@ -56,7 +56,7 @@ class UpdateQuestionAnswerDto extends PickType(BaseDto, [
   @Field(() => Float, { nullable: true })
   score: number;
 
-  @Field(() => String, { nullable: true, description: 'Chú thích' })
+  @Field(() => String, { nullable: true })
   remark: string;
 }
 
@@ -81,16 +81,15 @@ class QuestionBaseDto extends BaseDto {
   @Field(() => LevelEnum)
   level: LevelEnum;
 
-  @Field(() => StatusShareEnum, { defaultValue: StatusShareEnum.PRIVATE })
+  @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum;
 
   @Field(() => CategoryEnum)
   category: CategoryEnum;
 
   @Field(() => Int, {
+    description: 'Số lượng đáp án nhiễu (Điền khuyết)',
     nullable: true,
-    description:
-      'Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.',
   })
   quantityWrongAnswers: number;
 

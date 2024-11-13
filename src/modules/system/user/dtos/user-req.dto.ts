@@ -2,7 +2,6 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { IsValidPassword } from '~/common/decorators/password.decorator';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IsEmail, Validate } from 'class-validator';
-import { Expose } from 'class-transformer';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { EmailEnum, GenderEnum } from '~/modules/system/user/user.constant';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
@@ -53,16 +52,13 @@ class UserBaseDto extends BaseDto {
 export class UserCreateDto extends UserBaseDto {
   @Field(() => String)
   @IsEmail()
-  @Expose()
   email: string;
 
   @Field(() => String)
   @Validate(IsValidPassword)
-  @Expose()
   password: string;
 
   @Field(() => [String])
-  @Expose()
   @Validate(IsValidStringId)
   roleIds: string[];
 
@@ -73,7 +69,7 @@ export class UserCreateDto extends UserBaseDto {
 @InputType('CreateAdminArgs')
 export class AdminCreateDto extends UserCreateDto {
   @Field(() => Boolean, { nullable: true })
-  status: boolean = false;
+  status: boolean;
 }
 
 @InputType('UpdateInfoArgs')
@@ -88,7 +84,6 @@ export class UpdateInfoDto extends PartialType(UserBaseDto) {
 @InputType('UpdateUserArgs')
 export class UpdateUserDto extends PartialType(UserBaseDto) {
   @Field(() => [String], { nullable: true })
-  @Expose()
   @Validate(IsValidStringId)
   roleIds: string[];
 

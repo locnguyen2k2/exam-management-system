@@ -10,7 +10,7 @@ export class ClassPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], { nullable: true })
   classStatus: StatusShareEnum[];
 
-  @Field(() => [String], { description: 'Mã lớp', nullable: true })
+  @Field(() => [String], { nullable: true })
   @Validate(IsValidStringId)
   lessonIds: string[];
 }
@@ -23,7 +23,7 @@ class ClassBaseDto extends BaseDto {
   @Field(() => String, { description: 'Mã lớp' })
   code: string;
 
-  @Field(() => String, { nullable: true, description: 'Mô tả' })
+  @Field(() => String, { description: 'Mô tả', nullable: true })
   description: string;
 
   @Field(() => String)

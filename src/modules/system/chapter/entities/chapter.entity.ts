@@ -9,32 +9,21 @@ import { QuestionEntity } from '~/modules/system/question/entities/question.enti
 export class ChapterEntity extends ExtendedEntity {
   @Field(() => String, { description: 'Đầu mục' })
   @Column('string')
-  label: string;
+  label: string = '';
 
   @Field(() => String, { description: 'Tên chương' })
   @Column('string')
   name: string;
 
-  @Field(() => String, { nullable: true, description: 'Mô tả' })
-  @Column('string', { nullable: true })
-  description: string;
+  @Field(() => String, { description: 'Mô tả' })
+  @Column('string')
+  description: string = '';
 
-  @Field(() => StatusShareEnum, {
-    nullable: true,
-    defaultValue: StatusShareEnum.PRIVATE,
-    description: 'Trạng thái chia sẻ',
-  })
-  @Column({
-    type: 'enum',
-    enum: StatusShareEnum,
-    default: StatusShareEnum.PRIVATE,
-  })
+  @Field(() => StatusShareEnum, { description: 'Trạng thái chia sẻ' })
+  @Column({ type: 'enum', enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [QuestionEntity], {
-    nullable: true,
-    defaultValue: [],
-  })
+  @Field(() => [QuestionEntity])
   @Column('json', { array: true })
   questions: QuestionEntity[] = [];
 

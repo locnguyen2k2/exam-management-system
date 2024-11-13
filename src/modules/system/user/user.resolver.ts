@@ -14,8 +14,6 @@ import {
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
-import { plainToClass } from 'class-transformer';
-import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('User')
@@ -30,7 +28,7 @@ export class UserResolver {
   async users(
     @Args('userPageOptions', { nullable: true })
     userPagination: UserPageOptions = new UserPageOptions(),
-  ): Promise<PageDto<UserEntity>> {
+  ) {
     return await this.userService.findAll(userPagination);
   }
 
@@ -39,7 +37,7 @@ export class UserResolver {
     name: 'userDetail',
     description: 'Chi tiết người dùng',
   })
-  async detail(@Args('id') @IdParam() id: string): Promise<UserProfile> {
+  async detail(@Args('id') @IdParam() id: string) {
     return await this.userService.getProfile(id);
   }
 
@@ -51,10 +49,9 @@ export class UserResolver {
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('adminCreateArgs') args: AdminCreateDto,
-  ): Promise<UserEntity> {
-    args.createBy = user?.id ? user.id : null;
-    const data = AdminCreateDto.plainToClass(args);
-    return await this.userService.create({ ...data, createBy: null });
+  ) {
+    args.createBy = user.id;
+    return await this.userService.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_USER)
@@ -66,16 +63,14 @@ export class UserResolver {
     @Args('userId') @IdParam() userId: string,
     @Args('updateUserArgs') args: UpdateUserDto,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<UserProfile> {
-    args.updateBy = user?.id ? user.id : null;
-    const data = plainToClass(UpdateUserDto, args);
-    console.log(data);
-    return await this.userService.update(userId, data);
+  ) {
+    args.updateBy = user.id;
+    return await this.userService.update(userId, args);
   }
 
   @Permissions(PermissionEnum.DELETE_USER)
   @Mutation(() => String, { name: 'deleteUser', description: 'Xóa người dùng' })
-  async delete(@Args('userId') @IdParam() uid: string): Promise<string> {
+  async delete(@Args('userId') @IdParam() uid: string) {
     return await this.userService.deleteUser(uid);
   }
 }

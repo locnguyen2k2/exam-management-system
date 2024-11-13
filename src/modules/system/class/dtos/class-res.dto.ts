@@ -12,20 +12,20 @@ export class ClassSimpleDto extends ExtendedEntity {
   @Field(() => String)
   code: string;
 
-  @Field(() => String, { nullable: true })
-  description: string = '';
+  @Field(() => String)
+  description: string;
 
-  @Field(() => String, { nullable: true })
-  startYear: string = '';
+  @Field(() => String)
+  startYear: string;
 
-  @Field(() => String, { nullable: true })
-  endYear: string = '';
+  @Field(() => String)
+  endYear: string;
 
-  @Field(() => Boolean, { nullable: true })
+  @Field(() => Boolean)
   enable: boolean;
 
-  @Field(() => StatusShareEnum, { nullable: true })
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  @Field(() => StatusShareEnum)
+  status: StatusShareEnum;
 }
 
 @ObjectType('ClassPagination')

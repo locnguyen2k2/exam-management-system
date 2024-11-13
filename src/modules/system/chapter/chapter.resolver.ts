@@ -97,11 +97,10 @@ export class ChapterResolver {
   })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createChaptersArgs') dto: CreateChaptersDto,
+    @Args('createChaptersArgs') args: CreateChaptersDto,
   ): Promise<ChapterEntity[]> {
-    const data = plainToClass(CreateChaptersDto, dto);
-    data.createBy = user.id;
-    return await this.chapterService.create(data);
+    args.createBy = user.id;
+    return await this.chapterService.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_CHAPTER)
@@ -112,12 +111,11 @@ export class ChapterResolver {
   async update(
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('updateChapterArgs') dto: UpdateChapterDto,
+    @Args('updateChapterArgs') args: UpdateChapterDto,
   ): Promise<ChapterEntity> {
-    const data = plainToClass(UpdateChapterDto, dto);
-    delete data.id;
-    data.updateBy = user.id;
-    return await this.chapterService.update(id, data);
+    delete args.id;
+    args.updateBy = user.id;
+    return await this.chapterService.update(id, args);
   }
 
   @Permissions(PermissionEnum.UPDATE_CHAPTER)
@@ -158,7 +156,7 @@ export class ChapterResolver {
     @IdParam()
     chapterIds: string[],
     @CurrentUser() user: IAuthPayload,
-  ): Promise<string> {
+  ) {
     return await this.chapterService.deleteMany(chapterIds, user.id);
   }
 }

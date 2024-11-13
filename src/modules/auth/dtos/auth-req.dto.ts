@@ -1,6 +1,5 @@
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
-import { Expose } from 'class-transformer';
 import { IsValidPassword } from '~/common/decorators/password.decorator';
 import {
   IsEmail,
@@ -21,7 +20,6 @@ export class ConfirmEmailDto extends BaseDto {
 
   @Field(() => String)
   @IsEmail()
-  @Expose()
   email: string;
 }
 
@@ -32,12 +30,10 @@ export class ResetPasswordDto extends BaseDto {
 
   @Field(() => String)
   @Validate(IsValidPassword)
-  @Expose()
   newPassword: string;
 
   @Field(() => String)
   @IsEmail()
-  @Expose()
   email: string;
 }
 
@@ -45,12 +41,10 @@ export class ResetPasswordDto extends BaseDto {
 export class LoginDto extends BaseDto {
   @Field(() => String)
   @IsEmail()
-  @Expose()
   email: string;
 
   @Field(() => String)
   @Validate(IsValidPassword)
-  @Expose()
   password: string;
 }
 
@@ -64,35 +58,25 @@ export class BaseRegisterDto extends BaseDto {
 
   @Field(() => String)
   @IsEmail()
-  @Expose()
   email: string;
 
   @Field(() => String, { nullable: true })
   @MaxLength(255)
-  @IsOptional()
-  @Expose()
-  photo: string = null;
+  photo: string;
 
   @Field(() => String, { nullable: true })
   @IsPhoneNumber()
-  @IsOptional()
-  @Expose()
-  phone: string = null;
+  phone: string;
 
   @Field(() => String, { nullable: true })
   @MaxLength(255)
-  @IsOptional()
-  @Expose()
-  address: string = null;
+  address: string;
 
   @Field(() => GenderEnum, { nullable: true })
   @IsEnum(GenderEnum)
-  @IsOptional()
-  @Expose()
-  gender: GenderEnum = null;
+  gender: GenderEnum;
 
   @HideField()
-  @Expose()
   roleIds: string[] = [];
 
   @HideField()
@@ -103,7 +87,6 @@ export class BaseRegisterDto extends BaseDto {
 export class RegisterDto extends BaseRegisterDto {
   @Field(() => String)
   @Validate(IsValidPassword)
-  @Expose()
   password: string;
 }
 
@@ -111,6 +94,7 @@ export class RegisterDto extends BaseRegisterDto {
 export class GenerateTokenDto extends BaseDto {
   @Field(() => String)
   token: string;
+
   @Field(() => TokenEntity)
   type: TokenEnum;
 }

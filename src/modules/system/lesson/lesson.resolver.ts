@@ -33,7 +33,7 @@ export class LessonResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('lessonPageOptions')
     pageOptions: LessonPageOptions = new LessonPageOptions(),
-  ): Promise<PageDto<LessonDetailDto>> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
@@ -60,11 +60,10 @@ export class LessonResolver {
   @Mutation(() => [LessonEntity], { name: 'createLessons' })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createLessonArgs') dto: CreateLessonDto,
-  ): Promise<LessonEntity[]> {
-    const data = plainToClass(CreateLessonDto, dto);
-    data.createBy = user.id;
-    return await this.lessonService.create(data);
+    @Args('createLessonArgs') args: CreateLessonDto,
+  ) {
+    args.createBy = user.id;
+    return await this.lessonService.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
@@ -75,11 +74,10 @@ export class LessonResolver {
   async update(
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('updateLessonArgs') dto: UpdateLessonDto,
-  ): Promise<LessonDetailDto> {
-    const data = plainToClass(UpdateLessonDto, dto);
-    data.updateBy = user.id;
-    return await this.lessonService.update(id, data);
+    @Args('updateLessonArgs') args: UpdateLessonDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.lessonService.update(id, args);
   }
 
   @Permissions(PermissionEnum.UPDATE_LESSON)
@@ -89,11 +87,10 @@ export class LessonResolver {
   })
   async enable(
     @CurrentUser() user: IAuthPayload,
-    @Args('enableLessonsArgs') dto: EnableLessonsDto,
-  ): Promise<LessonEntity[]> {
-    const data = plainToClass(EnableLessonsDto, dto);
-    data.updateBy = user.id;
-    return await this.lessonService.enableLessons(data);
+    @Args('enableLessonsArgs') args: EnableLessonsDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.lessonService.enableLessons(args);
   }
 
   @Permissions(PermissionEnum.DELETE_LESSON)
@@ -104,7 +101,7 @@ export class LessonResolver {
   async delete(
     @CurrentUser() user: IAuthPayload,
     @Args('lessonIds', { type: () => [String] }) @IdParam() lessonIds: string[],
-  ): Promise<string> {
+  ) {
     return await this.lessonService.deleteMany(lessonIds, user.id);
   }
 }

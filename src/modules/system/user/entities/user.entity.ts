@@ -21,35 +21,34 @@ export class UserEntity extends ExtendedEntity {
   email: string;
 
   @Field(() => String)
-  @Column({ type: 'string', length: 600, nullable: true, default: null })
-  password: string;
+  @Column({ type: 'string', length: 600 })
+  password: string = null;
 
   @Field(() => Boolean, {
     description: 'Trạng thái xác thực',
-    defaultValue: false,
   })
-  @Column({ type: 'boolean', default: false })
-  status: boolean;
+  @Column({ type: 'boolean' })
+  status: boolean = false;
 
-  @Field(() => String, { nullable: true })
-  @Column({ type: 'string', length: 255, default: '' })
-  photo: string;
+  @Field(() => String)
+  @Column({ type: 'string', length: 255 })
+  photo: string = '';
 
-  @Field(() => String, { nullable: true })
-  @Column({ type: 'string', length: 255, default: '' })
-  address: string = null;
+  @Field(() => String)
+  @Column({ type: 'string', length: 255 })
+  address: string = '';
 
-  @Field(() => GenderEnum, { nullable: true })
-  @Column({ type: 'enum', enum: GenderEnum, default: null })
-  gender: GenderEnum;
+  @Field(() => GenderEnum)
+  @Column({ type: 'enum', enum: GenderEnum })
+  gender: GenderEnum = null;
 
-  @Field(() => String, { nullable: true, defaultValue: '' })
-  @Column({ type: 'string', default: '' })
-  phone: string = null;
+  @Field(() => String)
+  @Column({ type: 'string' })
+  phone: string = '';
 
   @Field(() => [RoleEntity])
-  @Column('json', { array: true, default: [] })
-  roles: RoleEntity[];
+  @Column('json', { array: true })
+  roles: RoleEntity[] = [];
 
   @Column(() => TokenEntity)
   tokens: TokenEntity[] = [];

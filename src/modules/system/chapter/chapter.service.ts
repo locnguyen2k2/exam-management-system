@@ -154,11 +154,8 @@ export class ChapterService {
             chapData.name.toLowerCase().replace(/\s/g, ''),
         );
 
-        if (isReplaced) {
-          throw new BusinessException(
-            `400:Tên chương bị trùng! ${isReplaced.name}`,
-          );
-        }
+        if (isReplaced)
+          throw new BusinessException(`400:Chương ${isReplaced.name} bị trùng`);
 
         delete chapData.questionIds;
 
@@ -216,20 +213,18 @@ export class ChapterService {
 
   async update(id: string, data: UpdateChapterDto): Promise<ChapterEntity> {
     const isExisted = await this.findOne(id);
-    let oldLesson: LessonEntity;
+    let oldLesson: LessonEntity = null;
     let newLesson: LessonEntity;
     let oldChapters = [];
     let newChapters = [];
 
-    if (isExisted.create_by !== data.updateBy) {
+    if (isExisted.create_by !== data.updateBy)
       throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
-    }
 
     if (!_.isEmpty(data.name)) {
       const isReplaced = await this.findByName(data.name);
-      if (isReplaced && isReplaced.create_by !== data.updateBy) {
+      if (isReplaced && isReplaced.create_by !== data.updateBy)
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
-      }
     }
 
     if (!_.isNil(data.lessonId)) {
@@ -238,27 +233,17 @@ export class ChapterService {
         data.updateBy,
       );
 
-      const isReplaced = newLesson.chapterIds.find(
-        (chapterId) => chapterId === id,
-      );
+      const isReplaced = newLesson.chapterIds.find((chapId) => chapId === id);
 
-      if (!isReplaced) {
-        oldLesson = await this.lessonService.findByChapter(isExisted.id);
+      oldLesson = isReplaced
+        ? await this.lessonService.findByChapter(isExisted.id)
+        : null;
 
-        if (oldLesson?.id) {
-          if (oldLesson.chapterIds && oldLesson.chapterIds.length > 0) {
-            oldChapters = oldLesson.chapterIds.filter(
-              (chapterId) => chapterId !== id,
-            );
-          }
-        }
+      if (oldLesson && oldLesson.chapterIds && oldLesson.chapterIds.length > 0)
+        oldChapters = oldLesson.chapterIds.filter((chapId) => chapId !== id);
 
-        if (newLesson.chapterIds && newLesson.chapterIds.length > 0) {
-          newChapters = newLesson.chapterIds.filter(
-            (chapterId) => chapterId !== id,
-          );
-        }
-      }
+      if (newLesson.chapterIds && newLesson.chapterIds.length > 0)
+        newChapters = newLesson.chapterIds.filter((chapId) => chapId !== id);
     }
 
     await this.chapterRepo.update(
@@ -278,6 +263,7 @@ export class ChapterService {
 
     oldLesson &&
       (await this.lessonService.updateChapters(oldLesson.id, oldChapters));
+
     newLesson &&
       (await this.lessonService.updateChapters(newLesson.id, [
         ...newChapters,
@@ -515,8 +501,6 @@ export class ChapterService {
       ])
       .toArray();
 
-    const questions = data[0]?.questions ? data[0].questions : [];
-
-    return questions;
+    return data[0]?.questions ? data[0].questions : [];
   }
 }

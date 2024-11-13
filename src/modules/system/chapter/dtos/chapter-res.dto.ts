@@ -8,26 +8,22 @@ import { QuestionEntity } from '~/modules/system/question/entities/question.enti
 
 @ObjectType('ChapterModel')
 export class ChapterDetailDto extends ExtendedEntity {
-  @Field(() => String, {})
+  @Field(() => String)
   label: string;
 
-  @Field(() => String, {})
+  @Field(() => String)
   name: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   description: string;
 
-  @Field(() => LessonEntity, { nullable: true })
+  @Field(() => LessonEntity)
   lesson: LessonEntity;
 
-  @Field(() => StatusShareEnum, {
-    nullable: true,
-    defaultValue: StatusShareEnum.PRIVATE,
-    description: 'Trạng thái chia sẻ',
-  })
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  @Field(() => StatusShareEnum, { description: 'Trạng thái chia sẻ' })
+  status: StatusShareEnum;
 
-  @Field(() => [QuestionEntity], { nullable: true })
+  @Field(() => [QuestionEntity])
   questions: QuestionEntity[];
 }
 

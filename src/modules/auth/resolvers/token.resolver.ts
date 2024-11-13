@@ -8,7 +8,7 @@ export class TokenResolver {
   constructor(private readonly tokenService: TokenService) {}
 
   @Mutation(() => String || Boolean, { description: 'Làm mới token truy cập' })
-  async refreshToken(@Args('token') token: string): Promise<string | boolean> {
+  async refreshToken(@Args('token') token: string) {
     return await this.tokenService.confirmRefreshToken(token);
   }
 }

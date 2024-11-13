@@ -30,7 +30,7 @@ class LessonBaseDto extends BaseDto {
   @Validate(IsValidStringId)
   classIds: string[];
 
-  @Field(() => StatusShareEnum)
+  @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum;
 }
 

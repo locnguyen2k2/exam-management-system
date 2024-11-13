@@ -15,32 +15,31 @@ export class ClassEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   code: string;
 
-  @Field(() => String, { nullable: true })
-  @Column({ type: 'string', default: '' })
+  @Field(() => String)
+  @Column({ type: 'string' })
   description: string = '';
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   @Column({ type: 'string' })
-  startYear: string = '';
+  startYear: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   @Column({ type: 'string' })
-  endYear: string = '';
+  endYear: string;
 
-  @Field(() => Boolean, { nullable: true })
-  @Column('boolean', { default: false })
-  enable: boolean;
+  @Field(() => Boolean)
+  @Column('boolean')
+  enable: boolean = false;
 
-  @Field(() => StatusShareEnum, { nullable: true })
+  @Field(() => StatusShareEnum)
   @Column({
     type: 'enum',
     enum: StatusShareEnum,
-    default: StatusShareEnum.PRIVATE,
   })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
-  @Field(() => [LessonEntity], { nullable: true })
-  @Column({ type: 'json', array: true, default: [] })
+  @Field(() => [LessonEntity])
+  @Column({ type: 'json', array: true })
   lessons: LessonEntity[] = [];
 
   constructor(classEntity: Partial<ClassEntity>) {

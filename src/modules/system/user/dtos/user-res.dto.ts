@@ -20,17 +20,17 @@ export class UserProfile {
   @Field(() => String)
   lastName: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   photo: string = '';
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   address: string = '';
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   phone: string = '';
 
-  @Field(() => GenderEnum, { nullable: true })
-  gender: GenderEnum = null;
+  @Field(() => GenderEnum)
+  gender: GenderEnum;
 
   @Field(() => Boolean)
   status: boolean;

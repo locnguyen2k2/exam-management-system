@@ -73,7 +73,7 @@ export class AnswerResolver {
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
     @Args('updateAnswerArgs') dto: UpdateAnswerDto,
-  ): Promise<AnswerEntity> {
+  ) {
     dto.updateBy = user.id;
     const data = plainToClass(UpdateAnswerDto, dto);
     delete data.id;
@@ -88,7 +88,7 @@ export class AnswerResolver {
   async deleteAnswers(
     @Args('answerIds', { type: () => [String] }) @IdParam() answerIds: [string],
     @CurrentUser() user: IAuthPayload,
-  ): Promise<string> {
+  ) {
     return await this.answerService.deleteMany(answerIds, user.id);
   }
 }

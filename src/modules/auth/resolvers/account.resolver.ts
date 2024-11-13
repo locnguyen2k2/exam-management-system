@@ -14,12 +14,12 @@ export class AccountResolver {
   constructor(private readonly userService: UserService) {}
 
   @Query(() => UserProfile, { description: 'Lấy thông tin tài khoản' })
-  async myProfile(@CurrentUser() user: IAuthPayload): Promise<UserProfile> {
+  async myProfile(@CurrentUser() user: IAuthPayload) {
     return await this.userService.getProfile(user.id);
   }
 
   @Query(() => Boolean, { description: 'Đăng xuất khỏi hệ thống' })
-  async logout(@CurrentUser() user: IAuthPayload): Promise<boolean> {
+  async logout(@CurrentUser() user: IAuthPayload) {
     return await this.userService.resetTokens(user.email);
   }
 
@@ -27,7 +27,7 @@ export class AccountResolver {
   async updateInfo(
     @CurrentUser() user: IAuthPayload,
     @Args('updateAccountArgs') args: UpdateInfoDto,
-  ): Promise<UserProfile> {
+  ) {
     const data = plainToClass(UpdateInfoDto, args);
     return await this.userService.update(user.id, { ...data });
   }

@@ -17,7 +17,7 @@ type PermissionModel {
   updateBy: String
   name: String!
   value: String!
-  remark: String
+  remark: String!
   status: Boolean!
 }
 
@@ -62,10 +62,10 @@ type UserModel {
 
   """Trạng thái xác thực"""
   status: Boolean!
-  photo: String
-  address: String
-  gender: GenderEnum
-  phone: String
+  photo: String!
+  address: String!
+  gender: GenderEnum!
+  phone: String!
   roles: [RoleModel!]!
 }
 
@@ -96,10 +96,10 @@ type UserProfile {
   name: String!
   firstName: String!
   lastName: String!
-  photo: String
-  address: String
-  phone: String
-  gender: GenderEnum
+  photo: String!
+  address: String!
+  phone: String!
+  gender: GenderEnum!
   status: Boolean!
   enable: Boolean!
   roles: [String!]!
@@ -276,15 +276,15 @@ type QuestionPagination {
 }
 
 type ScaleDto {
-  percent: Float
-  chapterId: String
+  percent: Float!
+  chapterId: String!
   level: LevelEnum!
   category: CategoryEnum!
 }
 
 type ExamModel {
   id: String!
-  enable: Boolean
+  enable: Boolean!
   createdAt: String!
   updatedAt: String!
 
@@ -293,15 +293,13 @@ type ExamModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String
+  label: String!
   time: String!
   sku: String!
-
-  """10 được đặt mặc định"""
-  maxScore: Float
+  maxScore: Float!
   scales: [ScaleDto!]!
   questions: [ExamQuestionModel!]!
-  status: StatusShareEnum
+  status: StatusShareEnum!
 }
 
 type ChapterEntity {
@@ -325,11 +323,11 @@ type ChapterEntity {
   name: String!
 
   """Mô tả"""
-  description: String
+  description: String!
 
   """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questions: [QuestionModel!]
+  status: StatusShareEnum!
+  questions: [QuestionModel!]!
 }
 
 type LessonDefaultFields {
@@ -345,9 +343,9 @@ type LessonDefaultFields {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String
+  label: String!
   name: String!
-  description: String
+  description: String!
   status: StatusShareEnum!
   chapterIds: [String!]!
   exams: [ExamModel!]!
@@ -355,7 +353,7 @@ type LessonDefaultFields {
 
 type ClassModel {
   id: String!
-  enable: Boolean
+  enable: Boolean!
   createdAt: String!
   updatedAt: String!
 
@@ -366,11 +364,11 @@ type ClassModel {
   updateBy: String
   name: String!
   code: String!
-  description: String
-  startYear: String
-  endYear: String
-  status: StatusShareEnum
-  lessons: [LessonDefaultFields!]
+  description: String!
+  startYear: String!
+  endYear: String!
+  status: StatusShareEnum!
+  lessons: [LessonDefaultFields!]!
 }
 
 type ExamPagination {
@@ -393,12 +391,12 @@ type ChapterModel {
   updateBy: String
   label: String!
   name: String!
-  description: String
-  lesson: LessonDefaultFields
+  description: String!
+  lesson: LessonDefaultFields!
 
   """Trạng thái chia sẻ"""
-  status: StatusShareEnum
-  questions: [QuestionModel!]
+  status: StatusShareEnum!
+  questions: [QuestionModel!]!
 }
 
 type ChapterPagination {
@@ -408,7 +406,7 @@ type ChapterPagination {
 
 type ClassSimpleFields {
   id: String!
-  enable: Boolean
+  enable: Boolean!
   createdAt: String!
   updatedAt: String!
 
@@ -419,10 +417,10 @@ type ClassSimpleFields {
   updateBy: String
   name: String!
   code: String!
-  description: String
-  startYear: String
-  endYear: String
-  status: StatusShareEnum
+  description: String!
+  startYear: String!
+  endYear: String!
+  status: StatusShareEnum!
 }
 
 type ClassPagination {
@@ -443,13 +441,13 @@ type LessonModel {
 
   """Cập nhật bởi"""
   updateBy: String
-  label: String
+  label: String!
   name: String!
-  description: String
+  description: String!
   status: StatusShareEnum!
-  chapters: [ChapterEntity!]
-  classes: [ClassSimpleFields!]
-  exams: [ExamModel!]
+  chapters: [ChapterEntity!]!
+  classes: [ClassSimpleFields!]!
+  exams: [ExamModel!]!
 }
 
 type lessons {
@@ -668,8 +666,6 @@ input ClassPageOptions {
   page: Int = 1
   take: Int = 10
   classStatus: [StatusShareEnum!]
-
-  """Mã lớp"""
   lessonIds: [String!]
 }
 
@@ -802,7 +798,7 @@ input CreateAdminArgs {
   email: String!
   password: String!
   roleIds: [String!]!
-  status: Boolean = false
+  status: Boolean
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -824,7 +820,7 @@ input CreateRoleArgs {
   name: String!
   value: String!
   remark: String
-  permissionIds: [String!]!
+  permissionIds: [String!]
 }
 
 input UpdateRoleArgs {
@@ -928,10 +924,10 @@ input RegisterArgs {
   firstName: String!
   lastName: String!
   email: String!
-  photo: String = null
-  phone: String = null
-  address: String = null
-  gender: GenderEnum = null
+  photo: String
+  phone: String
+  address: String
+  gender: GenderEnum
   password: String!
 }
 
@@ -953,7 +949,7 @@ input ChapterBaseDto {
   enable: Boolean
 
   """Đầu mục"""
-  label: String!
+  label: String
 
   """Tên chương"""
   name: String!
@@ -962,10 +958,8 @@ input ChapterBaseDto {
   lessonId: String!
 
   """Mô tả"""
-  description: String = ""
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum = PRIVATE
+  description: String
+  status: StatusShareEnum
 }
 
 input UpdateChapterArgs {
@@ -981,10 +975,8 @@ input UpdateChapterArgs {
   lessonId: String
 
   """Mô tả"""
-  description: String = ""
-
-  """Trạng thái chia sẻ"""
-  status: StatusShareEnum = PRIVATE
+  description: String
+  status: StatusShareEnum
 }
 
 input EnableChaptersArgs {
@@ -1019,7 +1011,7 @@ input LessonBaseDto {
   name: String!
   description: String
   classIds: [String!]!
-  status: StatusShareEnum!
+  status: StatusShareEnum
 }
 
 input UpdateLessonArgs {
@@ -1055,12 +1047,10 @@ input QuestionArgs {
   remark: String
   chapterId: String!
   level: LevelEnum!
-  status: StatusShareEnum! = PRIVATE
+  status: StatusShareEnum
   category: CategoryEnum!
 
-  """
-  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
-  """
+  """Số lượng đáp án nhiễu (Điền khuyết)"""
   quantityWrongAnswers: Int
 
   """
@@ -1076,11 +1066,11 @@ input CreateAnswerArgs {
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
   value: String!
-  isCorrect: Boolean! = false
+  isCorrect: Boolean!
   score: Float! = 0
 
   """Chú thích"""
-  remark: String
+  remark: String!
 }
 
 input UpdateQuestionArgs {
@@ -1090,12 +1080,10 @@ input UpdateQuestionArgs {
   remark: String
   chapterId: String
   level: LevelEnum
-  status: StatusShareEnum = PRIVATE
+  status: StatusShareEnum
   category: CategoryEnum
 
-  """
-  Số lượng đáp án nhiễu (cho câu hỏi điền khuyết) tự tạo đáp án nhiễu từ đáp án đúng.
-  """
+  """Số lượng đáp án nhiễu (Điền khuyết)"""
   quantityWrongAnswers: Int
   answers: [UpdateQuestionAnswerDto!]
 }
@@ -1110,8 +1098,6 @@ input UpdateQuestionAnswerDto {
   value: String
   isCorrect: Boolean
   score: Float
-
-  """Chú thích"""
   remark: String
 }
 
@@ -1135,25 +1121,27 @@ input QuestionStatusDto {
 
 input CreateExamPaperArgs {
   enable: Boolean
-  label: String = ""
+  label: String!
 
   """Thời gian làm bài (phút)"""
   time: Float!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!
+
+  """Mã bộ đề (ABC -> Các mã đề sinh ra:  [ABC123 | ABC321 | ABC232])"""
   sku: String
 
-  """10 được đặt mặc định"""
+  """Mặc định (10)"""
   maxScore: Float = 10
-  status: StatusShareEnum = PRIVATE
+  status: StatusShareEnum
 
-  """Số lượng đề muốn random từ đề gốc đã nhập"""
+  """Số lượng đề sinh từ đề gốc"""
   numberExams: Float = 1
   questionIds: [String!]!
 
-  """Trộn ngẫu nhiên danh sách câu hỏi"""
-  mixQuestions: Boolean! = false
+  """Trộn câu hỏi"""
+  mixQuestions: Boolean
 }
 
 enum QuestionLabelEnum {
@@ -1173,20 +1161,22 @@ enum AnswerLabelEnum {
 
 input GenerateExamPaperArgs {
   enable: Boolean
-  label: String = ""
+  label: String!
 
   """Thời gian làm bài (phút)"""
   time: Float!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!
+
+  """Mã bộ đề (ABC -> Các mã đề sinh ra:  [ABC123 | ABC321 | ABC232])"""
   sku: String
 
-  """10 được đặt mặc định"""
+  """Mặc định (10)"""
   maxScore: Float = 10
-  status: StatusShareEnum = PRIVATE
+  status: StatusShareEnum
 
-  """Số lượng đề muốn random từ đề gốc đã nhập"""
+  """Số lượng đề sinh từ đề gốc"""
   numberExams: Float = 1
   scales: [ScaleArgs!]!
   totalQuestions: Float!
@@ -1212,14 +1202,14 @@ input UpdateExamPaperArgs {
   enable: Boolean
   label: String
 
-  """Thời gian làm bài (phút)"""
+  """Thời gian (phút)"""
   time: Float
   questionLabel: QuestionLabelEnum
   answerLabel: AnswerLabelEnum
 
-  """10 được đặt mặc định"""
+  """Mặc định 10"""
   maxScore: Float = 10
-  status: StatusShareEnum = PRIVATE
+  status: StatusShareEnum
 }
 
 input CreateClassArgs {

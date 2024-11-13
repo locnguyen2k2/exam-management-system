@@ -64,11 +64,10 @@ export class ExamResolver {
   })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createExamPaperArgs') dto: CreateExamPaperDto,
+    @Args('createExamPaperArgs') args: CreateExamPaperDto,
   ): Promise<ExamEntity[]> {
-    const data = CreateExamPaperDto.plainToClass(dto);
-    data.createBy = user.id;
-    return await this.examService.create(data);
+    args.createBy = user.id;
+    return await this.examService.create(args);
   }
 
   @Permissions(PermissionEnum.ADD_EXAM)
@@ -78,11 +77,10 @@ export class ExamResolver {
   })
   async generate(
     @CurrentUser() user: IAuthPayload,
-    @Args('generateExamPaperArgs') dto: GenerateExamPaperDto,
+    @Args('generateExamPaperArgs') args: GenerateExamPaperDto,
   ): Promise<ExamEntity[]> {
-    const data = GenerateExamPaperDto.plainToClass(dto);
-    data.createBy = user.id;
-    return await this.examService.generate(data);
+    args.createBy = user.id;
+    return await this.examService.generate(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_EXAM)

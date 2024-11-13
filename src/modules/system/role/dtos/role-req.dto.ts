@@ -13,16 +13,16 @@ export class RolePageOptions extends PageOptionDto {
 
 @InputType()
 class RoleBaseDto extends BaseDto {
-  @Field(() => String, { nullable: false })
+  @Field(() => String)
   name: string;
 
-  @Field(() => String, { nullable: false })
+  @Field(() => String)
   value: string;
 
   @Field(() => String, { nullable: true })
   remark: string;
 
-  @Field(() => [String])
+  @Field(() => [String], { nullable: true })
   permissionIds: string[];
 }
 

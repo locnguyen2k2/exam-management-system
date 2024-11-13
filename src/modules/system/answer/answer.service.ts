@@ -105,10 +105,10 @@ export class AnswerService {
       { id },
       {
         ...(data?.value && { name: data.value }),
-        // ...(data?.label && { label: data.label }),
+        ...(data?.remark && { description: data.remark }),
         ...(data?.updateBy && { update_by: data.updateBy }),
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
-        ...(data?.remark && { description: data.remark }),
+        ...(!_.isNil(data?.isCorrect) && { isCorrect: data.isCorrect }),
         update_by: data.updateBy,
       },
     );

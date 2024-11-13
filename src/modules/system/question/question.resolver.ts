@@ -8,7 +8,6 @@ import {
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
 } from '~/modules/system/question/dtos/question-req.dto';
-import { plainToClass } from 'class-transformer';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
@@ -51,7 +50,7 @@ export class QuestionResolver {
   async question(
     @Args('questionId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<QuestionEntity> {
+  ) {
     return this.questionService.detailQuestion(id, user.id);
   }
 
@@ -63,7 +62,7 @@ export class QuestionResolver {
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createQuestionArgs') args: CreateQuestionsDto,
-  ): Promise<QuestionEntity[]> {
+  ) {
     args.createBy = user.id;
     return await this.questionService.create(args);
   }
@@ -76,11 +75,10 @@ export class QuestionResolver {
   async update(
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('updateQuestionArgs') dto: UpdateQuestionDto,
-  ): Promise<QuestionEntity> {
-    const data = plainToClass(UpdateQuestionDto, dto);
-    data.updateBy = user.id;
-    return await this.questionService.update(id, data);
+    @Args('updateQuestionArgs') args: UpdateQuestionDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.questionService.update(id, args);
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
@@ -90,11 +88,10 @@ export class QuestionResolver {
   })
   async enableQuestions(
     @CurrentUser() user: IAuthPayload,
-    @Args('enableQuestionsArgs') dto: EnableQuestionsDto,
+    @Args('enableQuestionsArgs') args: EnableQuestionsDto,
   ) {
-    const data = plainToClass(EnableQuestionsDto, dto);
-    data.updateBy = user.id;
-    return await this.questionService.enableQuestions(data);
+    args.updateBy = user.id;
+    return await this.questionService.enableQuestions(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
@@ -104,11 +101,10 @@ export class QuestionResolver {
   })
   async updateManyStatus(
     @CurrentUser() user: IAuthPayload,
-    @Args('updateQuestionStatusArgs') dto: UpdateQuestionStatusDto,
-  ): Promise<QuestionEntity[]> {
-    const data = plainToClass(UpdateQuestionStatusDto, dto);
-    data.updateBy = user.id ? user.id : null;
-    return await this.questionService.updateStatus(data);
+    @Args('updateQuestionStatusArgs') args: UpdateQuestionStatusDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.questionService.updateStatus(args);
   }
 
   @Permissions(PermissionEnum.DELETE_QUESTION)
@@ -121,7 +117,7 @@ export class QuestionResolver {
     @IdParam()
     questionIds: string[],
     @CurrentUser() user: IAuthPayload,
-  ): Promise<string> {
+  ) {
     return await this.questionService.deleteMany(questionIds, user.id);
   }
 }

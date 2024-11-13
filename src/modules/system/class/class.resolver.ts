@@ -29,7 +29,7 @@ export class ClassResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('classPageOptions', { nullable: true })
     classPageOptions: ClassPageOptions = new ClassPageOptions(),
-  ): Promise<PageDto<ClassEntity>> {
+  ) {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
@@ -47,11 +47,10 @@ export class ClassResolver {
   })
   async create(
     @CurrentUser() user: IAuthPayload,
-    @Args('createClassArgs') dto: CreateClassDto,
+    @Args('createClassArgs') args: CreateClassDto,
   ): Promise<ClassEntity> {
-    const data = CreateClassDto.plainToClass(dto);
-    data.createBy = user.id;
-    return await this.classServicee.create(data);
+    args.createBy = user.id;
+    return await this.classServicee.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_CLASS)
@@ -62,11 +61,10 @@ export class ClassResolver {
   async update(
     @Args('classId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('updateClassArgs') dto: UpdateClassDto,
-  ): Promise<ClassEntity> {
-    const data = plainToClass(UpdateClassDto, dto);
-    data.updateBy = user.id;
-    return await this.classServicee.update(id, data);
+    @Args('updateClassArgs') args: UpdateClassDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.classServicee.update(id, args);
   }
 
   @Permissions(PermissionEnum.DELETE_CLASS)
@@ -74,7 +72,7 @@ export class ClassResolver {
   async deleteClasses(
     @Args('classIds', { type: () => [String] }) @IdParam() classIds: string[],
     @CurrentUser() user: IAuthPayload,
-  ): Promise<string> {
+  ) {
     return await this.classServicee.deleteMany(classIds, user.id);
   }
 }

@@ -9,9 +9,9 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 @ObjectType()
 export class ScaleDto {
-  @Field(() => Number, { nullable: true })
+  @Field(() => Number)
   percent: number;
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   chapterId: string;
   @Field(() => LevelEnum)
   level: LevelEnum;
@@ -22,8 +22,8 @@ export class ScaleDto {
 @ObjectType('ExamModel')
 @Entity('exam_entity')
 export class ExamEntity extends ExtendedEntity {
-  @Field(() => String, { nullable: true })
-  @Column({ type: 'string', default: null })
+  @Field(() => String)
+  @Column({ type: 'string' })
   label: string;
 
   @Field(() => String)
@@ -34,8 +34,8 @@ export class ExamEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   sku: string;
 
-  @Field(() => Float, { description: '10 được đặt mặc định', nullable: true })
-  @Column('int', { default: 10.0 })
+  @Field(() => Float)
+  @Column('double')
   maxScore: number = 10.0;
 
   // IScale: Chapter, Level, Percent, Catalog
@@ -47,13 +47,13 @@ export class ExamEntity extends ExtendedEntity {
   @Column('json', { array: true })
   questions: ExamQuestionDto[];
 
-  @Field(() => Boolean, { nullable: true })
-  @Column('boolean', { default: false })
-  enable: boolean;
+  @Field(() => Boolean)
+  @Column('boolean')
+  enable: boolean = false;
 
-  @Field(() => StatusShareEnum, { nullable: true })
-  @Column('enum', { enum: StatusShareEnum, default: StatusShareEnum.PRIVATE })
-  status: StatusShareEnum;
+  @Field(() => StatusShareEnum)
+  @Column('enum', { enum: StatusShareEnum })
+  status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
   constructor(examEntity: Partial<ExamEntity>) {
     super();

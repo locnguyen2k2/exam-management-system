@@ -27,7 +27,7 @@ export class RoleResolver {
   async roles(
     @Args('rolePageOptions', { nullable: true })
     rolePageOptions: RolePageOptions = new RolePageOptions(),
-  ): Promise<PageDto<RoleEntity>> {
+  ) {
     return this.roleService.findAll(rolePageOptions);
   }
 
@@ -39,10 +39,9 @@ export class RoleResolver {
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createRoleArgs') args: RoleCreateDto,
-  ): Promise<RoleEntity> {
-    args.createBy = user?.id ? user.id : null;
-    const data = RoleCreateDto.plainToClass(args);
-    return await this.roleService.create(data);
+  ) {
+    args.createBy = user.id;
+    return await this.roleService.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_ROLE)
@@ -54,10 +53,9 @@ export class RoleResolver {
     @Args('id') @IdParam() id: string,
     @Args('updateRoleArgs') args: UpdateRoleDto,
     @CurrentUser() user: IAuthPayload,
-  ): Promise<RoleEntity> {
-    args.updateBy = user.id ? user.id : null;
-    const data = plainToClass(UpdateRoleDto, args);
-    return await this.roleService.update(id, data);
+  ) {
+    args.updateBy = user.id;
+    return await this.roleService.update(id, args);
   }
 
   @Permissions(PermissionEnum.DELETE_ROLE)
@@ -67,7 +65,7 @@ export class RoleResolver {
   })
   async deleteRoles(
     @Args('roleIds', { type: () => [String] }) @IdParam() roleIds: string[],
-  ): Promise<string> {
+  ) {
     return await this.roleService.deleteMany(roleIds);
   }
 }

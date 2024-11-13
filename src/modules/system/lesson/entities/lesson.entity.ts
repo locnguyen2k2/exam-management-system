@@ -7,28 +7,28 @@ import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 @ObjectType('LessonDefaultFields')
 @Entity('lesson_entity')
 export class LessonEntity extends ExtendedEntity {
-  @Field(() => String, { nullable: true })
-  @Column('string', { default: '' })
-  label: string;
+  @Field(() => String)
+  @Column('string')
+  label: string = '';
 
   @Field(() => String)
   @Column('string')
   name: string;
 
-  @Field(() => String, { nullable: true })
-  @Column('string', { default: '' })
-  description: string;
+  @Field(() => String)
+  @Column('string')
+  description: string = '';
 
   @Field(() => StatusShareEnum)
   @Column('enum', { enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
   @Field(() => [String])
-  @Column('string', { array: true, default: [] })
+  @Column('string', { array: true })
   chapterIds: string[] = [];
 
   @Field(() => [ExamEntity])
-  @Column('json', { array: true, default: [] })
+  @Column('json', { array: true })
   exams: ExamEntity[] = [];
 
   constructor(lessonEntity: Partial<LessonEntity>) {

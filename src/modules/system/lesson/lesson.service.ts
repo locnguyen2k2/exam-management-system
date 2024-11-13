@@ -334,7 +334,7 @@ export class LessonService {
 
     if (!_.isNil(data.examIds)) {
       await Promise.all(
-        data.examIds.map(async (examId) => {
+        data.examIds.map(async (examId: string) => {
           const isExam = await this.findByExamId(examId);
           exams.push(isExam.exams.find((exam) => exam.id === examId));
         }),
@@ -343,7 +343,7 @@ export class LessonService {
 
     if (!_.isNil(data.chapterIds)) {
       await Promise.all(
-        data.chapterIds.map(async (chapterId) => {
+        data.chapterIds.map(async (chapterId: string) => {
           const chapter = await this.chapterService.findAvailable(
             chapterId,
             data.createBy,

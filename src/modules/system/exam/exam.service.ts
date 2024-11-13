@@ -153,14 +153,9 @@ export class ExamService {
     );
 
     chapter.map(({ chapterId }) => {
-      const isChapter = lesson.chapters.some(
-        (chapter) => chapter.id === chapterId,
-      );
+      const isChapter = lesson.chapters.some((chap) => chap.id === chapterId);
       if (!isChapter)
-        throw new BusinessException(
-          ErrorEnum.RECORD_NOT_FOUND,
-          `Chapter ${chapterId}`,
-        );
+        throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, `${chapterId}`);
     });
 
     const classifyQuizzes = this.classifyQuestions(chapter);
@@ -168,11 +163,11 @@ export class ExamService {
     const listQuestions = chapter.map(({ question }) => question);
 
     for (let i = 0; i < data.numberExams; i++) {
-      const randQuestions = data.mixQuestions
+      const randQuizzes = data.mixQuestions
         ? this.randomQuestions(listQuestions)
         : listQuestions;
       const questions: any[] = this.handleQuestionLabel(
-        randQuestions,
+        randQuizzes,
         data.questionLabel,
         data.answerLabel,
       );
@@ -206,12 +201,12 @@ export class ExamService {
   }
 
   randomQuestions(
-    questions: QuestionEntity[],
-    quantity: number = questions.length,
+    quizzes: QuestionEntity[],
+    quantity = quizzes.length,
   ): QuestionEntity[] {
-    const handleQuestions: QuestionEntity[] = shuffle(questions);
+    const handleQuestions: QuestionEntity[] = shuffle(quizzes);
 
-    questions.map(({ id, answers }) => {
+    quizzes.map(({ id, answers }) => {
       const index = handleQuestions.findIndex((quest) => quest.id === id);
       handleQuestions[index]['answers'] = shuffle(answers);
     });
@@ -286,10 +281,10 @@ export class ExamService {
 
     for (const scale of scales) {
       const index = listScales.findIndex(
-        (item: IScale) =>
-          item.chapterId === scale.chapterId &&
-          item.level === scale.level &&
-          item.category === scale.category,
+        ({ chapterId, level, category }) =>
+          chapterId === scale.chapterId &&
+          level === scale.level &&
+          category === scale.category,
       );
 
       if (index !== -1) {
@@ -315,15 +310,12 @@ export class ExamService {
     const listScales: IScale[] = this.handleScale(scales);
 
     await Promise.all(
-      listScales.map(async (scale) => {
-        if (
-          !lesson.chapters.find((chapter) => chapter.id === scale.chapterId)
-        ) {
+      listScales.map(async ({ chapterId }) => {
+        if (!lesson.chapters.find((chap) => chap.id === chapterId))
           throw new BusinessException(
             ErrorEnum.RECORD_NOT_FOUND,
-            `Chapter ${scale.chapterId}`,
+            `${chapterId}`,
           );
-        }
       }),
     );
 
@@ -412,6 +404,7 @@ export class ExamService {
           exam.questions[0].label,
           exam.questions[0].answers[0].label,
         )[0];
+
         quiz['label'] = quizLabel;
         quizzes = _.orderBy([quiz, ...quizzes], ['label'], ['asc']);
 
@@ -442,12 +435,8 @@ export class ExamService {
             question.id,
             question.create_by,
           );
-          if (!answerLabel) {
-            answerLabel = question.answers[0].label;
-          }
-          isQuestion.question['answers'] = question.answers.map(
-            (answer) => answer,
-          );
+          if (!answerLabel) answerLabel = question.answers[0].label;
+          isQuestion.question['answers'] = question.answers;
           questions[index] = isQuestion.question;
         }),
       );
@@ -488,16 +477,12 @@ export class ExamService {
     await Promise.all(
       data.examsEnable.map(async (examEnable: any) => {
         const isExisted = await this.findOne(examEnable.examId);
-        if (isExisted) {
-          if (isExisted.create_by !== data.updateBy) {
-            throw new BusinessException(
-              ErrorEnum.NO_PERMISSON,
-              examEnable.examId,
-            );
-          }
-          isExisted.enable = examEnable.enable;
-          listExams.push(isExisted);
-        }
+
+        if (isExisted.create_by !== data.updateBy)
+          throw new BusinessException(ErrorEnum.NO_PERMISSON);
+
+        isExisted.enable = examEnable.enable;
+        listExams.push(isExisted);
       }),
     );
 
@@ -517,9 +502,8 @@ export class ExamService {
     await Promise.all(
       ids.map(async (id) => {
         const isExisted = await this.lessonService.findByExamId(id);
-        if (isExisted.create_by !== uid) {
-          throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
-        }
+        if (isExisted.create_by !== uid)
+          throw new BusinessException(ErrorEnum.NO_PERMISSON);
       }),
     );
 

@@ -6,19 +6,19 @@ import { ExtendedEntity } from '~/common/entity/base.entity';
 @Entity('permission_entity')
 export class PermissionEntity extends ExtendedEntity {
   @Field(() => String)
-  @Column({ type: 'string', nullable: false })
+  @Column({ type: 'string' })
   name: string;
 
   @Field(() => String)
   @Column({ type: 'string' })
   value: string;
 
-  @Field(() => String, { nullable: true, defaultValue: '' })
-  @Column({ type: 'string', nullable: true, default: '' })
+  @Field(() => String)
+  @Column({ type: 'string' })
   remark: string = '';
 
-  @Field(() => Boolean, { defaultValue: false })
-  @Column({ type: 'boolean', default: false })
+  @Field(() => Boolean)
+  @Column({ type: 'boolean' })
   status: boolean = false;
 
   constructor(permissionEntity: Partial<PermissionEntity>) {

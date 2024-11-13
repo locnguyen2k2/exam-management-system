@@ -2,15 +2,9 @@ import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsValidScale } from '~/common/decorators/scale.decorator';
-import {
-  IsOptional,
-  Max,
-  Min,
-  Validate,
-  ValidateNested,
-} from 'class-validator';
+import { Max, Min, Validate, ValidateNested } from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import {
@@ -26,7 +20,7 @@ export class ExamPaperPageOptions extends PageOptionDto {
   @Field(() => [StatusShareEnum], {
     nullable: true,
   })
-  readonly examStatus?: StatusShareEnum[];
+  readonly examStatus: StatusShareEnum[];
 }
 
 @InputType('ScaleArgs')
@@ -49,13 +43,11 @@ class Scale implements IScale {
 
 @InputType()
 class BaseExamDto extends BaseDto {
-  @Field(() => String, { nullable: true, defaultValue: '' })
+  @Field(() => String)
   label: string;
 
   @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
-  @Transform(({ value }) =>
-    typeof value === 'number' ? `${value} phút` : value,
-  )
+  @Transform(({ value }) => `${value} phút`)
   time: string;
 
   @Field(() => QuestionLabelEnum)
@@ -68,22 +60,23 @@ class BaseExamDto extends BaseDto {
   @Validate(IsValidStringId)
   lessonId: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String, {
+    description:
+      'Mã bộ đề (ABC -> Các mã đề sinh ra:  [ABC123 | ABC321 | ABC232])',
+    nullable: true,
+  })
   @Validate(IsValidSku)
   sku: string;
 
-  @Field(() => Number, {
-    description: '10 được đặt mặc định',
-    nullable: true,
-  })
-  maxScore: number = 10;
+  @Field(() => Number, { description: 'Mặc định (10)', nullable: true })
+  maxScore: number = 10.0;
 
   @Field(() => StatusShareEnum, { nullable: true })
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  status: StatusShareEnum;
 
   @Field(() => Number, {
+    description: 'Số lượng đề sinh từ đề gốc',
     nullable: true,
-    description: 'Số lượng đề muốn random từ đề gốc đã nhập',
   })
   numberExams: number = 1;
 }
@@ -97,10 +90,7 @@ export class CreateExamPaperDto extends BaseExamDto {
   @Validate(IsValidStringId)
   questionIds: string[];
 
-  @Field(() => Boolean, {
-    defaultValue: false,
-    description: 'Trộn ngẫu nhiên danh sách câu hỏi',
-  })
+  @Field(() => Boolean, { description: 'Trộn câu hỏi', nullable: true })
   mixQuestions: boolean;
 
   @HideField()
@@ -111,7 +101,6 @@ export class CreateExamPaperDto extends BaseExamDto {
 export class GenerateExamPaperDto extends BaseExamDto {
   @Field(() => [Scale])
   @Validate(IsValidScale)
-  @Expose()
   @ValidateNested({ each: true })
   @Type(() => Scale)
   scales: Scale[];
@@ -126,16 +115,10 @@ export class GenerateExamPaperDto extends BaseExamDto {
 @InputType('UpdateExamPaperArgs')
 export class UpdateExamPaperDto extends BaseDto {
   @Field(() => String, { nullable: true })
-  @IsOptional()
   label: string;
 
-  @Field(() => Number, {
-    nullable: true,
-    description: 'Thời gian làm bài (phút)',
-  })
-  @Transform(({ value }) =>
-    typeof value === 'number' ? `${value} phút` : value,
-  )
+  @Field(() => Number, { description: 'Thời gian (phút)', nullable: true })
+  @Transform(({ value }) => `${value} phút`)
   time: string;
 
   @Field(() => QuestionLabelEnum, { nullable: true })
@@ -144,14 +127,11 @@ export class UpdateExamPaperDto extends BaseDto {
   @Field(() => AnswerLabelEnum, { nullable: true })
   answerLabel: AnswerLabelEnum;
 
-  @Field(() => Number, {
-    description: '10 được đặt mặc định',
-    nullable: true,
-  })
+  @Field(() => Number, { description: 'Mặc định 10', nullable: true })
   maxScore: number = 10;
 
   @Field(() => StatusShareEnum, { nullable: true })
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  status: StatusShareEnum;
 
   @HideField()
   updateBy: string;

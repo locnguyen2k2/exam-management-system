@@ -41,10 +41,9 @@ export class PermissionResolver {
   async create(
     @CurrentUser() user: IAuthPayload,
     @Args('createPermissionArgs') args: CreatePermissionDto,
-  ): Promise<PermissionEntity> {
-    args.createBy = user?.id ? user.id : null;
-    const data = CreatePermissionDto.plainToClass(args);
-    return await this.permissionService.create(data);
+  ) {
+    args.createBy = user.id;
+    return await this.permissionService.create(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_PERMISSION)
@@ -56,10 +55,9 @@ export class PermissionResolver {
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
     @Args('updatePermissionArgs') args: UpdatePermissionDto,
-  ): Promise<any> {
-    args.updateBy = user?.id ? user.id : null;
-    const data = plainToClass(UpdatePermissionDto, args);
-    return await this.permissionService.update(id, data);
+  ) {
+    args.updateBy = user.id;
+    return await this.permissionService.update(id, args);
   }
 
   @Permissions(PermissionEnum.DELETE_PERMISSION)
@@ -71,7 +69,7 @@ export class PermissionResolver {
     @Args('permissionIds', { type: () => [String] })
     @IdParam()
     perIds: string[],
-  ): Promise<string> {
+  ) {
     return await this.permissionService.deleteMany(perIds);
   }
 }

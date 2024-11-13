@@ -8,26 +8,26 @@ import { createPaginatedType } from '~/common/dtos/pagination/pagination.dto';
 
 @ObjectType('LessonModel')
 export class LessonDetailDto extends ExtendedEntity {
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   label: string;
 
   @Field(() => String)
   name: string;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => String)
   description: string;
 
   @Field(() => StatusShareEnum)
-  status: StatusShareEnum = StatusShareEnum.PRIVATE;
+  status: StatusShareEnum;
 
-  @Field(() => [ChapterEntity], { nullable: true })
-  chapters?: ChapterEntity[] = [];
+  @Field(() => [ChapterEntity])
+  chapters?: ChapterEntity[];
 
-  @Field(() => [ClassSimpleDto], { nullable: true })
-  classes?: ClassSimpleDto[] = [];
+  @Field(() => [ClassSimpleDto])
+  classes?: ClassSimpleDto[];
 
-  @Field(() => [ExamEntity], { nullable: true })
-  exams?: ExamEntity[] = [];
+  @Field(() => [ExamEntity])
+  exams?: ExamEntity[];
 }
 
 @ObjectType('lessons')

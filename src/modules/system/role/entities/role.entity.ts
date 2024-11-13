@@ -14,8 +14,8 @@ export class RoleEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   value: string;
 
-  @Field(() => String, { defaultValue: '' })
-  @Column({ type: 'string', default: '' })
+  @Field(() => String)
+  @Column({ type: 'string' })
   remark: string = '';
 
   @Field(() => [PermissionEntity])
