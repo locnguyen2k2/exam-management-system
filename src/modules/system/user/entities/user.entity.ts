@@ -30,9 +30,9 @@ export class UserEntity extends ExtendedEntity {
   @Column({ type: 'boolean' })
   status: boolean = false;
 
-  @Field(() => String)
-  @Column({ type: 'string', length: 255 })
-  photo: string = '';
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'string', length: 255, nullable: true })
+  photo: string;
 
   @Field(() => String)
   @Column({ type: 'string', length: 255 })
