@@ -648,6 +648,7 @@ input ExamPaperPageOptions {
   page: Int = 1
   take: Int = 10
   examStatus: [StatusShareEnum!]
+  examSku: String
 }
 
 input ClassPageOptions {

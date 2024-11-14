@@ -171,6 +171,11 @@ export class LessonService {
           ...(!_.isEmpty(pageOptions.examStatus) && {
             'exams.status': { $in: pageOptions.examStatus },
           }),
+          ...(!_.isNil(pageOptions.examSku) && {
+            'exams.sku': {
+              $regex: new RegExp(`^${pageOptions.examSku}\\d{3}$`, 'i'),
+            },
+          }),
           ...(uid && {
             $and: [
               {
@@ -278,9 +283,6 @@ export class LessonService {
         },
       },
     });
-
-    if (!isLesson)
-      throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, examSku);
 
     return isLesson;
   }

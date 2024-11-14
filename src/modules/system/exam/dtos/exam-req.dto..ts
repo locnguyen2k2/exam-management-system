@@ -21,6 +21,11 @@ export class ExamPaperPageOptions extends PageOptionDto {
     nullable: true,
   })
   readonly examStatus: StatusShareEnum[];
+
+  @Field(() => String, {
+    nullable: true,
+  })
+  readonly examSku: string;
 }
 
 @InputType('ScaleArgs')
