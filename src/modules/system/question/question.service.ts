@@ -425,9 +425,9 @@ export class QuestionService {
     }
 
     if (!_.isEmpty(category)) {
-      if (category !== CategoryEnum.MULTIPLE_CHOICE) {
-        const { correctAnswers } = this.classifyAnswers(answers);
+      const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
 
+      if (category !== CategoryEnum.MULTIPLE_CHOICE) {
         if (correctAnswers.length > 1)
           throw new BusinessException(
             '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
@@ -435,7 +435,6 @@ export class QuestionService {
       }
 
       if (category === CategoryEnum.FILL_IN) {
-        const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
         const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
 
         this.isValidFillInQuiz(content, correctAnswers[0].value);
@@ -458,10 +457,10 @@ export class QuestionService {
         }
       }
     }
-
+    console.log(data);
     if (!_.isNil(data.picture)) {
-      !_.isEmpty(question.picture) &&
-        (await this.imageService.deleteImage(question.picture));
+      if (!_.isEmpty(question.picture))
+        await this.imageService.deleteImage(question.picture);
       const image: Promise<FileUpload> = new Promise((resolve) =>
         resolve(data.picture),
       );
@@ -576,8 +575,8 @@ export class QuestionService {
         ({ id }) => id !== question.id,
       );
 
-      !_.isEmpty(question.picture) &&
-        (await this.imageService.deleteImage(question.picture));
+      if (!_.isEmpty(question.picture))
+        await this.imageService.deleteImage(question.picture);
 
       await this.chapService.updateQuizzes(chapterId, newQuestions);
     }
