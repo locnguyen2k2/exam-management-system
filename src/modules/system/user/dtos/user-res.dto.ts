@@ -20,16 +20,16 @@ export class UserProfile {
   @Field(() => String)
   lastName: string;
 
-  @Field(() => String)
-  photo: string = '';
-
-  @Field(() => String)
-  address: string = '';
-
   @Field(() => String, { nullable: true })
+  photo: string;
+
+  @Field(() => String)
+  address: string;
+
+  @Field(() => String)
   phone: string;
 
-  @Field(() => GenderEnum)
+  @Field(() => GenderEnum, { nullable: true })
   gender: GenderEnum;
 
   @Field(() => Boolean)

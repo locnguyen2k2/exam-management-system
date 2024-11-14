@@ -20,7 +20,7 @@ export class UserEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   email: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column({ type: 'string', length: 600 })
   password: string = null;
 
@@ -31,14 +31,14 @@ export class UserEntity extends ExtendedEntity {
   status: boolean = false;
 
   @Field(() => String, { nullable: true })
-  @Column({ type: 'string', length: 255, nullable: true })
-  photo: string;
+  @Column({ type: 'string', length: 255 })
+  photo: string = null;
 
   @Field(() => String)
   @Column({ type: 'string', length: 255 })
   address: string = '';
 
-  @Field(() => GenderEnum)
+  @Field(() => GenderEnum, { nullable: true })
   @Column({ type: 'enum', enum: GenderEnum })
   gender: GenderEnum = null;
 
