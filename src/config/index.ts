@@ -5,8 +5,8 @@ import {
 } from '~/config/database.config';
 import { AppConfig, appConfigKey, IAppConfig } from '~/config/app.config';
 import {
-  GraphqlConfig,
   gplConfigKey,
+  GraphqlConfig,
   IGraphqlConfig,
 } from '~/config/graphql.config';
 import {
@@ -14,6 +14,11 @@ import {
   MailerConfig,
   mailerConfigKey,
 } from '~/config/mailer.config';
+import {
+  IRedisConfig,
+  RedisConfig,
+  redisConfigKey,
+} from '~/config/redis.config';
 import { IJwtConfig, JwtConfig, jwtConfigKey } from '~/config/jwt.config';
 // import {
 //   FirebaseConfig,
@@ -26,6 +31,7 @@ export * from '~/config/database.config';
 export * from '~/config/graphql.config';
 export * from '~/config/mailer.config';
 export * from '~/config/jwt.config';
+export * from '~/config/redis.config';
 
 // export * from '~/config/firebase/firebase.config';
 
@@ -35,6 +41,7 @@ export interface AllConfigType {
   [gplConfigKey]: IGraphqlConfig;
   [mailerConfigKey]: IMailerConfig;
   [jwtConfigKey]: IJwtConfig;
+  [redisConfigKey]: IRedisConfig;
   // [firebaseKey]: IFirebaseConfig;
 }
 
@@ -46,5 +53,6 @@ export default {
   GraphqlConfig,
   MailerConfig,
   JwtConfig,
+  RedisConfig,
   // FirebaseConfig,
 };

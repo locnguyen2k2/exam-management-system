@@ -8,6 +8,7 @@ export const RedisConfig = registerAs(redisConfigKey, () => ({
   host: env('REDIS_HOST', '127.0.0.1'),
   port: envNumber('REDIS_PORT', 6379),
   password: env('REDIS_PASSWORD'),
+  db: envNumber('REDIS_DB'),
 }));
 
 export type IRedisConfig = ConfigType<typeof RedisConfig>;
