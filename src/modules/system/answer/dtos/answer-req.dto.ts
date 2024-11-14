@@ -16,14 +16,14 @@ export class AnswerBaseDto extends BaseDto {
   })
   value: string;
 
-  @Field(() => Boolean, { defaultValue: null })
+  @Field(() => Boolean, { nullable: true })
   isCorrect: boolean;
 
-  @Field(() => Float, { defaultValue: 0 })
+  @Field(() => Float, { nullable: true })
   @Min(0)
   score: number;
 
-  @Field(() => String, { defaultValue: null, description: 'Chú thích' })
+  @Field(() => String, { description: 'Chú thích', nullable: true })
   remark: string;
 }
 

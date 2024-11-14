@@ -18,8 +18,8 @@ export class QuestionEntity extends ExtendedEntity {
   picture: string;
 
   @Field(() => String, { nullable: true, description: 'Chú thích' })
-  @Column({ type: 'string', nullable: true })
-  remark: string;
+  @Column({ type: 'string' })
+  remark: string = '';
 
   @Field(() => LevelEnum, { description: 'Cấp độ câu hỏi' })
   @Column({ type: 'enum', enum: LevelEnum })
