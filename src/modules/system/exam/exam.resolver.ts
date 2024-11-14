@@ -57,6 +57,21 @@ export class ExamResolver {
     return await this.examService.getExamDetail(id, user.id);
   }
 
+  @Permissions(PermissionEnum.DETAIL_EXAM)
+  @Query(() => [ExamEntity], {
+    name: 'examsBySku',
+    description: 'Lấy đề thi theo mã sku',
+  })
+  async getBySku(
+    @Args('id') @IdParam() sku: string,
+    @CurrentUser() user: IAuthPayload,
+  ) {
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+    return await this.examService.findBySku(sku, isAdmin ? null : user.id);
+  }
+
   @Permissions(PermissionEnum.ADD_EXAM)
   @Mutation(() => [ExamEntity], {
     name: 'createExamPapers',
@@ -78,7 +93,7 @@ export class ExamResolver {
   async generate(
     @CurrentUser() user: IAuthPayload,
     @Args('generateExamPaperArgs') args: GenerateExamPaperDto,
-  ): Promise<ExamEntity[]> {
+  ) {
     args.createBy = user.id;
     return await this.examService.generate(args);
   }
@@ -105,11 +120,10 @@ export class ExamResolver {
   async update(
     @Args('examId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
-    @Args('updateExamPaperArgs') dto: UpdateExamPaperDto,
-  ): Promise<ExamEntity> {
-    const data = plainToClass(UpdateExamPaperDto, dto);
-    data.updateBy = user.id;
-    return await this.examService.update(id, data);
+    @Args('updateExamPaperArgs') args: UpdateExamPaperDto,
+  ) {
+    args.updateBy = user.id;
+    return await this.examService.update(id, args);
   }
 
   @Permissions(PermissionEnum.DELETE_EXAM)
@@ -120,7 +134,7 @@ export class ExamResolver {
   async delete(
     @Args('examPaperIds', { type: () => [String] }) @IdParam() ids: string[],
     @CurrentUser() user: IAuthPayload,
-  ): Promise<string> {
+  ) {
     return await this.examService.deleteMany(ids, user.id);
   }
 }

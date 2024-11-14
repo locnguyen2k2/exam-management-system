@@ -75,6 +75,16 @@ export class ExamService {
     return isExisted.exams.find((exam) => exam.id === id);
   }
 
+  async findBySku(sku: string, uid: string = null): Promise<ExamEntity[]> {
+    const isExisted = await this.lessonService.findByExamSku(sku);
+
+    if (!isExisted || (uid && isExisted.create_by !== uid)) return [];
+
+    return isExisted.exams.filter(
+      (exam) => exam.sku.slice(0, -3) === sku.toUpperCase(),
+    );
+  }
+
   async findByQuestionId(questionId: string): Promise<ExamEntity[]> {
     const isExisted = await this.lessonService.findExamsByQuiz(questionId);
     const isExams = isExisted.map(({ exams }) => exams).flat();
@@ -308,6 +318,13 @@ export class ExamService {
     delete data.numberExams;
 
     const listScales: IScale[] = this.handleScale(scales);
+
+    if (data.sku) {
+      const isExisted = await this.findBySku(data.sku, data.createBy);
+
+      if (isExisted.length > 0)
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.sku);
+    }
 
     await Promise.all(
       listScales.map(async ({ chapterId }) => {

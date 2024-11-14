@@ -505,6 +505,9 @@ type Query {
   """Chi tiết đề thi"""
   examDetail(id: String!): ExamModel!
 
+  """Lấy đề thi theo mã sku"""
+  examsBySku(id: String!): [ExamModel!]!
+
   """Lấy danh sách lớp"""
   classes(classPageOptions: ClassPageOptions): ClassPagination!
 }
@@ -1204,7 +1207,7 @@ input UpdateExamPaperArgs {
   answerLabel: AnswerLabelEnum
 
   """Mặc định 10"""
-  maxScore: Float = 10
+  maxScore: Float
   status: StatusShareEnum
 }
 

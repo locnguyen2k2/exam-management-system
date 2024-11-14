@@ -270,6 +270,21 @@ export class LessonService {
     return isLesson;
   }
 
+  async findByExamSku(examSku: string): Promise<LessonEntity> {
+    const isLesson = await this.lessonRepo.findOne({
+      where: {
+        'exams.sku': {
+          $regex: new RegExp(`^${examSku}\\d{3}$`, 'i'),
+        },
+      },
+    });
+
+    if (!isLesson)
+      throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, examSku);
+
+    return isLesson;
+  }
+
   async findExamsByQuiz(quizId: string): Promise<LessonEntity[]> {
     return await this.lessonRepo.find({
       where: {

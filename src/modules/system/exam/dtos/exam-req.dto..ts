@@ -128,7 +128,7 @@ export class UpdateExamPaperDto extends BaseDto {
   answerLabel: AnswerLabelEnum;
 
   @Field(() => Number, { description: 'Mặc định 10', nullable: true })
-  maxScore: number = 10;
+  maxScore: number;
 
   @Field(() => StatusShareEnum, { nullable: true })
   status: StatusShareEnum;
