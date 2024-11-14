@@ -12,21 +12,17 @@ export class AnswerEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   value: string;
 
-  @Field(() => Float, { nullable: true })
-  @Column({ type: 'float', default: null })
-  score: number;
+  @Field(() => Float)
+  @Column({ type: 'float' })
+  score: number = 0;
 
-  @Field(() => Boolean, { nullable: true })
-  @Column({ type: 'boolean', default: false })
-  isCorrect: boolean;
+  @Field(() => Boolean)
+  @Column({ type: 'boolean' })
+  isCorrect: boolean = false;
 
-  @Field(() => String, {
-    nullable: true,
-    defaultValue: null,
-    description: 'Chú thích của đáp án',
-  })
-  @Column({ type: 'string', default: null })
-  remark: string;
+  @Field(() => String, { description: 'Chú thích của đáp án' })
+  @Column({ type: 'string' })
+  remark: string = '';
 
   constructor(answerEntity: Partial<AnswerEntity>) {
     super();

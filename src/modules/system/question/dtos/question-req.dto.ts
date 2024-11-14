@@ -42,7 +42,6 @@ class UpdateQuestionAnswerDto extends PickType(BaseDto, [
   id: string;
 
   @Field(() => String, {
-    nullable: true,
     description:
       'Đáp án câu hỏi điền khuyết sẽ ' +
       'phân cách bằng ký hiệu [__] ' +

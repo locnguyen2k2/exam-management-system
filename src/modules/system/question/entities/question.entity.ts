@@ -17,7 +17,7 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   picture: string = null;
 
-  @Field(() => String, { nullable: true, description: 'Chú thích' })
+  @Field(() => String, { description: 'Chú thích' })
   @Column({ type: 'string' })
   remark: string = '';
 
@@ -25,20 +25,12 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'enum', enum: LevelEnum })
   level: LevelEnum;
 
-  @Field(() => Boolean, { nullable: true, description: 'Trạng thái kích hoạt' })
+  @Field(() => Boolean, { description: 'Trạng thái kích hoạt' })
   @Column({ type: 'boolean' })
   enable: boolean = false;
 
-  @Field(() => StatusShareEnum, {
-    nullable: true,
-    defaultValue: StatusShareEnum.PRIVATE,
-    description: 'Trạng thái',
-  })
-  @Column({
-    type: 'enum',
-    enum: StatusShareEnum,
-    default: StatusShareEnum.PRIVATE,
-  })
+  @Field(() => StatusShareEnum)
+  @Column({ type: 'enum', enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
 
   @Field(() => CategoryEnum, { description: 'Loại câu hỏi' })
@@ -49,7 +41,7 @@ export class QuestionEntity extends ExtendedEntity {
     description: 'Danh sách đáp án',
   })
   @Column('json', { array: true })
-  answers: AnswerEntity[];
+  answers: AnswerEntity[] = [];
 
   constructor(questionEntity: Partial<QuestionEntity>) {
     super();

@@ -6,7 +6,7 @@ import {
   PartialType,
 } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
-import { Min } from 'class-validator';
+import { IsOptional, Min } from 'class-validator';
 
 @InputType('CreateAnswerArgs')
 export class AnswerBaseDto extends BaseDto {
@@ -20,6 +20,7 @@ export class AnswerBaseDto extends BaseDto {
   isCorrect: boolean;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
   @Min(0)
   score: number;
 

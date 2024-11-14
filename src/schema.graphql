@@ -58,13 +58,13 @@ type UserModel {
   firstName: String!
   lastName: String!
   email: String!
-  password: String!
+  password: String
 
   """Trạng thái xác thực"""
   status: Boolean!
-  photo: String!
+  photo: String
   address: String!
-  gender: GenderEnum!
+  gender: GenderEnum
   phone: String!
   roles: [RoleModel!]!
 }
@@ -96,10 +96,10 @@ type UserProfile {
   name: String!
   firstName: String!
   lastName: String!
-  photo: String!
+  photo: String
   address: String!
   phone: String!
-  gender: GenderEnum!
+  gender: GenderEnum
   status: Boolean!
   enable: Boolean!
   roles: [String!]!
@@ -139,11 +139,11 @@ type AnswerModel {
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
   value: String!
-  score: Float
-  isCorrect: Boolean
+  score: Float!
+  isCorrect: Boolean!
 
   """Chú thích của đáp án"""
-  remark: String
+  remark: String!
 }
 
 type ExamQuestionAnswerModel {
@@ -164,11 +164,11 @@ type ExamQuestionAnswerModel {
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
   value: String!
-  score: Float
-  isCorrect: Boolean
+  score: Float!
+  isCorrect: Boolean!
 
   """Chú thích của đáp án"""
-  remark: String
+  remark: String!
 
   """Nhãn đáp án"""
   label: String!
@@ -178,7 +178,7 @@ type QuestionModel {
   id: String!
 
   """Trạng thái kích hoạt"""
-  enable: Boolean
+  enable: Boolean!
   createdAt: String!
   updatedAt: String!
 
@@ -195,13 +195,11 @@ type QuestionModel {
   picture: String
 
   """Chú thích"""
-  remark: String
+  remark: String!
 
   """Cấp độ câu hỏi"""
   level: LevelEnum!
-
-  """Trạng thái"""
-  status: StatusShareEnum
+  status: StatusShareEnum!
 
   """Loại câu hỏi"""
   category: CategoryEnum!
@@ -239,7 +237,7 @@ type ExamQuestionModel {
   id: String!
 
   """Trạng thái kích hoạt"""
-  enable: Boolean
+  enable: Boolean!
   createdAt: String!
   updatedAt: String!
 
@@ -256,13 +254,11 @@ type ExamQuestionModel {
   picture: String
 
   """Chú thích"""
-  remark: String
+  remark: String!
 
   """Cấp độ câu hỏi"""
   level: LevelEnum!
-
-  """Trạng thái"""
-  status: StatusShareEnum
+  status: StatusShareEnum!
 
   """Loại câu hỏi"""
   category: CategoryEnum!
@@ -1066,11 +1062,11 @@ input CreateAnswerArgs {
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
   value: String!
-  isCorrect: Boolean!
-  score: Float! = 0
+  isCorrect: Boolean
+  score: Float
 
   """Chú thích"""
-  remark: String!
+  remark: String
 }
 
 input UpdateQuestionArgs {
@@ -1095,7 +1091,7 @@ input UpdateQuestionAnswerDto {
   """
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
-  value: String
+  value: String!
   isCorrect: Boolean
   score: Float
   remark: String
