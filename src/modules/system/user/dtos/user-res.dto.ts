@@ -26,8 +26,8 @@ export class UserProfile {
   @Field(() => String)
   address: string = '';
 
-  @Field(() => String)
-  phone: string = '';
+  @Field(() => String, { nullable: true })
+  phone: string;
 
   @Field(() => GenderEnum)
   gender: GenderEnum;
