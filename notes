@@ -1,8 +1,0 @@
-Index Database (MongoDB)
-- Không thể tạo chỉ mục cho 2 Array,
-- Prefix rules (tiền tố) truy vấn trong mongoDB từ: Buộc phải có chỉ mục ngoài cùng bên trái
-
-Factory Function
-- Là hàm trả về một instance của một class không cần new
-- Đóng gói các tạo ra các objects nhất quán, dễ tùy chỉnh
-- Không cần quan tâm đến chi tiết bên trong

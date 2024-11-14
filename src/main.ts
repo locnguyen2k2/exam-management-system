@@ -9,7 +9,9 @@ import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 declare const module: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create<INestApplication>(AppModule);
+  const app = await NestFactory.create<INestApplication>(AppModule, {
+    cors: true,
+  });
   const configService = app.get(ConfigService<ConfigKeyPaths>);
   const { port, globalPrefix } = configService.get('app', { infer: true });
   const imgConfigs = { maxFileSize: 1000000, maxFiles: 51 };
@@ -17,7 +19,7 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   app.setGlobalPrefix(globalPrefix);
-  app.enableCors({ origin: '*', credentials: true });
+  // app.enableCors({ origin: '*', credentials: true });
   app.use('/graphql', graphqlUploadExpress(imgConfigs));
   // Transform và chuyển đổi các validation
   app.useGlobalPipes(
