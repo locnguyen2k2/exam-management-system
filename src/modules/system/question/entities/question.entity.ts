@@ -13,9 +13,9 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   content: string;
 
-  @Field(() => String, { nullable: true, description: 'Hình ảnh' })
-  @Column({ type: 'string', nullable: true })
-  picture: string;
+  @Field(() => String, { description: 'Hình ảnh', nullable: true })
+  @Column({ type: 'string' })
+  picture: string = null;
 
   @Field(() => String, { nullable: true, description: 'Chú thích' })
   @Column({ type: 'string' })
