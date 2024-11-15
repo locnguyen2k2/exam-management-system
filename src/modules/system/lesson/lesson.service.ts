@@ -427,7 +427,7 @@ export class LessonService {
   }
 
   async addExams(lessonId: string, exams: ExamEntity[]): Promise<boolean> {
-    await this.findAvailable(lessonId, exams[0].create_by);
+    // await this.findAvailable(lessonId, exams[0].create_by);
 
     await this.lessonRepo.findOneAndUpdate(
       { id: lessonId },
