@@ -457,7 +457,7 @@ export class QuestionService {
         }
       }
     }
-    console.log(data);
+
     if (!_.isNil(data.picture)) {
       if (!_.isEmpty(question.picture))
         await this.imageService.deleteImage(question.picture);
