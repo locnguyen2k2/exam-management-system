@@ -391,12 +391,14 @@ export class QuestionService {
     // Lấy danh sách câu hỏi cập nhật
     if (!_.isEmpty(data.answers)) {
       await Promise.all(
-        data.answers.map(async (answer) =>
-          answers.push({
-            ...(await this.findAnswer(id, answer.id)),
-            ...answer,
-          }),
-        ),
+        data.answers.map(async (answer) => {
+          if (!_.isNil(answer.id)) {
+            answers.push({
+              ...(await this.findAnswer(id, answer.id)),
+              ...answer,
+            });
+          }
+        }),
       );
     }
 
