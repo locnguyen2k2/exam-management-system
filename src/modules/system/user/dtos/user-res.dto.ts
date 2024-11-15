@@ -23,10 +23,10 @@ export class UserProfile {
   @Field(() => String, { nullable: true })
   photo: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   address: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   phone: string;
 
   @Field(() => GenderEnum, { nullable: true })
