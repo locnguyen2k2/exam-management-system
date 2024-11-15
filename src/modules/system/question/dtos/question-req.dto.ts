@@ -37,7 +37,7 @@ class UpdateQuestionAnswerDto extends PickType(BaseDto, [
   'updated_at',
   'enable',
 ] as const) {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Validate(IsValidStringId)
   id: string;
 
@@ -46,6 +46,7 @@ class UpdateQuestionAnswerDto extends PickType(BaseDto, [
       'Đáp án câu hỏi điền khuyết sẽ ' +
       'phân cách bằng ký hiệu [__] ' +
       '(đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)',
+    nullable: true,
   })
   value: string;
 

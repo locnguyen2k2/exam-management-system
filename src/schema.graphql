@@ -1090,12 +1090,12 @@ input UpdateQuestionArgs {
 
 input UpdateQuestionAnswerDto {
   enable: Boolean
-  id: String!
+  id: String
 
   """
   Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)
   """
-  value: String!
+  value: String
   isCorrect: Boolean
   score: Float
   remark: String

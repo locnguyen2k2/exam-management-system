@@ -367,18 +367,23 @@ export class QuestionService {
     let picture = '';
     let newQuestions = [];
     let oldQuestions = [];
+    let answers = []; // Danh sách câu hỏi hiện cập nhật
+    const newAnswers = []; // Danh sách câu hỏi thêm mới
     const { chapterId, question } = await this.chapService.findAvailableQuiz(
       id,
       data.updateBy,
     );
     const newQuestion = question;
-    // Lấy danh sách câu hỏi không cập nhật
-    let answers: any[] = !_.isEmpty(data.answers)
-      ? question.answers.filter(
-          (answer) =>
-            !data.answers.some((dataAnswer) => dataAnswer.id === answer.id),
-        )
-      : question.answers;
+    // Lấy danh sách câu hỏi không cập nhật và câu hỏi mới
+    if (!_.isEmpty(data.answers))
+      question.answers.filter((answer) => {
+        if (_.isNil(answer.id)) {
+          answers.push(answer);
+        } else {
+          if (!data.answers.some((dataAnswer) => dataAnswer.id === answer.id))
+            answers.push(answer);
+        }
+      });
 
     const content = !_.isEmpty(data.content) ? data.content : question.content;
     const category = !_.isEmpty(data.category)
@@ -424,39 +429,39 @@ export class QuestionService {
       }
     }
 
-    if (!_.isEmpty(category)) {
-      const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
+    // if (!_.isEmpty(category)) {
+    const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
 
-      if (category !== CategoryEnum.MULTIPLE_CHOICE) {
-        if (correctAnswers.length > 1)
-          throw new BusinessException(
-            '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
-          );
-      }
+    if (category !== CategoryEnum.MULTIPLE_CHOICE) {
+      if (correctAnswers.length > 1)
+        throw new BusinessException(
+          '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
+        );
+    }
 
-      if (category === CategoryEnum.FILL_IN) {
-        const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
+    if (category === CategoryEnum.FILL_IN) {
+      const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
 
-        this.isValidFillInQuiz(content, correctAnswers[0].value);
+      this.isValidFillInQuiz(content, correctAnswers[0].value);
 
-        if (wrongAnswers.length > maxAnswerValue)
-          throw new BusinessException(
-            `400:${this.maxFillInAnswerValue(correctAnswers[0])} là số đáp án nhiễu tối đa`,
-          );
+      if (wrongAnswers.length > maxAnswerValue)
+        throw new BusinessException(
+          `400:${this.maxFillInAnswerValue(correctAnswers[0])} là số đáp án nhiễu tối đa`,
+        );
 
-        if (!_.isNil(data.quantityWrongAnswers)) {
-          const fillInAnswers = this.randFillInAnswer(
-            answers,
-            data.quantityWrongAnswers,
-          );
+      if (!_.isNil(data.quantityWrongAnswers)) {
+        const fillInAnswers = this.randFillInAnswer(
+          answers,
+          data.quantityWrongAnswers,
+        );
 
-          answers = [
-            ...fillInAnswers.correctAnswers,
-            ...fillInAnswers.wrongAnswers,
-          ];
-        }
+        answers = [
+          ...fillInAnswers.correctAnswers,
+          ...fillInAnswers.wrongAnswers,
+        ];
       }
     }
+    // }
 
     if (!_.isNil(data.picture)) {
       if (!_.isEmpty(question.picture))
