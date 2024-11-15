@@ -396,6 +396,7 @@ export class QuestionService {
             ...(!_.isNil(answer.id)
               ? await this.findAnswer(id, answer.id)
               : answer),
+            ...answer,
           });
         }),
       );
