@@ -97,8 +97,8 @@ type UserProfile {
   firstName: String!
   lastName: String!
   photo: String
-  address: String!
-  phone: String!
+  address: String
+  phone: String
   gender: GenderEnum
   status: Boolean!
   enable: Boolean!

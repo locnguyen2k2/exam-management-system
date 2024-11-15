@@ -12,22 +12,21 @@ export class ImageService {
 
   async uploadImage(picture: Promise<FileUpload>): Promise<string> {
     const formData = new FormData();
-    const { createReadStream, filename, mimetype } = await picture;
-
-    formData.append(
-      'operations',
-      JSON.stringify({
-        query: `query($file: Upload!) { uploadImage(file: $file) }`,
-        variables: { file: null },
-      }),
-    );
-    formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
-    formData.append('0', createReadStream(), {
-      filename,
-      contentType: mimetype,
-    });
-
     try {
+      const { createReadStream, filename, mimetype } = await picture;
+      formData.append(
+        'operations',
+        JSON.stringify({
+          query: `query($file: Upload!) { uploadImage(file: $file) }`,
+          variables: { file: null },
+        }),
+      );
+      formData.append('map', JSON.stringify({ '0': ['variables.file'] }));
+      formData.append('0', createReadStream(), {
+        filename,
+        contentType: mimetype,
+      });
+
       const { data } = await axios({
         method: 'post',
         url: env('FIREBASE_API_UPLOAD_IMAGE'),
@@ -37,7 +36,9 @@ export class ImageService {
 
       return data.data.uploadImage;
     } catch (error: any) {
-      throw new BusinessException('400:Cập nhật hình ảnh thất bại!');
+      throw new BusinessException(
+        `400:Cập nhật hình ảnh thất bại ${error.message}!`,
+      );
     }
   }
 
