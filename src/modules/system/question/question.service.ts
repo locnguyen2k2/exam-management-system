@@ -392,12 +392,11 @@ export class QuestionService {
     if (!_.isEmpty(data.answers)) {
       await Promise.all(
         data.answers.map(async (answer) => {
-          if (!_.isNil(answer.id)) {
-            answers.push({
-              ...(await this.findAnswer(id, answer.id)),
-              ...answer,
-            });
-          }
+          answers.push({
+            ...(!_.isNil(answer.id)
+              ? await this.findAnswer(id, answer.id)
+              : answer),
+          });
         }),
       );
     }
