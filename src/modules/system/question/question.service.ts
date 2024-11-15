@@ -12,10 +12,6 @@ import {
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
-// import {
-//   regSpecialChars,
-//   regWhiteSpace,
-// } from '~/common/constants/regex.constant';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
@@ -251,7 +247,7 @@ export class QuestionService {
     }
 
     return {
-      correctAnswers: [correctAnswer],
+      correctAnswers: classifyAnswer.correctAnswers,
       wrongAnswers: listAnswers,
     };
   }
@@ -365,124 +361,129 @@ export class QuestionService {
 
   async update(id: string, data: UpdateQuestionDto): Promise<QuestionEntity> {
     let picture = '';
-    let newQuestions = [];
-    let oldQuestions = [];
-    let answers = []; // Danh sách câu hỏi hiện cập nhật
-    const { chapterId, question } = await this.chapService.findAvailableQuiz(
-      id,
-      data.updateBy,
-    );
+    let newQuestions = []; // Danh sách câu hỏi mới
+    let oldQuestions = []; // Danh sách câu hỏi cũ
+    let answers = []; // Danh sách đáp án
+    const { updateBy } = data;
+    const chapter = await this.chapService.findAvailableQuiz(id, updateBy);
+    const { chapterId, question } = chapter;
+    let content = question.content;
     const newQuestion = question;
-    // Lấy danh sách câu hỏi không cập nhật và câu hỏi mới
-    if (!_.isEmpty(data.answers))
-      question.answers.filter((answer) => {
-        if (_.isNil(answer.id)) {
-          answers.push(answer);
-        } else {
-          if (!data.answers.some((dataAnswer) => dataAnswer.id === answer.id))
-            answers.push(answer);
-        }
-      });
+    const category = data.category ? data.category : question.category;
+    newQuestion.update_by = updateBy;
 
-    const content = !_.isEmpty(data.content) ? data.content : question.content;
-    const category = !_.isEmpty(data.category)
-      ? data.category
-      : question.category;
-    // Lấy danh sách câu hỏi cập nhật
     if (!_.isEmpty(data.answers)) {
+      // Lấy danh sách câu hỏi không cập nhật
+      for (const answer of question.answers) {
+        if (!data.answers.some((newAnswer) => newAnswer.id === answer.id))
+          answers.push(answer);
+      }
+      // Lấy danh sách thông tin đáp án cập nhật và đáp án mới
       await Promise.all(
         data.answers.map(async (answer) => {
-          answers.push({
-            ...(!_.isNil(answer.id)
-              ? await this.findAnswer(id, answer.id)
-              : answer),
-            ...answer,
-          });
+          const newAnswer = !_.isNil(answer.id)
+            ? {
+                ...(await this.findAnswer(id, answer.id)),
+                ...answer,
+                update_by: updateBy,
+              }
+            : new AnswerEntity({
+                ...answer,
+                update_by: updateBy,
+                create_by: updateBy,
+              });
+
+          if (
+            (!_.isNil(answer.id) && !_.isEmpty(answer.value)) ||
+            _.isNil(answer.id)
+          ) {
+            const handleValue = answer.value.replaceAll(' ', '').toLowerCase();
+            const isReplaced = answers.find(
+              ({ value }) =>
+                value.replaceAll(' ', '').toLowerCase() === handleValue,
+            );
+
+            if (
+              isReplaced &&
+              (_.isNil(answer.id) || answer.id !== isReplaced.id)
+            )
+              throw new BusinessException(
+                `400:Đáp án bị trùng ${answer.value}`,
+              );
+          }
+
+          answers.push(newAnswer);
         }),
       );
     }
 
-    if (!_.isEmpty(data.chapterId) && chapterId !== data.chapterId) {
+    const { correctAnswers } = this.classifyAnswers(answers);
+
+    if (!_.isNil(data.chapterId) && chapterId !== data.chapterId) {
       const newChapter = await this.chapService.findAvailable(
         data.chapterId,
-        data.updateBy,
+        updateBy,
       );
       const oldChapter = await this.chapService.findAvailable(
         chapterId,
-        data.updateBy,
+        updateBy,
       );
 
-      oldQuestions = oldChapter.questions.filter((question) => {
-        if (question.id !== id) return question;
-      });
+      oldQuestions = oldChapter.questions.filter(
+        (question) => question.id !== id,
+      );
       newQuestions = newChapter.questions.filter((question) => question);
     }
 
-    if (data.content) {
-      const isReplaced = await this.chapService.findByQuizContent(content);
+    if (!_.isEmpty(data.content)) {
+      content = data.content;
+      const isReplaced = await this.chapService.findByQuizContent(data.content);
 
       if (
         isReplaced &&
         isReplaced.id !== chapterId &&
-        isReplaced.create_by === question.create_by
-      ) {
+        isReplaced.create_by === updateBy
+      )
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
-      }
     }
 
-    // if (!_.isEmpty(category)) {
-    const { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
-
-    if (category !== CategoryEnum.MULTIPLE_CHOICE) {
-      if (correctAnswers.length > 1)
-        throw new BusinessException(
-          '400:Ngoài trắc nghiệm nhiều đáp án, các câu hỏi khác chỉ có 1 đáp án',
-        );
-    }
+    if (category !== CategoryEnum.MULTIPLE_CHOICE && correctAnswers.length > 1)
+      throw new BusinessException(
+        '400:Ngoài câu hỏi nhiều đáp án, câu hỏi khác chỉ có 1 đáp án đúng',
+      );
 
     if (category === CategoryEnum.FILL_IN) {
-      const maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
-
+      // Kiểm tra tính hợp lệ cuủa nội dung và đáp án
       this.isValidFillInQuiz(content, correctAnswers[0].value);
 
-      if (wrongAnswers.length > maxAnswerValue)
-        throw new BusinessException(
-          `400:${this.maxFillInAnswerValue(correctAnswers[0])} là số đáp án nhiễu tối đa`,
-        );
-
       if (!_.isNil(data.quantityWrongAnswers)) {
-        const fillInAnswers = this.randFillInAnswer(
+        const { wrongAnswers } = this.randFillInAnswer(
           answers,
           data.quantityWrongAnswers,
         );
 
-        answers = [
-          ...fillInAnswers.correctAnswers,
-          ...fillInAnswers.wrongAnswers,
-        ];
+        answers = [...correctAnswers, ...wrongAnswers];
       }
     }
-    // }
 
     if (!_.isNil(data.picture)) {
-      if (!_.isEmpty(question.picture))
-        await this.imageService.deleteImage(question.picture);
       const image: Promise<FileUpload> = new Promise((resolve) =>
         resolve(data.picture),
       );
+      if (!_.isEmpty(question.picture))
+        await this.imageService.deleteImage(question.picture);
       picture += await this.imageService.uploadImage(image);
     }
 
-    newQuestion.update_by = data.updateBy;
-    if (!_.isEmpty(data.content)) newQuestion.content = data.content;
+    newQuestion.content = content;
+    newQuestion.category = category;
+    newQuestion.answers = answers;
+
     if (data.level) newQuestion.level = data.level;
     if (data.status) newQuestion.status = data.status;
-    if (!_.isEmpty(data.remark)) newQuestion.remark = data.remark;
     if (!_.isEmpty(picture)) newQuestion.picture = picture;
-    if (!_.isNil(data?.enable)) newQuestion.enable = data.enable;
-    if (!_.isNil(data?.category)) newQuestion.category = data.category;
-    if (!_.isEmpty(data?.answers))
-      newQuestion.answers = answers.map((answer) => new AnswerEntity(answer));
+    if (!_.isNil(data.enable)) newQuestion.enable = data.enable;
+    if (!_.isEmpty(data.remark)) newQuestion.remark = data.remark;
 
     await this.chapService.updateQuiz(chapterId, newQuestion);
     await this.examService.updateQuiz(id, newQuestion);

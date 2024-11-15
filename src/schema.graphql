@@ -1089,7 +1089,6 @@ input UpdateQuestionArgs {
 }
 
 input UpdateQuestionAnswerDto {
-  enable: Boolean
   id: String
 
   """
@@ -1099,6 +1098,7 @@ input UpdateQuestionAnswerDto {
   isCorrect: Boolean
   score: Float
   remark: String
+  enable: Boolean
 }
 
 input EnableQuestionsArgs {
