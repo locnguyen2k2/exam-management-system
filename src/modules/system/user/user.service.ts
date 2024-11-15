@@ -156,7 +156,7 @@ export class UserService {
         (await this.imageService.deleteImage(user.photo));
 
       const image: Promise<FileUpload> = new Promise((resolve) =>
-        resolve(args.picture),
+        resolve(args.photo),
       );
 
       photo += await this.imageService.uploadImage(image);

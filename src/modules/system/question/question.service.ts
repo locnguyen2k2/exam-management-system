@@ -368,7 +368,6 @@ export class QuestionService {
     let newQuestions = [];
     let oldQuestions = [];
     let answers = []; // Danh sách câu hỏi hiện cập nhật
-    const newAnswers = []; // Danh sách câu hỏi thêm mới
     const { chapterId, question } = await this.chapService.findAvailableQuiz(
       id,
       data.updateBy,
