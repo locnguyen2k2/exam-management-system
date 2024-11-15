@@ -11,6 +11,8 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 export class ScaleDto {
   @Field(() => Number)
   percent: number;
+  @Field(() => Float, { nullable: true })
+  score: number;
   @Field(() => String)
   chapterId: string;
   @Field(() => LevelEnum)

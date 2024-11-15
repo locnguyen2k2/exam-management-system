@@ -598,7 +598,7 @@ export class QuestionService {
   ) {
     return await Promise.all(
       scales.map(async (scale) => {
-        const { chapterId, percent, level, category } = scale;
+        const { chapterId, percent, level, category, score } = scale;
         const questionQty = Math.ceil((percent * totalQuestions) / 100);
         // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
         const { questions, chapter } = await this.randQuestsByChap(
@@ -607,6 +607,7 @@ export class QuestionService {
           category,
           questionQty,
           uid,
+          score,
         );
 
         if (questions.length - questionQty < 0)
@@ -631,6 +632,7 @@ export class QuestionService {
     category: CategoryEnum,
     quantity: number,
     uid: string,
+    score: number,
   ): Promise<IDetailChapter> {
     const chapter = await this.chapService.findAvailable(chapterId, uid);
     const questions = await this.chapService.randQuizzes(
@@ -639,6 +641,7 @@ export class QuestionService {
       category,
       quantity,
       uid,
+      score,
     );
 
     return { chapter, questions };

@@ -1,10 +1,16 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { Field, HideField, InputType } from '@nestjs/graphql';
+import { Field, Float, HideField, InputType } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { Transform, Type } from 'class-transformer';
 import { IsValidScale } from '~/common/decorators/scale.decorator';
-import { Max, Min, Validate, ValidateNested } from 'class-validator';
+import {
+  IsOptional,
+  Max,
+  Min,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import {
@@ -38,6 +44,11 @@ class Scale implements IScale {
   @Min(10)
   @Max(100)
   percent: number;
+
+  @Field(() => Float, { nullable: true })
+  @Min(0.1)
+  @IsOptional()
+  score: number = 0.25;
 
   @Field(() => LevelEnum)
   level: LevelEnum;

@@ -273,6 +273,7 @@ type QuestionPagination {
 
 type ScaleDto {
   percent: Float!
+  score: Float
   chapterId: String!
   level: LevelEnum!
   category: CategoryEnum!
@@ -1185,6 +1186,7 @@ input GenerateExamPaperArgs {
 input ScaleArgs {
   chapterId: String!
   percent: Float!
+  score: Float = 0.25
   level: LevelEnum!
   category: CategoryEnum!
 }

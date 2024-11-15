@@ -218,6 +218,13 @@ export class ExamService {
 
     quizzes.map(({ id, answers }) => {
       const index = handleQuestions.findIndex((quest) => quest.id === id);
+      for (const answer of answers) {
+        if (
+          answer.isCorrect &&
+          !_.isNil(handleQuestions[index]['questionScore'])
+        )
+          answer.score = handleQuestions[index]['questionScore'];
+      }
       handleQuestions[index]['answers'] = shuffle(answers);
     });
 
@@ -239,13 +246,15 @@ export class ExamService {
             level === question.level && category === question.category,
         );
 
-        idxInfo !== -1
-          ? result[idxChapter].info[idxInfo].questions.push(question)
-          : result[idxChapter].info.push({
-              level: question.level,
-              category: question.category,
-              questions: [question],
-            });
+        if (idxInfo !== -1) {
+          result[idxChapter].info[idxInfo].questions.push(question);
+        } else {
+          result[idxChapter].info.push({
+            level: question.level,
+            category: question.category,
+            questions: [question],
+          });
+        }
       } else {
         result.push({
           chapterId: chapterId,
@@ -355,7 +364,6 @@ export class ExamService {
       );
 
       delete data.id;
-
       listExams.push(
         new ExamEntity({
           label: data.label,
@@ -366,6 +374,8 @@ export class ExamService {
           maxScore: data.maxScore,
           scales: listScales,
           questions: questions.map((question) => {
+            delete question.questionScore;
+
             return {
               ...question,
               label: question.label,

@@ -183,9 +183,12 @@ export class ChapterService {
               chapterIds: [newChapter.id],
             });
           } else {
-            !lessonChapters[index].chapterIds.find(
-              (chapterId) => chapterId === newChapter.id,
-            ) && lessonChapters[index].chapterIds.push(newChapter.id);
+            if (
+              !lessonChapters[index].chapterIds.find(
+                (chapterId) => chapterId === newChapter.id,
+              )
+            )
+              lessonChapters[index].chapterIds.push(newChapter.id);
           }
         }
 
@@ -261,14 +264,14 @@ export class ChapterService {
 
     const result = await this.findOne(id);
 
-    oldLesson &&
-      (await this.lessonService.updateChapters(oldLesson.id, oldChapters));
+    if (oldLesson)
+      await this.lessonService.updateChapters(oldLesson.id, oldChapters);
 
-    newLesson &&
-      (await this.lessonService.updateChapters(newLesson.id, [
+    if (newLesson)
+      await this.lessonService.updateChapters(newLesson.id, [
         ...newChapters,
         isExisted.id,
-      ]));
+      ]);
 
     return result;
   }
@@ -468,6 +471,7 @@ export class ChapterService {
     category: CategoryEnum,
     quantity: number,
     uid: string,
+    score: number,
   ) {
     const data = await this.chapterRepo
       .aggregate([
@@ -497,6 +501,7 @@ export class ChapterService {
         },
         { $unwind: '$questions' },
         { $sample: { size: quantity } },
+        { $addFields: { 'questions.questionScore': score } },
         { $group: { _id: '$id', questions: { $push: '$questions' } } },
       ])
       .toArray();

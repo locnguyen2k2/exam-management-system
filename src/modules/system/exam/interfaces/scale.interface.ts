@@ -3,6 +3,7 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 
 export interface IScale {
   percent: number;
+  score?: number;
   chapterId: string;
   level: LevelEnum;
   category: CategoryEnum;
