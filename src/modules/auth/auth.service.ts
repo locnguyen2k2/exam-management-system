@@ -84,8 +84,8 @@ export class AuthService {
     );
 
     await this.mailService.sendResetPasswordEmail(email, value);
-    repass_token &&
-      (await this.userService.deleteUserToken(repass_token.value));
+    if (repass_token)
+      await this.userService.deleteUserToken(repass_token.value);
 
     return 'Mã xác thực để đổi lại mật khẩu đã được gửi vào email!';
   }
@@ -176,7 +176,7 @@ export class AuthService {
     if (!isValidToken.email_verified)
       throw new BusinessException(ErrorEnum.INVALID_TOKEN);
 
-    const { email, given_name, family_name, picture } = isValidToken;
+    const { email, given_name, family_name } = isValidToken;
     let user = await this.userService.findByEmail(email);
 
     if (user && !user.enable)
@@ -188,7 +188,8 @@ export class AuthService {
         firstName: given_name,
         lastName: family_name,
         email: email,
-        photo: picture,
+        // photo: picture,
+        photo: null,
         roleIds: [userRole.id],
         createBy: 0,
       };
@@ -201,8 +202,8 @@ export class AuthService {
       });
     } else {
       const { confirm_token } = await this.userService.getTokens(email);
-      confirm_token &&
-        (await this.userService.deleteUserToken(confirm_token.value));
+      if (confirm_token)
+        await this.userService.deleteUserToken(confirm_token.value);
 
       await this.userService.updateStatus(user.id, true);
     }

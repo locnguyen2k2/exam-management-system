@@ -62,18 +62,22 @@ export class BaseRegisterDto extends BaseDto {
 
   @Field(() => String, { nullable: true })
   @MaxLength(255)
+  @IsOptional()
   photo: string;
 
   @Field(() => String, { nullable: true })
   @IsPhoneNumber()
+  @IsOptional()
   phone: string;
 
   @Field(() => String, { nullable: true })
   @MaxLength(255)
+  @IsOptional()
   address: string;
 
   @Field(() => GenderEnum, { nullable: true })
   @IsEnum(GenderEnum)
+  @IsOptional()
   gender: GenderEnum;
 
   @HideField()
