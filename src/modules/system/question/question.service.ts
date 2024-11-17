@@ -478,6 +478,7 @@ export class QuestionService {
     newQuestion.content = content;
     newQuestion.category = category;
     newQuestion.answers = answers;
+    newQuestion.updated_at = data.updated_at;
 
     if (data.level) newQuestion.level = data.level;
     if (data.status) newQuestion.status = data.status;

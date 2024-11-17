@@ -1,10 +1,4 @@
-import {
-  Field,
-  Float,
-  HideField,
-  InputType,
-  PartialType,
-} from '@nestjs/graphql';
+import { Field, Float, InputType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IsOptional, Min } from 'class-validator';
 
@@ -26,19 +20,4 @@ export class AnswerBaseDto extends BaseDto {
 
   @Field(() => String, { description: 'Chú thích', nullable: true })
   remark: string;
-}
-
-@InputType()
-export class CreateAnswersDto extends BaseDto {
-  @Field(() => [AnswerBaseDto])
-  items: AnswerBaseDto[];
-
-  @HideField()
-  createBy: string = null;
-}
-
-@InputType('UpdateAnswerArgs')
-export class UpdateAnswerDto extends PartialType(AnswerBaseDto) {
-  @HideField()
-  updateBy: string = null;
 }

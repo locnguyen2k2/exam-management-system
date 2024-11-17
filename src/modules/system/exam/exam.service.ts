@@ -492,6 +492,7 @@ export class ExamService {
       }),
       ...(!_.isNil(data.enable) && { enable: data.enable }),
       update_by: data.updateBy,
+      updated_at: data.updated_at,
     });
 
     await this.lessonService.updateExam(newExam);

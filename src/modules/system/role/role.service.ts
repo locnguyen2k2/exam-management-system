@@ -142,6 +142,7 @@ export class RoleService {
         ...(!_.isNil(data?.enable) && { enable: data.enable }),
         ...(!_.isNil(data?.permissionIds) && { permissions: permissions }),
         ...(data?.updateBy && { update_by: data.updateBy }),
+        updated_at: data.updated_at,
       },
     );
 

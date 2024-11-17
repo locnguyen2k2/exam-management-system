@@ -34,7 +34,7 @@ export class UserEntity extends ExtendedEntity {
   @Column({ type: 'string', length: 255 })
   photo: string = null;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column({ type: 'string', length: 255 })
   address: string = '';
 
@@ -42,7 +42,7 @@ export class UserEntity extends ExtendedEntity {
   @Column({ type: 'enum', enum: GenderEnum })
   gender: GenderEnum = null;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   @Column({ type: 'string' })
   phone: string = '';
 

@@ -63,9 +63,9 @@ type UserModel {
   """Trạng thái xác thực"""
   status: Boolean!
   photo: String
-  address: String!
+  address: String
   gender: GenderEnum
-  phone: String!
+  phone: String
   roles: [RoleModel!]!
 }
 
@@ -320,7 +320,7 @@ type ChapterEntity {
   name: String!
 
   """Mô tả"""
-  description: String!
+  description: String
 
   """Trạng thái chia sẻ"""
   status: StatusShareEnum!
@@ -388,7 +388,7 @@ type ChapterModel {
   updateBy: String
   label: String!
   name: String!
-  description: String!
+  description: String
   lesson: LessonDefaultFields!
 
   """Trạng thái chia sẻ"""
@@ -1090,6 +1090,7 @@ input UpdateQuestionArgs {
 }
 
 input UpdateQuestionAnswerDto {
+  enable: Boolean
   id: String
 
   """
@@ -1099,7 +1100,6 @@ input UpdateQuestionAnswerDto {
   isCorrect: Boolean
   score: Float
   remark: String
-  enable: Boolean
 }
 
 input EnableQuestionsArgs {

@@ -1,4 +1,8 @@
-import { plainToClass as NestPlainToClass, Transform } from 'class-transformer';
+import {
+  Expose,
+  plainToClass as NestPlainToClass,
+  Transform,
+} from 'class-transformer';
 import { Field, HideField, InputType } from '@nestjs/graphql';
 import { v4 as uuid } from 'uuid';
 import { IsOptional } from 'class-validator';
@@ -11,10 +15,12 @@ export class BaseDto {
 
   @HideField()
   @Transform(() => new Date().toISOString())
+  @Expose()
   created_at: string;
 
   @HideField()
   @Transform(() => new Date().toISOString())
+  @Expose()
   updated_at: string;
 
   @Field(() => Boolean, { nullable: true })

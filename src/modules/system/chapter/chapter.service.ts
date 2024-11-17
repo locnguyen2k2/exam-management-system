@@ -259,6 +259,7 @@ export class ChapterService {
         ...(!_.isNil(data?.status) && { status: data.status }),
         ...(data?.description && { description: data.description }),
         update_by: data.updateBy,
+        updated_at: data.updated_at,
       },
     );
 

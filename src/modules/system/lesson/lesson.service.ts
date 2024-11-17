@@ -408,6 +408,7 @@ export class LessonService {
         ...(!_.isEmpty(data.chapterIds) && { chapters }),
         ...(!_.isNil(data.examIds) && { exams: exams }),
         update_by: data.updateBy,
+        updated_at: data.updated_at,
       },
     );
 

@@ -32,7 +32,10 @@ export class QuestionPageOptions extends PageOptionDto {
 }
 
 @InputType()
-class UpdateQuestionAnswerDto {
+class UpdateQuestionAnswerDto extends PickType(BaseDto, [
+  'updated_at',
+  'enable',
+] as const) {
   @Field(() => String, { nullable: true })
   @Validate(IsValidStringId)
   id: string;
@@ -55,13 +58,8 @@ class UpdateQuestionAnswerDto {
   @Field(() => String, { nullable: true })
   remark: string;
 
-  @Field(() => Boolean, { nullable: true })
-  enable: boolean;
-
   @HideField()
-  @Expose()
-  @Transform(() => new Date().toISOString())
-  updated_at: string;
+  created_at: string;
 }
 
 @InputType('QuestionArgs')
@@ -152,6 +150,7 @@ export class UpdateQuestionDto extends PartialType(
     'enable',
     'status',
     'category',
+    'updated_at',
     'quantityWrongAnswers',
   ] as const),
 ) {

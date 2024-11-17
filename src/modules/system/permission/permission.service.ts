@@ -103,6 +103,7 @@ export class PermissionService {
         ...(data.remark && { remark: data.remark }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),
         update_by: data.updateBy,
+        updated_at: data.updated_at,
       },
     );
     const result = await this.findOne(id);

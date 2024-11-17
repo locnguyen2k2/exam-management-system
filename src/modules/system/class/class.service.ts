@@ -202,7 +202,7 @@ export class ClassService {
           data.updateBy,
         );
         const isReplaced = lessons.some((lesson) => lesson.id === lessonId);
-        !isReplaced && lessons.push(isLesson);
+        if (!isReplaced) lessons.push(isLesson);
       }
     }
 
@@ -254,6 +254,7 @@ export class ClassService {
         }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),
         update_by: data.updateBy,
+        updated_at: data.updated_at,
       },
     );
 
@@ -308,7 +309,7 @@ export class ClassService {
 
       const isReplaced = classIds.some((classId) => classId === id);
 
-      !isReplaced && classIds.push(id);
+      if (!isReplaced) classIds.push(id);
     }
 
     // for (const id of classIds) {

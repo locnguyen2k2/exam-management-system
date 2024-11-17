@@ -184,6 +184,7 @@ export class UserService {
         ...(!_.isNil(args?.status) && { status: args.status }),
         ...(!_.isEmpty(args?.roleIds) && { roles: listRole }),
         ...(args?.updateBy && { update_by: args.updateBy }),
+        updated_at: args.updated_at,
       },
     );
 

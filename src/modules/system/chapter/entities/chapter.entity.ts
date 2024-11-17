@@ -15,7 +15,7 @@ export class ChapterEntity extends ExtendedEntity {
   @Column('string')
   name: string;
 
-  @Field(() => String, { description: 'Mô tả' })
+  @Field(() => String, { description: 'Mô tả', nullable: true })
   @Column('string')
   description: string = '';
 
