@@ -198,6 +198,8 @@ export class ExamService {
         }),
         create_by: createBy,
         update_by: createBy,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
       });
 
       exams.push(newExam);
@@ -363,7 +365,6 @@ export class ExamService {
         data.answerLabel,
       );
 
-      delete data.id;
       listExams.push(
         new ExamEntity({
           label: data.label,
@@ -383,6 +384,8 @@ export class ExamService {
           }),
           create_by: data.createBy,
           update_by: data.createBy,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
         }),
       );
     }

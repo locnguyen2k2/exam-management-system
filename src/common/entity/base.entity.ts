@@ -6,7 +6,6 @@ import {
   ObjectIdColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  VirtualColumn,
 } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 
@@ -19,11 +18,8 @@ export abstract class BaseEntity extends NestedBaseEntity {
   @Field(() => String)
   id: string = uuid();
 
-  @Field(() => Boolean, {
-    description: 'Trạng thái quản lý',
-    defaultValue: false,
-  })
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean' })
+  @Field(() => Boolean, { description: 'Trạng thái quản lý' })
   enable: boolean = false;
 
   @Field(() => String, { name: 'createdAt' })
@@ -31,14 +27,14 @@ export abstract class BaseEntity extends NestedBaseEntity {
     name: 'created_at',
     type: 'date',
   })
-  created_at: string = new Date().toISOString();
+  created_at: string;
 
   @Field(() => String, { name: 'updatedAt' })
   @UpdateDateColumn({
     name: 'updated_at',
     type: 'date',
   })
-  updated_at: string = new Date().toISOString();
+  updated_at: string;
 }
 
 @ObjectType()
@@ -63,16 +59,4 @@ export abstract class ExtendedEntity extends BaseEntity {
   })
   @Column({ name: 'update_by', nullable: true, comment: 'Cập nhật bơi' })
   update_by: string;
-
-  @VirtualColumn({
-    query: (alias) =>
-      `SELECT email FROM user_entity WHERE id = ${alias}.create_by`,
-  })
-  creator: string;
-
-  @VirtualColumn({
-    query: (alias) =>
-      `SELECT email FROM user_entity WHERE id = ${alias}.update_by`,
-  })
-  updater: string;
 }

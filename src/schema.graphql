@@ -178,7 +178,7 @@ type ExamQuestionAnswerModel {
 type QuestionModel {
   id: String!
 
-  """Trạng thái kích hoạt"""
+  """Trạng thái quản lý"""
   enable: Boolean!
   createdAt: String!
   updatedAt: String!
@@ -237,7 +237,7 @@ enum CategoryEnum {
 type ExamQuestionModel {
   id: String!
 
-  """Trạng thái kích hoạt"""
+  """Trạng thái quản lý"""
   enable: Boolean!
   createdAt: String!
   updatedAt: String!
@@ -282,6 +282,8 @@ type ScaleDto {
 
 type ExamModel {
   id: String!
+
+  """Trạng thái quản lý"""
   enable: Boolean!
   createdAt: String!
   updatedAt: String!
@@ -351,6 +353,8 @@ type LessonDefaultFields {
 
 type ClassModel {
   id: String!
+
+  """Trạng thái quản lý"""
   enable: Boolean!
   createdAt: String!
   updatedAt: String!

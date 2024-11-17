@@ -17,7 +17,7 @@ import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { Validate, ValidateNested } from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 @InputType('QuestionPageOptions')
 export class QuestionPageOptions extends PageOptionDto {
@@ -32,10 +32,7 @@ export class QuestionPageOptions extends PageOptionDto {
 }
 
 @InputType()
-class UpdateQuestionAnswerDto extends PickType(BaseDto, [
-  'updated_at',
-  'enable',
-] as const) {
+class UpdateQuestionAnswerDto extends PartialType(BaseDto) {
   @Field(() => String, { nullable: true })
   @Validate(IsValidStringId)
   id: string;
@@ -57,9 +54,6 @@ class UpdateQuestionAnswerDto extends PickType(BaseDto, [
 
   @Field(() => String, { nullable: true })
   remark: string;
-
-  @HideField()
-  created_at: string;
 }
 
 @InputType('QuestionArgs')

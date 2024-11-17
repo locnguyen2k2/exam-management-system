@@ -137,7 +137,9 @@ export class QuestionService {
         }
 
         const isReplaced = correctAnswers.find(
-          (correctAnswer) => correctAnswer.value === answer.value,
+          (correctAnswer) =>
+            correctAnswer.value.replaceAll(' ', '').toLowerCase() ===
+            answer.value.replaceAll(' ', '').toLowerCase(),
         );
 
         if (!isReplaced) {
@@ -145,7 +147,9 @@ export class QuestionService {
         }
       } else {
         const isReplaced = wrongAnswers.find(
-          (wrongAnswer) => wrongAnswer.value === answer.value,
+          (wrongAnswer) =>
+            wrongAnswer.value.replaceAll(' ', '').toLowerCase() ===
+            answer.value.replaceAll(' ', '').toLowerCase(),
         );
 
         if (!_.isNil(answer.score) && answer.score > 0)
@@ -381,10 +385,13 @@ export class QuestionService {
       // Lấy danh sách thông tin đáp án cập nhật và đáp án mới
       await Promise.all(
         data.answers.map(async (answer) => {
-          const newAnswer = !_.isNil(answer.id)
+          const isUpdate =
+            !_.isNil(answer.id) && (await this.findAnswer(id, answer.id));
+          const newAnswer = isUpdate
             ? {
-                ...(await this.findAnswer(id, answer.id)),
+                ...isUpdate,
                 ...answer,
+                created_at: isUpdate.created_at,
                 update_by: updateBy,
               }
             : new AnswerEntity({

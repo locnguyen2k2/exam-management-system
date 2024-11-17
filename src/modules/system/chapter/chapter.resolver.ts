@@ -113,7 +113,6 @@ export class ChapterResolver {
     @CurrentUser() user: IAuthPayload,
     @Args('updateChapterArgs') args: UpdateChapterDto,
   ): Promise<ChapterEntity> {
-    delete args.id;
     args.updateBy = user.id;
     return await this.chapterService.update(id, args);
   }

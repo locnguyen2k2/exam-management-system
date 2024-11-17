@@ -49,10 +49,6 @@ export class ExamEntity extends ExtendedEntity {
   @Column('json', { array: true })
   questions: ExamQuestionDto[];
 
-  @Field(() => Boolean)
-  @Column('boolean')
-  enable: boolean = false;
-
   @Field(() => StatusShareEnum)
   @Column('enum', { enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;

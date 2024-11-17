@@ -27,10 +27,6 @@ export class ClassEntity extends ExtendedEntity {
   @Column({ type: 'string' })
   endYear: string;
 
-  @Field(() => Boolean)
-  @Column('boolean')
-  enable: boolean = false;
-
   @Field(() => StatusShareEnum)
   @Column({
     type: 'enum',

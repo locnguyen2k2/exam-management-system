@@ -5,6 +5,8 @@ import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 @ObjectType('QuestionModel')
 @Entity('question_entity')
@@ -25,10 +27,6 @@ export class QuestionEntity extends ExtendedEntity {
   @Column({ type: 'enum', enum: LevelEnum })
   level: LevelEnum;
 
-  @Field(() => Boolean, { description: 'Trạng thái kích hoạt' })
-  @Column({ type: 'boolean' })
-  enable: boolean = false;
-
   @Field(() => StatusShareEnum)
   @Column({ type: 'enum', enum: StatusShareEnum })
   status: StatusShareEnum = StatusShareEnum.PRIVATE;
@@ -40,6 +38,8 @@ export class QuestionEntity extends ExtendedEntity {
   @Field(() => [AnswerEntity], {
     description: 'Danh sách đáp án',
   })
+  @ValidateNested({ each: true })
+  @Type(() => AnswerEntity)
   @Column('json', { array: true })
   answers: AnswerEntity[] = [];
 
