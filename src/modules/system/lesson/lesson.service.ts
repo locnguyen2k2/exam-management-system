@@ -106,10 +106,11 @@ export class LessonService {
   //   if (isExisted) return isExisted;
   // }
 
-  async findAvailable(id: string, uid: string): Promise<LessonEntity> {
+  async findAvailable(id: string, uid?: string): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
 
-    if (isExisted.create_by === uid) return isExisted;
+    if (isExisted && (!uid || (uid && isExisted.create_by === uid)))
+      return isExisted;
 
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
@@ -363,7 +364,7 @@ export class LessonService {
         data.chapterIds.map(async (chapterId: string) => {
           const chapter = await this.chapterService.findAvailable(
             chapterId,
-            data.createBy,
+            data.updateBy,
           );
 
           const index = chapters.findIndex(({ id }) => id === chapterId);

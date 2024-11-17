@@ -83,7 +83,7 @@ export class ClassService {
     return await this.classRepo.find({ 'lessons.id': { $in: [lessonId] } });
   }
 
-  async findAvailable(id: string, uid: string = null): Promise<ClassEntity> {
+  async findAvailable(id: string, uid?: string): Promise<ClassEntity> {
     const isExisted = await this.findOne(id);
 
     if (!uid || (uid && isExisted.create_by === uid)) return isExisted;

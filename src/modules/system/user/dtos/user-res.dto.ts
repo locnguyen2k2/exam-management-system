@@ -9,6 +9,9 @@ export class UserPagination extends createPaginatedType(UserEntity) {}
 @ObjectType('UserProfile')
 export class UserProfile {
   @Field(() => String)
+  id: string;
+
+  @Field(() => String)
   email: string;
 
   @Field(() => String)

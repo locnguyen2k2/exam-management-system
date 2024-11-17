@@ -6,7 +6,6 @@ import {
   LessonPageOptions,
   UpdateLessonDto,
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
-import { plainToClass } from 'class-transformer';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { PermissionEnum } from '~/modules/system/permission/permission.constant';
@@ -17,7 +16,6 @@ import {
   LessonPaginationDto,
 } from '~/modules/system/lesson/dtos/lesson-res.dto';
 import { RoleEnum } from '~/modules/system/role/role.constant';
-import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 import { IdParam } from '~/common/decorators/id.decorator';
 
 @Resolver('Lessons')

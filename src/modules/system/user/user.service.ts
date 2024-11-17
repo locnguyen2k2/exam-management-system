@@ -242,6 +242,7 @@ export class UserService {
     const roles = this.getUserPermissions(user);
 
     return {
+      id: uid,
       name: `${user.firstName} ${user.lastName}`,
       firstName: `${user.firstName}`,
       lastName: `${user.lastName}`,
