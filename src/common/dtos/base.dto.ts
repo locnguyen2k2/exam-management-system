@@ -14,12 +14,12 @@ export class BaseDto {
   id: string;
 
   @HideField()
-  @Transform(() => new Date().toISOString())
+  @Transform(() => new Date())
   @Expose()
   created_at: string;
 
   @HideField()
-  @Transform(() => new Date().toISOString())
+  @Transform(() => new Date())
   @Expose()
   updated_at: string;
 
