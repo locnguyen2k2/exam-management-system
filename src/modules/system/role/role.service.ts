@@ -22,11 +22,6 @@ import { searchIndexes } from '~/utils/search';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import { UserService } from '~/modules/system/user/user.service';
 import { paginate } from '~/helpers/paginate/paginate';
-import { PermissionPageOptions } from '~/modules/system/permission/dtos/permission-req.dto';
-import {
-  regSpecialChars,
-  regWhiteSpace,
-} from '~/common/constants/regex.constant';
 
 @Injectable()
 export class RoleService {
@@ -151,8 +146,9 @@ export class RoleService {
 
     await Promise.all(
       users.map(async (user) => {
+        const oldRoles = user.roles.filter((role) => role.id !== id);
         await this.userService.update(user.id, {
-          roleIds: [id],
+          roleIds: [...oldRoles.map((role) => role.id), id],
         });
       }),
     );

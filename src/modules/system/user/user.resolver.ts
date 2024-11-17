@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UserEntity } from '~/modules/system/user/entities/user.entity';
 import { UserService } from '~/modules/system/user/user.service';
-import { Permissions } from '~/common/decorators/permission.decorator';
+import { Permissions, Public } from '~/common/decorators/permission.decorator';
 import {
   AdminCreateDto,
   UpdateUserDto,
@@ -54,7 +54,8 @@ export class UserResolver {
     return await this.userService.create(args);
   }
 
-  @Permissions(PermissionEnum.UPDATE_USER)
+  // @Permissions(PermissionEnum.UPDATE_USER)
+  @Public()
   @Mutation(() => UserProfile, {
     name: 'updateUser',
     description: 'Cập nhật người dùng',

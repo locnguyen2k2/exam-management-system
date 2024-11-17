@@ -152,8 +152,8 @@ export class UserService {
     let photo = '';
 
     if (!_.isNil(args.photo)) {
-      !_.isEmpty(user.photo) &&
-        (await this.imageService.deleteImage(user.photo));
+      if (!_.isEmpty(user.photo))
+        await this.imageService.deleteImage(user.photo);
 
       const image: Promise<FileUpload> = new Promise((resolve) =>
         resolve(args.photo),
@@ -194,7 +194,7 @@ export class UserService {
   async deleteUser(uid: string): Promise<string> {
     const user = await this.findOne(uid);
 
-    !_.isEmpty(user.photo) && (await this.imageService.deleteImage(user.photo));
+    if (!_.isEmpty(user.photo)) await this.imageService.deleteImage(user.photo);
 
     await this.userRepository.deleteOne({ id: uid });
 
