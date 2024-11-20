@@ -83,9 +83,6 @@ importers:
       graphql-upload:
         specifier: '14'
         version: 14.0.0(@types/express@5.0.0)(graphql@16.9.0)
-      handlebars:
-        specifier: ^4.7.8
-        version: 4.7.8
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -7045,6 +7042,7 @@ snapshots:
       wordwrap: 1.0.0
     optionalDependencies:
       uglify-js: 3.19.3
+    optional: true
 
   has-flag@4.0.0: {}
 
@@ -9453,7 +9451,8 @@ snapshots:
 
   word@0.3.0: {}
 
-  wordwrap@1.0.0: {}
+  wordwrap@1.0.0:
+    optional: true
 
   wrap-ansi@6.2.0:
     dependencies:
