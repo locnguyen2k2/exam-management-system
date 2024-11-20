@@ -25,9 +25,9 @@ import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { shuffle } from '~/utils/shuffle';
 import { FileUpload } from '~/modules/system/image/image.interface';
+import * as Excel from 'xlsx';
+import { WorkBook, WorkSheet } from 'xlsx';
 import { plainToClass } from 'class-transformer';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-require-imports
-const Excel = require('exceljs');
 
 export interface IClassifyQuestion {
   chapterId: string;
@@ -361,12 +361,12 @@ export class QuestionService {
       }),
     );
 
-    // await Promise.all(
-    //   questionsInfo.map(
-    //     async ({ chapterId, question }) =>
-    //       await this.chapService.addQuizzes(chapterId, [question]),
-    //   ),
-    // );
+    await Promise.all(
+      questionsInfo.map(
+        async ({ chapterId, question }) =>
+          await this.chapService.addQuizzes(chapterId, [question]),
+      ),
+    );
 
     return questionsInfo.map(({ question }) => question);
   }
@@ -617,126 +617,119 @@ export class QuestionService {
 
   async importFile(args: ImportQuestionDto): Promise<QuestionEntity[]> {
     const file: any = new Promise((resolve) => resolve(args.file));
-    const { createReadStream, mimetype, filename } = await file;
-    const workbook = new Excel.Workbook();
-    await workbook.xlsx.read(createReadStream());
-
-    const worksheet = workbook.getWorksheet(1);
-    const values = [];
-    const data = [];
-    let cols: string[] = [];
-
+    const { createReadStream } = await file;
+    const buffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      createReadStream()
+        .on('data', (chunk: any) => chunks.push(chunk))
+        .on('end', () => resolve(Buffer.concat(chunks)))
+        .on('error', reject);
+    });
+    let workbook: WorkBook;
     try {
-      worksheet.eachRow((row: any, rowNumber: any) => {
-        const rowValues = row.values.slice(1, row.values.length);
-        if (rowNumber === 1) {
-          cols = rowValues.map((key: string) => key);
-        } else {
-          values.push(rowValues);
-        }
-      });
+      workbook = Excel.read(buffer, { type: 'buffer' });
     } catch (err: any) {
       throw new BusinessException(`400:File không hợp lệ!`);
     }
-
-    // Check columns
-    for (let i = 0; i < cols.length; i++) {
-      switch (i) {
+    const sheet: WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const range = Excel.utils.decode_range(sheet['!ref']);
+    // Check name of columns
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const colName = sheet[Excel.utils.encode_cell({ c: C, r: 0 })]?.v;
+      switch (C) {
         case 0:
-          if (cols[i] !== 'chapterId')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'chapterId'`);
+          if (colName !== 'chapterId')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'chapterId'`);
           break;
         case 1:
-          if (cols[i] !== 'content')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'content'`);
+          if (colName !== 'content')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'content'`);
           break;
         case 2:
-          if (cols[i] !== 'level')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'level'`);
+          if (colName !== 'level')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'level'`);
           break;
         case 3:
-          if (cols[i] !== 'category')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'category'`);
+          if (colName !== 'category')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'category'`);
           break;
         case 4:
-          if (cols[i] !== 'status')
+          if (colName !== 'status')
             throw new BusinessException(
-              `400:Cột ${i + 1} phải là cột 'status'`,
+              `400:Cột ${C + 1} phải là cột 'status'`,
             );
           break;
         case 5:
-          if (cols[i] !== 'enable')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'enable'`);
+          if (colName !== 'enable')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'enable'`);
           break;
         case 6:
-          if (cols[i] !== 'description')
+          if (colName !== 'description')
             throw new BusinessException(
-              `400:Cột ${i + 1} phải là 'description'`,
+              `400:Cột ${C + 1} phải là 'description'`,
             );
           break;
         case 7:
-          if (cols[i] !== 'quantityWrongAnswers')
+          if (colName !== 'quantityWrongAnswers')
             throw new BusinessException(
-              `400:Cột ${i + 1} phải là 'quantityWrongAnswers'`,
+              `400:Cột ${C + 1} phải là 'quantityWrongAnswers'`,
             );
           break;
         default:
-          if (cols[i] !== 'answer')
-            throw new BusinessException(`400:Cột ${i + 1} phải là 'answer'`);
+          if (colName !== 'answer')
+            throw new BusinessException(`400:Cột ${C + 1} phải là 'answer'`);
           break;
       }
     }
 
-    if (values.length === 0) throw new BusinessException(`400:Dữ liệu trống!`);
-
-    values.map((val, index) => {
-      const idxRow = index + 2;
-      const rawLength = val.length;
+    const data = [];
+    for (let R = range.s.r; R <= range.e.r; ++R) {
       const handleData: any = {};
       handleData['answers'] = [];
-      if (rawLength < 8)
-        throw new BusinessException(
-          `400:Tại dòng ${index} - Dữ liệu không hợp lệ!`,
-        );
-
-      for (let i = 0; i < rawLength; i++) {
-        switch (i) {
+      if (R === 0 || !sheet[Excel.utils.encode_cell({ c: 0, r: R })]) {
+        continue;
+      }
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const colName = sheet[Excel.utils.encode_cell({ c: C, r: 0 })]?.v;
+        const idxRow = R + 1;
+        const value = sheet[Excel.utils.encode_cell({ c: C, r: R })]?.v;
+        switch (C) {
           case 0:
-            handleData[cols[i]] = val[i].toString();
+            handleData[`${colName}`] = value.toString();
             break;
           case 1:
-            handleData[cols[i]] = val[i].toString();
+            handleData[colName] = value.toString();
             break;
           case 2:
-            if (!LevelEnum[`${val[i]}`])
+            if (!LevelEnum[value])
               throw new BusinessException(
-                `400:Level [c${i + 1}r${idxRow}] không hợp lệ`,
+                `400:Level [c${C + 1}r${idxRow}] không hợp lệ`,
               );
-            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            handleData[colName] = value.toString().toLowerCase();
             break;
           case 3:
-            if (!CategoryEnum[`${val[i]}`])
+            if (!CategoryEnum[value])
               throw new BusinessException(
-                `400:Category [c${i + 1}r${idxRow}] không hợp lệ`,
+                `400:Category [c${C + 1}r${idxRow}] không hợp lệ`,
               );
-            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            handleData[colName] = value.toString().toLowerCase();
             break;
           case 4:
-            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            handleData[colName] = value.toString().toLowerCase();
             break;
           case 5:
-            handleData[cols[i]] = val[i].toString() === 'true';
+            handleData[colName] = value.toString() === 'true';
             break;
           case 6:
-            handleData[`${cols[i]}`] = val[i] ? val[i].toString() : '';
+            handleData[colName] = value ? value.toString() : '';
             break;
           case 7:
-            handleData[`${cols[i]}`] = parseInt(val[i]) ? parseInt(val[i]) : 0;
+            handleData[colName] = parseInt(value) ? parseInt(value) : 0;
             break;
           default: {
-            if (val[i]) {
+            if (value) {
               const answer: any = {};
-              const listValue = val[i].split(',');
+              const listValue = value.split(',');
               listValue.map((val: any) => {
                 const values = val.split(':');
                 answer[`${values[0]}`] =
@@ -754,24 +747,33 @@ export class QuestionService {
                 _.isNil(answer['value'])
               ) {
                 throw new BusinessException(
-                  `400:Đáp án không hợp lệ [c${i + 1}r${idxRow}]`,
+                  `400:Đáp án không hợp lệ [c${C + 1}r${idxRow}]`,
                 );
               }
               handleData['answers'].push(answer);
-              if (i + 1 === rawLength) {
+              if (
+                (C + 1 >= 9 &&
+                  !sheet[Excel.utils.encode_cell({ c: C + 1, r: R })]?.v) ||
+                C === range.e.c
+              ) {
                 data.push(handleData);
               }
-              break;
-            } else {
+            } else if (C === 8) {
               throw new BusinessException(
-                `400:Trống trường đáp án [c${i + 1}r${idxRow}]`,
+                `400:Trống trường đáp án [c${C + 1}r${idxRow}]`,
               );
             }
+            break;
           }
         }
+        // Check đáp án bị dứt quảng
+        if (
+          C + 1 >= 9 &&
+          !sheet[Excel.utils.encode_cell({ c: C + 1, r: R })]?.v
+        )
+          break;
       }
-    });
-
+    }
     let listQuestion: QuestionEntity[] = [];
 
     try {
