@@ -758,6 +758,9 @@ type Mutation {
   """Khởi tạo câu hỏi"""
   createQuestion(createQuestionArgs: CreateQuestionsArgs!): [QuestionModel!]!
 
+  """Import danh sách câu hỏi!"""
+  importQuestion(importQuestionArgs: ImportQuestions!): [QuestionModel!]!
+
   """Cập nhật câu hỏi"""
   updateQuestion(id: String!, updateQuestionArgs: UpdateQuestionArgs!): QuestionModel!
 
@@ -1077,6 +1080,10 @@ input CreateAnswerArgs {
 
   """Chú thích"""
   remark: String
+}
+
+input ImportQuestions {
+  file: Upload
 }
 
 input UpdateQuestionArgs {

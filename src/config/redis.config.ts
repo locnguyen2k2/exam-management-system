@@ -1,5 +1,5 @@
 import { ConfigType, registerAs } from '@nestjs/config';
-import { env, envNumber } from '~/utils/env';
+import { env, envNumber, envString } from '~/utils/env';
 
 export const redisConfigKey = 'redis';
 
@@ -8,6 +8,7 @@ export const RedisConfig = registerAs(redisConfigKey, () => ({
   host: env('REDIS_HOST', '127.0.0.1'),
   port: envNumber('REDIS_PORT', 6379),
   password: env('REDIS_PASSWORD'),
+  user: env('REDIS_USER'),
   db: envNumber('REDIS_DB'),
 }));
 

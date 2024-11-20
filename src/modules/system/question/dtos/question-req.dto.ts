@@ -31,6 +31,15 @@ export class QuestionPageOptions extends PageOptionDto {
   questionCategory: CategoryEnum[];
 }
 
+@InputType('ImportQuestions')
+export class ImportQuestionDto {
+  @Field(() => GraphQLUpload, { nullable: true })
+  file: FileUpload;
+
+  @HideField()
+  createdBy: string;
+}
+
 @InputType()
 class UpdateQuestionAnswerDto extends PartialType(BaseDto) {
   @Field(() => String, { nullable: true })
@@ -57,7 +66,7 @@ class UpdateQuestionAnswerDto extends PartialType(BaseDto) {
 }
 
 @InputType('QuestionArgs')
-class QuestionBaseDto extends BaseDto {
+export class QuestionBaseDto extends BaseDto {
   @Field(() => String, { nullable: true })
   sku: string;
 

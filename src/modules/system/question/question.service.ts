@@ -5,6 +5,7 @@ import { MongoRepository } from 'typeorm';
 import {
   CreateQuestionsDto,
   EnableQuestionsDto,
+  ImportQuestionDto,
   QuestionPageOptions,
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
@@ -24,6 +25,9 @@ import { factorial } from '~/utils/factorial';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import { shuffle } from '~/utils/shuffle';
 import { FileUpload } from '~/modules/system/image/image.interface';
+import { plainToClass } from 'class-transformer';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-require-imports
+const Excel = require('exceljs');
 
 export interface IClassifyQuestion {
   chapterId: string;
@@ -41,7 +45,6 @@ export class QuestionService {
     private readonly questionRepo: MongoRepository<QuestionEntity>,
     @Inject(forwardRef(() => ExamService))
     private readonly examService: ExamService,
-    // private readonly answerService: AnswerService,
     private readonly chapService: ChapterService,
     private readonly imageService: ImageService,
   ) {}
@@ -85,7 +88,7 @@ export class QuestionService {
   }
 
   // Kiểm tra đầu vào
-  async checkCreateQuestion(data: any) {
+  async checkCreateQuestion(data: any, index?: number) {
     await this.chapService.findAvailable(data.chapterId, data.createBy);
 
     const listQuestion = [];
@@ -103,7 +106,7 @@ export class QuestionService {
       totalCorrectAnswer.length > 1
     )
       throw new BusinessException(
-        '400:Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng!',
+        `400:row${index}|Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng!`,
       );
 
     if (
@@ -113,9 +116,7 @@ export class QuestionService {
           data.content.toLowerCase().replace(/\s/g, ''),
       )
     )
-      throw new BusinessException(
-        `400:Nội dung câu hỏi ${data.content} bị trùng!`,
-      );
+      throw new BusinessException(`400:row${index}|Nội dung câu hỏi bị trùng!`);
 
     listQuestion.push(data);
   }
@@ -196,12 +197,12 @@ export class QuestionService {
 
     if (listValue.length <= 1)
       throw new BusinessException(
-        '400:Nội dung phải có ít nhất 1 ô trống ([__])',
+        `400:${content} phải có ít nhất 1 ô trống ([__])`,
       );
 
     if (quantityValue !== this.listFillInAnswerValue(answerValue).length)
       throw new BusinessException(
-        `400:Đáp án phải có ${quantityValue} giá trị ([__])!`,
+        `400:Đáp án ${answerValue} phải có ${quantityValue} giá trị ([__])!`,
       );
   }
 
@@ -219,12 +220,12 @@ export class QuestionService {
 
     if (isStart || isEnd)
       throw new BusinessException(
-        '400:Đáp án điền khuyết không bắt đầu bằng [__] hoặc kết thúc khác [__]',
+        `400:Đáp án ${correctAnswer.value} không bắt đầu bằng [__] hoặc kết thúc khác [__]`,
       );
 
     if (quantityWrongAnswer > maxWrongAnswer)
       throw new BusinessException(
-        `400:${maxWrongAnswer} là số đáp án nhiễu tối đa`,
+        `400:${correctAnswer.value}, ${maxWrongAnswer} là số đáp án nhiễu tối đa`,
       );
 
     while (listAnswers.length < quantityWrongAnswer) {
@@ -258,16 +259,26 @@ export class QuestionService {
 
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: { chapterId: string; question: QuestionEntity }[] = [];
-
+    const quizzesContent: string[] = [];
     // Kiểm tra câu hỏi
     await Promise.all(
-      data.questions.map(
-        async (questionData: any) =>
-          await this.checkCreateQuestion({
+      data.questions.map(async (questionData: any, index: number) => {
+        const content = questionData.content.replaceAll(' ', '').toLowerCase();
+
+        if (quizzesContent.find((val) => val === content))
+          throw new BusinessException(
+            `400:row${index + 1}|Nội dung câu hỏi bị trùng!`,
+          );
+
+        quizzesContent.push(content);
+        await this.checkCreateQuestion(
+          {
             ...questionData,
             createBy: data.createBy,
-          }),
-      ),
+          },
+          index + 1,
+        );
+      }),
     );
 
     await Promise.all(
@@ -276,21 +287,27 @@ export class QuestionService {
         let answers = this.classifyAnswers(questionData.answers);
 
         if (answers.correctAnswers.length === 0)
-          throw new BusinessException('400:Phải có ít nhất 1 đáp án đúng!');
+          throw new BusinessException(
+            `400:row${index + 1}|Phải có ít nhất 1 đáp án đúng!`,
+          );
 
         if (questionData.category === CategoryEnum.FILL_IN) {
-          this.isValidFillInQuiz(
-            questionData.content,
-            answers.correctAnswers[0].value,
-          );
-
-          const maxAnswerValue = this.maxFillInAnswerValue(
-            answers.correctAnswers[0],
-          );
+          let maxAnswerValue = 0;
+          try {
+            this.isValidFillInQuiz(
+              questionData.content,
+              answers.correctAnswers[0].value,
+            );
+            maxAnswerValue = this.maxFillInAnswerValue(
+              answers.correctAnswers[0],
+            );
+          } catch (err: any) {
+            throw new BusinessException(`400:row${index + 1}|${err.message}`);
+          }
 
           if (answers.wrongAnswers.length > maxAnswerValue)
             throw new BusinessException(
-              `400:${maxAnswerValue} là số đáp án tối đa`,
+              `400:row${index + 1}|${maxAnswerValue} là số đáp án tối đa`,
             );
 
           if (!_.isNil(questionData.quantityWrongAnswers)) {
@@ -340,17 +357,16 @@ export class QuestionService {
         });
 
         const question = this.questionRepo.create(initial);
-
         questionsInfo.push({ chapterId, question });
       }),
     );
 
-    await Promise.all(
-      questionsInfo.map(
-        async ({ chapterId, question }) =>
-          await this.chapService.addQuizzes(chapterId, [question]),
-      ),
-    );
+    // await Promise.all(
+    //   questionsInfo.map(
+    //     async ({ chapterId, question }) =>
+    //       await this.chapService.addQuizzes(chapterId, [question]),
+    //   ),
+    // );
 
     return questionsInfo.map(({ question }) => question);
   }
@@ -597,6 +613,185 @@ export class QuestionService {
     }
 
     return '200:Xóa câu hỏi thành công!';
+  }
+
+  async importFile(args: ImportQuestionDto): Promise<QuestionEntity[]> {
+    const file: any = new Promise((resolve) => resolve(args.file));
+    const { createReadStream, mimetype, filename } = await file;
+    const workbook = new Excel.Workbook();
+    await workbook.xlsx.read(createReadStream());
+
+    const worksheet = workbook.getWorksheet(1);
+    const values = [];
+    const data = [];
+    let cols: string[] = [];
+
+    try {
+      worksheet.eachRow((row: any, rowNumber: any) => {
+        const rowValues = row.values.slice(1, row.values.length);
+        if (rowNumber === 1) {
+          cols = rowValues.map((key: string) => key);
+        } else {
+          values.push(rowValues);
+        }
+      });
+    } catch (err: any) {
+      throw new BusinessException(`400:File không hợp lệ!`);
+    }
+
+    // Check columns
+    for (let i = 0; i < cols.length; i++) {
+      switch (i) {
+        case 0:
+          if (cols[i] !== 'chapterId')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'chapterId'`);
+          break;
+        case 1:
+          if (cols[i] !== 'content')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'content'`);
+          break;
+        case 2:
+          if (cols[i] !== 'level')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'level'`);
+          break;
+        case 3:
+          if (cols[i] !== 'category')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'category'`);
+          break;
+        case 4:
+          if (cols[i] !== 'status')
+            throw new BusinessException(
+              `400:Cột ${i + 1} phải là cột 'status'`,
+            );
+          break;
+        case 5:
+          if (cols[i] !== 'enable')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'enable'`);
+          break;
+        case 6:
+          if (cols[i] !== 'description')
+            throw new BusinessException(
+              `400:Cột ${i + 1} phải là 'description'`,
+            );
+          break;
+        case 7:
+          if (cols[i] !== 'quantityWrongAnswers')
+            throw new BusinessException(
+              `400:Cột ${i + 1} phải là 'quantityWrongAnswers'`,
+            );
+          break;
+        default:
+          if (cols[i] !== 'answer')
+            throw new BusinessException(`400:Cột ${i + 1} phải là 'answer'`);
+          break;
+      }
+    }
+
+    if (values.length === 0) throw new BusinessException(`400:Dữ liệu trống!`);
+
+    values.map((val, index) => {
+      const idxRow = index + 2;
+      const rawLength = val.length;
+      const handleData: any = {};
+      handleData['answers'] = [];
+      if (rawLength < 8)
+        throw new BusinessException(
+          `400:Tại dòng ${index} - Dữ liệu không hợp lệ!`,
+        );
+
+      for (let i = 0; i < rawLength; i++) {
+        switch (i) {
+          case 0:
+            handleData[cols[i]] = val[i].toString();
+            break;
+          case 1:
+            handleData[cols[i]] = val[i].toString();
+            break;
+          case 2:
+            if (!LevelEnum[`${val[i]}`])
+              throw new BusinessException(
+                `400:Level [c${i + 1}r${idxRow}] không hợp lệ`,
+              );
+            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            break;
+          case 3:
+            if (!CategoryEnum[`${val[i]}`])
+              throw new BusinessException(
+                `400:Category [c${i + 1}r${idxRow}] không hợp lệ`,
+              );
+            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            break;
+          case 4:
+            handleData[`${cols[i]}`] = val[i].toString().toLowerCase();
+            break;
+          case 5:
+            handleData[cols[i]] = val[i].toString() === 'true';
+            break;
+          case 6:
+            handleData[`${cols[i]}`] = val[i] ? val[i].toString() : '';
+            break;
+          case 7:
+            handleData[`${cols[i]}`] = parseInt(val[i]) ? parseInt(val[i]) : 0;
+            break;
+          default: {
+            if (val[i]) {
+              const answer: any = {};
+              const listValue = val[i].split(',');
+              listValue.map((val: any) => {
+                const values = val.split(':');
+                answer[`${values[0]}`] =
+                  values[0] === 'isCorrect' || values[0] === 'enable'
+                    ? values[1].replaceAll(' ', '') === 'true'
+                    : values[0] === 'score'
+                      ? parseFloat(values[1].replaceAll(' ', ''))
+                      : !_.isNil(values[1])
+                        ? values[1]
+                        : '';
+              });
+              if (
+                _.isNil(answer['isCorrect']) ||
+                _.isNil(answer['score']) ||
+                _.isNil(answer['value'])
+              ) {
+                throw new BusinessException(
+                  `400:Đáp án không hợp lệ [c${i + 1}r${idxRow}]`,
+                );
+              }
+              handleData['answers'].push(answer);
+              if (i + 1 === rawLength) {
+                data.push(handleData);
+              }
+              break;
+            } else {
+              throw new BusinessException(
+                `400:Trống trường đáp án [c${i + 1}r${idxRow}]`,
+              );
+            }
+          }
+        }
+      }
+    });
+
+    let listQuestion: QuestionEntity[] = [];
+
+    try {
+      listQuestion = await this.create(
+        plainToClass(CreateQuestionsDto, {
+          questions: [...data],
+          createBy: args.createdBy,
+        }),
+      );
+    } catch (err: any) {
+      const code = err.errorCode;
+      const message: string[] = err.message.split('|');
+      if (message.length > 1)
+        throw new BusinessException(
+          `${code}:row[${parseInt(message[0].slice(3, message[0].length)) + 1}]|${message[1]}`,
+        );
+      return err;
+    }
+
+    return listQuestion;
   }
 
   async randQuestsByScales(

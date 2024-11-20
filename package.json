@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@liaoliaots/nestjs-redis": "^10.0.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/apollo": "^12.1.0",
     "@nestjs/cache-manager": "^2.3.0",
@@ -35,10 +36,13 @@
     "@types/lodash": "^4.17.7",
     "axios": "^1.7.6",
     "bcryptjs": "^2.4.3",
+    "cache-manager": "^5.7.6",
+    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "form-data": "^4.0.0",
     "google-auth-library": "^9.14.0",
     "graphql-upload": "14",
@@ -50,7 +54,9 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

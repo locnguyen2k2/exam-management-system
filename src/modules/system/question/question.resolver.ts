@@ -4,6 +4,7 @@ import { QuestionEntity } from '~/modules/system/question/entities/question.enti
 import {
   CreateQuestionsDto,
   EnableQuestionsDto,
+  ImportQuestionDto,
   QuestionPageOptions,
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
@@ -65,6 +66,19 @@ export class QuestionResolver {
   ) {
     args.createBy = user.id;
     return await this.questionService.create(args);
+  }
+
+  @Permissions(PermissionEnum.ADD_QUESTION)
+  @Mutation(() => [QuestionEntity], {
+    name: 'importQuestion',
+    description: 'Import danh sách câu hỏi!',
+  })
+  async importFile(
+    @CurrentUser() user: IAuthPayload,
+    @Args('importQuestionArgs') args: ImportQuestionDto,
+  ) {
+    args.createdBy = user.id;
+    return await this.questionService.importFile(args);
   }
 
   @Permissions(PermissionEnum.UPDATE_QUESTION)
