@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
-import {
-  RedisModule as NestRedisModule,
-  RedisService,
-} from '@liaoliaots/nestjs-redis';
+// import {
+//   RedisModule as NestRedisModule,
+//   RedisService,
+// } from '@liaoliaots/nestjs-redis';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
 import { ConfigKeyPaths, IRedisConfig } from '~/config';
@@ -56,24 +56,24 @@ const timeOut = envNumber('REDIS_TIME_OUT');
       inject: [ConfigService],
     }),
 
-    NestRedisModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService<ConfigKeyPaths>) => ({
-        readyLog: true,
-        config: configService.get<IRedisConfig>('redis'),
-      }),
-      inject: [ConfigService],
-    }),
+    // NestRedisModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService<ConfigKeyPaths>) => ({
+    //     readyLog: true,
+    //     config: configService.get<IRedisConfig>('redis'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
   ],
   providers: [
     CacheService,
-    {
-      provide: Symbol('REDIS_CLIENT'),
-      useFactory: (redisService: RedisService) => {
-        return redisService.getOrThrow();
-      },
-      inject: [RedisService],
-    },
+    // {
+    //   provide: Symbol('REDIS_CLIENT'),
+    //   useFactory: (redisService: RedisService) => {
+    //     return redisService.getOrThrow();
+    //   },
+    //   inject: [RedisService],
+    // },
   ],
   exports: [CacheService, CacheModule],
 })
