@@ -9,14 +9,12 @@ import {
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { RoleEnum } from '~/modules/system/role/role.constant';
-import { UserService } from '~/modules/system/user/user.service';
 import { TokenService } from '~/modules/auth/services/token.service';
 
 @Injectable()
 export class PermissionAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly userService: UserService,
     private readonly tokenService: TokenService,
   ) {}
 
@@ -52,8 +50,7 @@ export class PermissionAuthGuard implements CanActivate {
 
     // Kiểm tra nếu PermissionGuard không có yêu cu quyền truy cập
     if (!requirePerVals) return true;
-    const isUser = await this.userService.findOne(user.id);
-    const roles = this.userService.getUserPermissions(isUser);
+    const { roles } = user;
     // Thông qua với user có quyền quản trị
     if (
       roles.some(

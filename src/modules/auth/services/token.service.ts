@@ -43,8 +43,8 @@ export class TokenService {
       await this.verifyAccessToken(accessToken?.value);
       return accessToken;
     } catch {
-      accessToken &&
-        (await this.userService.deleteUserToken(accessToken.value));
+      if (accessToken)
+        await this.userService.deleteUserToken(accessToken.value);
 
       return await this.createUserAT({
         uid: user.id,
@@ -67,8 +67,8 @@ export class TokenService {
 
     const checkRT = refreshToken?.expired_at >= new Date();
     if (!checkRT) {
-      refreshToken &&
-        (await this.userService.deleteUserToken(refreshToken.value));
+      if (refreshToken)
+        await this.userService.deleteUserToken(refreshToken.value);
 
       return await this.generateUuidToken(user.id, TokenEnum.REFRESH_TOKEN);
     } else {
@@ -148,7 +148,7 @@ export class TokenService {
       } else {
         return await this.verifyAccessToken(token.value);
       }
-    } catch (error) {
+    } catch {
       throw new BusinessException(ErrorEnum.INVALID_TOKEN);
     }
   }
@@ -161,8 +161,8 @@ export class TokenService {
 
     const user = await this.userService.getByToken(token);
     const { access_token } = await this.userService.getTokens(user.email);
-    access_token &&
-      (await this.userService.deleteUserToken(access_token.value));
+    if (access_token)
+      await this.userService.deleteUserToken(access_token.value);
 
     const payload = {
       id: user.id,
