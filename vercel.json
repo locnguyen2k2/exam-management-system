@@ -12,7 +12,7 @@
     {
       "src": "/(.*)",
       "dest": "/graphql",
-      "methods": ["POST"]
+      "methods": ["GET","POST"]
     }
   ],
   "env": {
