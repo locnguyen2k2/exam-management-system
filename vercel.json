@@ -11,8 +11,8 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/graphql",
-      "methods": ["GET","POST"]
+      "dest": "src/main.ts",
+      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"]
     }
   ],
   "env": {
