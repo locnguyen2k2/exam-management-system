@@ -27,6 +27,20 @@ export class UserPageOptions extends PageOptionDto {
   readonly email?: EmailEnum[] = [];
 }
 
+@InputType('ChangePasswordArgs')
+export class ChangePasswordDto {
+  @Field(() => String)
+  @Validate(IsValidPassword)
+  newPassword: string;
+
+  @Field(() => String)
+  @Validate(IsValidPassword)
+  oldPassword: string;
+
+  @HideField()
+  updateBy: string;
+}
+
 @InputType()
 class UserBaseDto extends BaseDto {
   @Field(() => String)

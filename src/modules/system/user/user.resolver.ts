@@ -4,6 +4,7 @@ import { UserService } from '~/modules/system/user/user.service';
 import { Permissions } from '~/common/decorators/permission.decorator';
 import {
   AdminCreateDto,
+  ChangePasswordDto,
   UpdateUserDto,
   UserPageOptions,
 } from '~/modules/system/user/dtos/user-req.dto';
@@ -30,6 +31,19 @@ export class UserResolver {
     userPagination: UserPageOptions = new UserPageOptions(),
   ) {
     return await this.userService.findAll(userPagination);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_ACCOUNT)
+  @Query(() => String, {
+    name: 'changePassword',
+    description: 'Đổi mật khẩu',
+  })
+  async changePassword(
+    @Args() args: ChangePasswordDto,
+    @CurrentUser() user: IAuthPayload,
+  ) {
+    args.updateBy = user.id;
+    return await this.userService.changePassword(args);
   }
 
   @Permissions(PermissionEnum.DETAIL_USER)

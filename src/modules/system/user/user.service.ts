@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { UserEntity } from '~/modules/system/user/entities/user.entity';
 import { UserProfile } from '~/modules/system/user/dtos/user-res.dto';
-import { UserPageOptions } from '~/modules/system/user/dtos/user-req.dto';
+import {
+  ChangePasswordDto,
+  UserPageOptions,
+} from '~/modules/system/user/dtos/user-req.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { RoleService } from '~/modules/system/role/role.service';
 import { ErrorEnum } from '~/common/enums/error.enum';
@@ -130,11 +133,31 @@ export class UserService {
     return token.value;
   }
 
+  async changePassword(data: ChangePasswordDto): Promise<string> {
+    const user = await this.findOne(data.updateBy);
+
+    if (!user.password)
+      throw new BusinessException(
+        '400:Tài khoản chưa đăng ký xác thực bằng mật khẩu! Vui lòng đăng ký',
+      );
+
+    const isOldPassword = bcrypt.compareSync(data.oldPassword, user.password);
+
+    if (!isOldPassword)
+      throw new BusinessException('400:Mật khẩu cũ không đúng!');
+
+    await this.updatePassword(user.id, data.newPassword);
+
+    return '200:Đổi mật khẩu thành công!';
+  }
+
   async updatePassword(uid: string, password: string): Promise<UserEntity> {
     const hasPassword = await bcrypt.hashSync(password, 10);
     try {
+      const isUser = await this.findOne(uid);
       await this.userRepository.update({ id: uid }, { password: hasPassword });
-      return await this.findOne(uid);
+      await this.resetTokens(isUser.email);
+      return isUser;
     } catch (err) {
       throw new BusinessException(`400:${err.message}`);
     }
