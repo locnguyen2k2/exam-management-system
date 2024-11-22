@@ -6,6 +6,7 @@ import {
   CreateQuestionsDto,
   EnableQuestionsDto,
   ImportQuestionDto,
+  QuestionBaseDto,
   QuestionPageOptions,
   UpdateQuestionDto,
   UpdateQuestionStatusDto,
@@ -88,37 +89,48 @@ export class QuestionService {
   }
 
   // Kiểm tra đầu vào
-  async checkCreateQuestion(data: any, index?: number) {
+  async checkCreateQuestion(
+    data: any,
+    index?: number,
+  ): Promise<{
+    correctAnswers: AnswerBaseDto[];
+    wrongAnswers: AnswerBaseDto[];
+  }> {
+    const { category, content, quantityWrongAnswers, answers } = data;
+    let { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
     await this.chapService.findAvailable(data.chapterId, data.createBy);
-
-    const listQuestion = [];
-    const isReplaced = await this.chapService.findByQuizContent(data.content);
+    const isReplaced = await this.chapService.findByQuizContent(content);
 
     if (isReplaced && isReplaced.id === data.chapterId)
-      throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${data.content}`);
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
 
-    const totalCorrectAnswer = data.answers.filter(
-      (answer: AnswerEntity) => answer.isCorrect,
-    );
-
-    if (
-      data.category !== CategoryEnum.MULTIPLE_CHOICE &&
-      totalCorrectAnswer.length > 1
-    )
+    if (category !== CategoryEnum.MULTIPLE_CHOICE && correctAnswers.length > 1)
       throw new BusinessException(
         `400:row${index}|Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng!`,
       );
 
-    if (
-      listQuestion.find(
-        (quest: any) =>
-          quest.content.toLowerCase().replace(/\s/g, '') ===
-          data.content.toLowerCase().replace(/\s/g, ''),
-      )
-    )
-      throw new BusinessException(`400:row${index}|Nội dung câu hỏi bị trùng!`);
+    if (category === CategoryEnum.FILL_IN) {
+      let maxAnswerValue = 0;
+      try {
+        this.isValidFillInQuiz(content, correctAnswers[0].value);
+        maxAnswerValue = this.maxFillInAnswerValue(correctAnswers[0]);
+      } catch (err: any) {
+        throw new BusinessException(`400:row${index + 1}|${err.message}`);
+      }
 
-    listQuestion.push(data);
+      if (wrongAnswers.length > maxAnswerValue)
+        throw new BusinessException(
+          `400:row${index + 1}|${maxAnswerValue} là số đáp án tối đa`,
+        );
+
+      if (!_.isNil(quantityWrongAnswers)) {
+        const result = this.randFillInAnswer(answers, quantityWrongAnswers);
+        correctAnswers = result.correctAnswers;
+        wrongAnswers = result.wrongAnswers;
+      }
+    }
+
+    return { correctAnswers, wrongAnswers };
   }
 
   // Phân loại câu hỏi (Đúng/Sai)
@@ -130,36 +142,38 @@ export class QuestionService {
     const correctAnswers: AnswerBaseDto[] = []; // Số đáp án sai
 
     for (const answer of answers) {
-      if (answer.isCorrect) {
-        if (_.isNil(answer.score) || answer.score === 0) {
+      const initialAnswer = answer as AnswerBaseDto;
+
+      if (initialAnswer.isCorrect) {
+        if (_.isNil(initialAnswer.score) || initialAnswer.score === 0) {
           throw new BusinessException(
-            `400:Đáp án "${answer.value}" phải có điểm`,
+            `400:Đáp án "${initialAnswer.value}" phải có điểm`,
           );
         }
 
         const isReplaced = correctAnswers.find(
           (correctAnswer) =>
             correctAnswer.value.replaceAll(' ', '').toLowerCase() ===
-            answer.value.replaceAll(' ', '').toLowerCase(),
+            initialAnswer.value.replaceAll(' ', '').toLowerCase(),
         );
 
         if (!isReplaced) {
-          correctAnswers.push(new AnswerEntity({ ...answer }));
+          correctAnswers.push(new AnswerEntity({ ...initialAnswer }));
         }
       } else {
         const isReplaced = wrongAnswers.find(
           (wrongAnswer) =>
             wrongAnswer.value.replaceAll(' ', '').toLowerCase() ===
-            answer.value.replaceAll(' ', '').toLowerCase(),
+            initialAnswer.value.replaceAll(' ', '').toLowerCase(),
         );
 
-        if (!_.isNil(answer.score) && answer.score > 0)
+        if (!_.isNil(initialAnswer.score) && initialAnswer.score > 0)
           throw new BusinessException(
-            `400:Đáp án "${answer.value}" điểm phải bằng 0`,
+            `400:Đáp án "${initialAnswer.value}" điểm phải bằng 0`,
           );
 
         if (!isReplaced) {
-          wrongAnswers.push(new AnswerEntity({ ...answer }));
+          wrongAnswers.push(new AnswerEntity({ ...initialAnswer }));
         }
       }
     }
@@ -210,9 +224,9 @@ export class QuestionService {
     answers: AnswerBaseDto[],
     quantityWrongAnswer: number,
   ): { correctAnswers: AnswerBaseDto[]; wrongAnswers: AnswerBaseDto[] } {
-    const listAnswers: any[] = [];
-    const classifyAnswer = this.classifyAnswers(answers);
-    const correctAnswer = classifyAnswer.correctAnswers[0];
+    const wrongAnswers: any[] = [];
+    const { correctAnswers } = this.classifyAnswers(answers);
+    const correctAnswer = correctAnswers[0];
     const maxWrongAnswer = this.maxFillInAnswerValue(correctAnswer) - 1;
     const isStart = correctAnswer.value.startsWith('[__]');
     const isEnd = !correctAnswer.value.endsWith('[__]');
@@ -228,95 +242,61 @@ export class QuestionService {
         `400:${correctAnswer.value}, ${maxWrongAnswer} là số đáp án nhiễu tối đa`,
       );
 
-    while (listAnswers.length < quantityWrongAnswer) {
+    while (wrongAnswers.length < quantityWrongAnswer) {
       const shuffledValues = shuffle(listCorrectValue);
-      const wrongValue = shuffledValues.reduce(
-        (acc: string, curr: string) => acc + `${curr}[__]`,
-        '',
-      );
-
-      const isDuplicate = listAnswers.some(
+      const wrongValue = shuffledValues.join('[__]');
+      const isDuplicate = wrongAnswers.some(
         (answer) => answer.value === wrongValue,
       );
 
       if (!isDuplicate && wrongValue !== correctAnswer.value) {
-        listAnswers.push(
+        const initialAnswer: AnswerBaseDto = {
+          ...correctAnswer,
+          score: 0,
+          isCorrect: false,
+          value: wrongValue,
+          enable: correctAnswer.enable,
+        };
+
+        wrongAnswers.push(
           new AnswerEntity({
-            score: null,
-            isCorrect: false,
-            value: wrongValue,
-            enable: correctAnswer.enable,
+            ...initialAnswer,
           }),
         );
       }
     }
 
-    return {
-      correctAnswers: classifyAnswer.correctAnswers,
-      wrongAnswers: listAnswers,
-    };
+    return { correctAnswers, wrongAnswers };
+  }
+
+  handleReplacedQuestion(questions: QuestionBaseDto[]) {
+    const quizzesContent: string[] = [];
+    for (let i = 0; i < questions.length; i++) {
+      const content = questions[i].content.replaceAll(' ', '').toLowerCase();
+
+      if (quizzesContent.find((val) => val === content))
+        throw new BusinessException(
+          `400:row${i + 1}|Nội dung câu hỏi bị trùng!`,
+        );
+
+      quizzesContent.push(content);
+    }
   }
 
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: { chapterId: string; question: QuestionEntity }[] = [];
-    const quizzesContent: string[] = [];
     // Kiểm tra câu hỏi
+    this.handleReplacedQuestion(data.questions);
+
     await Promise.all(
-      data.questions.map(async (questionData: any, index: number) => {
-        const content = questionData.content.replaceAll(' ', '').toLowerCase();
-
-        if (quizzesContent.find((val) => val === content))
-          throw new BusinessException(
-            `400:row${index + 1}|Nội dung câu hỏi bị trùng!`,
-          );
-
-        quizzesContent.push(content);
-        await this.checkCreateQuestion(
+      data.questions.map(async (questionData, index) => {
+        const answers = await this.checkCreateQuestion(
           {
             ...questionData,
             createBy: data.createBy,
           },
           index + 1,
         );
-      }),
-    );
-
-    await Promise.all(
-      data.questions.map(async (questionData, index) => {
-        // Phân loại câu hỏi
-        let answers = this.classifyAnswers(questionData.answers);
-
-        if (answers.correctAnswers.length === 0)
-          throw new BusinessException(
-            `400:row${index + 1}|Phải có ít nhất 1 đáp án đúng!`,
-          );
-
-        if (questionData.category === CategoryEnum.FILL_IN) {
-          let maxAnswerValue = 0;
-          try {
-            this.isValidFillInQuiz(
-              questionData.content,
-              answers.correctAnswers[0].value,
-            );
-            maxAnswerValue = this.maxFillInAnswerValue(
-              answers.correctAnswers[0],
-            );
-          } catch (err: any) {
-            throw new BusinessException(`400:row${index + 1}|${err.message}`);
-          }
-
-          if (answers.wrongAnswers.length > maxAnswerValue)
-            throw new BusinessException(
-              `400:row${index + 1}|${maxAnswerValue} là số đáp án tối đa`,
-            );
-
-          if (!_.isNil(questionData.quantityWrongAnswers)) {
-            answers = this.randFillInAnswer(
-              questionData.answers,
-              questionData.quantityWrongAnswers,
-            );
-          }
-        }
 
         data.questions[index].answers = [
           ...answers.correctAnswers,
@@ -328,14 +308,6 @@ export class QuestionService {
     await Promise.all(
       data.questions.map(async (questionData) => {
         const { answers, chapterId } = questionData;
-        const listAnswer = answers.map(
-          (answer) =>
-            new AnswerEntity({
-              ...answer,
-              create_by: data.createBy,
-              update_by: data.createBy,
-            }),
-        );
         let picture = '';
 
         if (questionData.picture) {
@@ -350,10 +322,17 @@ export class QuestionService {
 
         const initial = new QuestionEntity({
           ...questionData,
-          answers: [...new Set(listAnswer)],
           ...(!_.isEmpty(picture) && { picture: picture }),
           create_by: data.createBy,
           update_by: data.createBy,
+          answers: answers.map(
+            (answer) =>
+              new AnswerEntity({
+                ...answer,
+                create_by: data.createBy,
+                update_by: data.createBy,
+              }),
+          ),
         });
 
         const question = this.questionRepo.create(initial);
@@ -628,7 +607,7 @@ export class QuestionService {
     let workbook: WorkBook;
     try {
       workbook = Excel.read(buffer, { type: 'buffer' });
-    } catch (err: any) {
+    } catch {
       throw new BusinessException(`400:File không hợp lệ!`);
     }
     const sheet: WorkSheet = workbook.Sheets[workbook.SheetNames[0]];
