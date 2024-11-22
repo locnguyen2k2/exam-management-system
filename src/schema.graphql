@@ -676,6 +676,9 @@ input ClassPageOptions {
 }
 
 type Mutation {
+  """Đổi mật khẩu"""
+  changePassword(ChangePasswordArgs: ChangePasswordArgs!): String!
+
   """Khởi tạo người dùng"""
   createUser(adminCreateArgs: CreateAdminArgs!): UserModel!
 
@@ -794,6 +797,11 @@ type Mutation {
   """Cập nhật lớp"""
   updateClass(classId: String!, updateClassArgs: UpdateClassArgs!): ClassModel!
   deleteClasses(classIds: [String!]!): String!
+}
+
+input ChangePasswordArgs {
+  newPassword: String!
+  oldPassword: String!
 }
 
 input CreateAdminArgs {

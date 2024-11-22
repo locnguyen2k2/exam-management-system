@@ -1,8 +1,8 @@
 // import { Global, Module } from '@nestjs/common';
-// // import {
-// //   RedisModule as NestRedisModule,
-// //   RedisService,
-// // } from '@liaoliaots/nestjs-redis';
+// import {
+//   RedisModule as NestRedisModule,
+//   RedisService,
+// } from '@liaoliaots/nestjs-redis';
 // import { ConfigModule, ConfigService } from '@nestjs/config';
 // import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
 // import { ConfigKeyPaths, IRedisConfig } from '~/config';
@@ -23,10 +23,7 @@
 //           socket: {
 //             host: configs.host,
 //             port: configs.port,
-//             reconnectStrategy: (retries: any) => {
-//               console.log(`redis.reconnect.attempt.${retries}`);
-//               return 1000 * timeOut;
-//             },
+//             reconnectStrategy: () => 1000 * timeOut,
 //           },
 //           disableOfflineQueue: true,
 //           password: configs.password,
@@ -38,12 +35,12 @@
 //           await redisClient.connect();
 //         };
 //
-//         redisClient.on('connect', () =>
-//           console.log('redis.connection.connected'),
-//         );
-//         redisClient.on('ready', () => console.log('redis.connection.ready'));
+//         // redisClient.on('connect', () =>
+//         //   console.log('redis.connection.connected'),
+//         // );
+//         // redisClient.on('ready', () => console.log('redis.connection.ready'));
 //         redisClient.on('error', (error) => {
-//           console.log({ err: error.message }, 'redis.connection.error');
+//           // console.log({ err: error.message }, 'redis.connection.error');
 //
 //           if (!error.code) setTimeout(restartRedisService, 1000 * timeOut);
 //         });
@@ -56,24 +53,24 @@
 //       inject: [ConfigService],
 //     }),
 //
-//     // NestRedisModule.forRootAsync({
-//     //   imports: [ConfigModule],
-//     //   useFactory: (configService: ConfigService<ConfigKeyPaths>) => ({
-//     //     readyLog: true,
-//     //     config: configService.get<IRedisConfig>('redis'),
-//     //   }),
-//     //   inject: [ConfigService],
-//     // }),
+//     NestRedisModule.forRootAsync({
+//       imports: [ConfigModule],
+//       useFactory: (configService: ConfigService<ConfigKeyPaths>) => ({
+//         readyLog: true,
+//         config: configService.get<IRedisConfig>('redis'),
+//       }),
+//       inject: [ConfigService],
+//     }),
 //   ],
 //   providers: [
 //     CacheService,
-//     // {
-//     //   provide: Symbol('REDIS_CLIENT'),
-//     //   useFactory: (redisService: RedisService) => {
-//     //     return redisService.getOrThrow();
-//     //   },
-//     //   inject: [RedisService],
-//     // },
+//     {
+//       provide: Symbol('REDIS_CLIENT'),
+//       useFactory: (redisService: RedisService) => {
+//         return redisService.getOrThrow();
+//       },
+//       inject: [RedisService],
+//     },
 //   ],
 //   exports: [CacheService, CacheModule],
 // })

@@ -34,12 +34,12 @@ export class UserResolver {
   }
 
   @Permissions(PermissionEnum.UPDATE_ACCOUNT)
-  @Query(() => String, {
+  @Mutation(() => String, {
     name: 'changePassword',
     description: 'Đổi mật khẩu',
   })
   async changePassword(
-    @Args() args: ChangePasswordDto,
+    @Args('ChangePasswordArgs') args: ChangePasswordDto,
     @CurrentUser() user: IAuthPayload,
   ) {
     args.updateBy = user.id;
