@@ -12,7 +12,7 @@ import {
   ExamPaperPageOptions,
   GenerateExamPaperDto,
   UpdateExamPaperDto,
-} from '~/modules/system/exam/dtos/exam-req.dto.';
+} from '~/modules/system/exam/dtos/exam-req.dto';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
@@ -45,13 +45,8 @@ export class ExamService {
   async findAll(
     uid: string = null,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
-    lessonId: string,
   ) {
-    const paginated = await this.lessonService.paginateExams(
-      lessonId,
-      pageOptions,
-      uid,
-    );
+    const paginated = await this.lessonService.paginateExams(pageOptions, uid);
     return {
       data: paginated.data[0] ? paginated.data[0].exams : [],
       meta: paginated.meta,

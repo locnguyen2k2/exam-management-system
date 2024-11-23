@@ -9,7 +9,7 @@ import {
 } from '~/modules/system/lesson/dtos/lesson-req.dto';
 import * as _ from 'lodash';
 import { LessonDetailDto } from '~/modules/system/lesson/dtos/lesson-res.dto';
-import { searchIndexes } from '~/utils/search';
+import { searchAtlas, searchIndexes } from '~/utils/search';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 // import {
 //   regSpecialChars,
@@ -21,7 +21,11 @@ import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity'
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { ErrorEnum } from '~/common/enums/error.enum';
 import { paginate } from '~/helpers/paginate/paginate';
-import { ExamPaperPageOptions } from '~/modules/system/exam/dtos/exam-req.dto.';
+import { ExamPaperPageOptions } from '~/modules/system/exam/dtos/exam-req.dto';
+import {
+  regSpecialChars,
+  regWhiteSpace,
+} from '~/common/constants/regex.constant';
 
 const defaultLookup = [
   {
@@ -155,17 +159,31 @@ export class LessonService {
   }
 
   async paginateExams(
-    lessonId: string,
     pageOptions: ExamPaperPageOptions = new ExamPaperPageOptions(),
     uid: string,
   ) {
     const filterOptions = [
       {
+        $addFields: {
+          textScore: { $meta: 'searchScore' },
+        },
+      },
+      {
         $unwind: '$exams',
       },
       {
         $match: {
-          id: lessonId,
+          ...(!_.isEmpty(pageOptions.lessonIds) && {
+            id: { $all: pageOptions.lessonIds },
+          }),
+          ...(!_.isEmpty(pageOptions.keyword) && {
+            'exams.label': {
+              $regex: pageOptions.keyword
+                .replace(regSpecialChars, '\\$&')
+                .replace(regWhiteSpace, '\\s*'),
+              $options: 'i',
+            },
+          }),
           ...(!_.isNil(pageOptions.enable) && {
             'exams.enable': pageOptions.enable,
           }),
@@ -190,6 +208,7 @@ export class LessonService {
       { $limit: pageOptions.take },
       {
         $sort: {
+          textScore: -1,
           [`exams.${pageOptions.sort}`]: !pageOptions.sorted ? -1 : 1,
         },
       },
@@ -205,7 +224,7 @@ export class LessonService {
         pageOptions,
         lookups: null,
       },
-      searchIndexes(pageOptions.keyword),
+      searchAtlas('searchExam', pageOptions.keyword),
     );
   }
 
@@ -383,14 +402,14 @@ export class LessonService {
 
           if (!newClass.lessons.find((lesson) => lesson.id === id)) {
             const isReplaced = newClassIds.some((itemId) => itemId === classId);
-            !isReplaced && newClassIds.push(classId);
+            if (!isReplaced) newClassIds.push(classId);
           }
         }),
       );
 
       const oldClasses = await this.classService.findByLesson(id);
       oldClasses.map((oldClass) => {
-        !data.classIds.includes(oldClass.id) && oldClassIds.push(oldClass.id);
+        if (!data.classIds.includes(oldClass.id)) oldClassIds.push(oldClass.id);
       });
     }
 

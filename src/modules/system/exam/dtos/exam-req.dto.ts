@@ -28,6 +28,12 @@ export class ExamPaperPageOptions extends PageOptionDto {
   })
   readonly examStatus: StatusShareEnum[];
 
+  @Field(() => [String], {
+    nullable: true,
+  })
+  @Validate(IsValidStringId)
+  readonly lessonIds: string[];
+
   @Field(() => String, {
     nullable: true,
   })

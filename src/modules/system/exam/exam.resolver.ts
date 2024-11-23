@@ -7,7 +7,7 @@ import {
   ExamPaperPageOptions,
   GenerateExamPaperDto,
   UpdateExamPaperDto,
-} from '~/modules/system/exam/dtos/exam-req.dto.';
+} from '~/modules/system/exam/dtos/exam-req.dto';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
@@ -27,7 +27,6 @@ export class ExamResolver {
     description: 'Lấy danh sách đề thi',
   })
   async exams(
-    @Args('lessonId') @IdParam() lessonId: string,
     @CurrentUser() user: IAuthPayload,
     @Args('examPageOptions', {
       nullable: true,
@@ -38,11 +37,7 @@ export class ExamResolver {
     const isAdmin = user.roles.some(
       (role: any) => role.value === RoleEnum.ADMIN,
     );
-    return this.examService.findAll(
-      isAdmin ? null : user.id,
-      examPageOptions,
-      lessonId,
-    );
+    return this.examService.findAll(isAdmin ? null : user.id, examPageOptions);
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)
