@@ -15,12 +15,17 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
-import { Validate, ValidateNested } from 'class-validator';
+import { IsOptional, Validate, ValidateNested } from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Type } from 'class-transformer';
 
 @InputType('QuestionPageOptions')
 export class QuestionPageOptions extends PageOptionDto {
+  @Field(() => [String], { nullable: true })
+  @Validate(IsValidStringId)
+  @IsOptional()
+  chapterId: string[];
+
   @Field(() => [StatusShareEnum], { nullable: true })
   questionStatus: StatusShareEnum[];
 

@@ -27,7 +27,7 @@ export function pipeLine({
         ],
         pageInfo: [
           ...(Array.isArray(groups)
-            ? [filterOptions[0], filterOptions[1]]
+            ? [filterOptions[0], filterOptions[1], filterOptions[2]]
             : filterOptions),
           { $count: 'numberRecords' },
         ],

@@ -25,7 +25,7 @@ import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
-import { searchIndexes } from '~/utils/search';
+import { searchAtlas, searchIndexes } from '~/utils/search';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
 import { CategoryEnum } from '~/modules/system/category/category.enum';
 
@@ -345,17 +345,31 @@ export class ChapterService {
   }
 
   async findQuizzes(
-    chapterId: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
     uid: string,
   ) {
     const filterOptions = [
       {
+        $addFields: {
+          textScore: { $meta: 'searchScore' },
+        },
+      },
+      {
         $unwind: '$questions',
       },
       {
         $match: {
-          id: chapterId,
+          ...(!_.isEmpty(pageOptions.chapterId) && {
+            id: { $all: pageOptions.chapterId },
+          }),
+          ...(!_.isEmpty(pageOptions.keyword) && {
+            'questions.content': {
+              $regex: pageOptions.keyword
+                .replace(regSpecialChars, '\\$&')
+                .replace(regWhiteSpace, '\\s*'),
+              $options: 'i',
+            },
+          }),
           ...(!_.isEmpty(pageOptions.questionCategory) && {
             'questions.category': { $all: pageOptions.questionCategory },
           }),
@@ -377,6 +391,7 @@ export class ChapterService {
       { $limit: pageOptions.take },
       {
         $sort: {
+          textScore: -1,
           [`questions.${pageOptions.sort}`]: !pageOptions.sorted ? -1 : 1,
         },
       },
@@ -394,7 +409,7 @@ export class ChapterService {
         pageOptions,
         lookups: null,
       },
-      searchIndexes(pageOptions.keyword),
+      searchAtlas('searchQuestion', pageOptions.keyword),
     );
   }
 

@@ -27,7 +27,6 @@ export class QuestionResolver {
     description: 'Lấy danh sách câu hỏi',
   })
   async questions(
-    @Args('chapterId') @IdParam() chapterId: string,
     @CurrentUser() user: IAuthPayload,
     @Args('questionPageOptions', { nullable: true })
     questionPageOptions: QuestionPageOptions = new QuestionPageOptions(),
@@ -38,7 +37,6 @@ export class QuestionResolver {
 
     return this.questionService.findAll(
       isAdmin ? null : user.id,
-      chapterId,
       questionPageOptions,
     );
   }

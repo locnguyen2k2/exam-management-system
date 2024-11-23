@@ -52,14 +52,9 @@ export class QuestionService {
 
   async findAll(
     uid: string,
-    chapterId: string,
     pageOptions: QuestionPageOptions = new QuestionPageOptions(),
   ) {
-    const paginated = await this.chapService.findQuizzes(
-      chapterId,
-      pageOptions,
-      uid,
-    );
+    const paginated = await this.chapService.findQuizzes(pageOptions, uid);
 
     return {
       data: paginated.data[0] ? paginated.data[0].questions : [],
