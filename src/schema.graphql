@@ -495,15 +495,13 @@ type Query {
   lesson(lessonId: String!): LessonModel!
 
   """Lấy danh sách câu hỏi"""
-  questions(chapterId: String!, questionPageOptions: QuestionPageOptions): QuestionPagination!
+  questions(questionPageOptions: QuestionPageOptions): QuestionPagination!
 
   """Chi tiết câu hỏi"""
   questionDetail(questionId: String!): QuestionModel!
 
   """Lấy danh sách đề thi"""
   exams(
-    lessonId: String!
-
     """Bộ lọc danh sách đề"""
     examPageOptions: ExamPaperPageOptions
   ): ExamPagination!
@@ -634,6 +632,7 @@ input QuestionPageOptions {
   enable: Boolean
   page: Int = 1
   take: Int = 10
+  chapterId: [String!]
   questionStatus: [StatusShareEnum!]
   questionLevel: [LevelEnum!]
   questionCategory: [CategoryEnum!]
@@ -654,6 +653,7 @@ input ExamPaperPageOptions {
   page: Int = 1
   take: Int = 10
   examStatus: [StatusShareEnum!]
+  lessonIds: [String!]
   examSku: String
 }
 
