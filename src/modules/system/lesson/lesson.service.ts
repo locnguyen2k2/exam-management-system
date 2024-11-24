@@ -506,11 +506,11 @@ export class LessonService {
   async deleteMany(ids: string[], uid: string) {
     await Promise.all(
       ids.map(async (lessonId) => {
-        await this.findAvailable(lessonId, uid);
-
+        const lesson = await this.findAvailable(lessonId, uid);
         const listClass = await this.classService.findByLesson(lessonId);
         const classIds = listClass.map(({ id }) => id);
 
+        await this.chapterService.deleteMany(lesson.chapterIds, uid);
         await this.classService.deleteLesson(classIds, lessonId);
       }),
     );
