@@ -2,7 +2,12 @@ import { BaseDto } from '~/common/dtos/base.dto';
 import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { Validate, ValidateNested } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsNotEmpty,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Type } from 'class-transformer';
 
@@ -18,6 +23,7 @@ export class ChapterBaseDto extends BaseDto {
   label: string;
 
   @Field(() => String, { description: 'Tên chương' })
+  @IsNotEmpty()
   name: string;
 
   @Field(() => String, { description: 'Mã học phần' })
@@ -36,6 +42,7 @@ export class CreateChaptersDto {
   @Field(() => [ChapterBaseDto])
   @ValidateNested({ each: true })
   @Type(() => ChapterBaseDto)
+  @ArrayNotEmpty()
   chapters: ChapterBaseDto[];
 
   @HideField()
@@ -73,6 +80,7 @@ export class EnableChaptersDto {
   @Field(() => [EnableChapterDto])
   @ValidateNested({ each: true })
   @Type(() => EnableChapterDto)
+  @ArrayNotEmpty()
   chaptersEnable: EnableChapterDto[];
 
   @HideField()
@@ -84,6 +92,7 @@ export class UpdateChaptersStatusDto {
   @Field(() => [ChapterStatusDto])
   @ValidateNested({ each: true })
   @Type(() => ChapterStatusDto)
+  @ArrayNotEmpty()
   chaptersStatus: ChapterStatusDto[];
 
   @HideField()

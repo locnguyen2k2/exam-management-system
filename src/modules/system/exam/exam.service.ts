@@ -23,7 +23,7 @@ import { alphabet } from '~/modules/system/exam/exam.constant';
 import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
-import { AnswerEntity } from '~/modules/system/answer/entities/answer.entity';
+import { AnswerEntity } from '~/modules/system/question/entities/answer.entity';
 import { shuffle } from '~/utils/shuffle';
 import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
 

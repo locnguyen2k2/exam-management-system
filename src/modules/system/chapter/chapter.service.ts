@@ -27,7 +27,7 @@ import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
 import { searchAtlas, searchIndexes } from '~/utils/search';
 import { PageDto } from '~/common/dtos/pagination/pagination.dto';
-import { CategoryEnum } from '~/modules/system/category/category.enum';
+import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
 
 @Injectable()
 export class ChapterService {
@@ -150,8 +150,8 @@ export class ChapterService {
 
         const isReplaced = newChapters.find(
           (chap: ChapterEntity) =>
-            chap.name.toLowerCase().replace(/\s/g, '') ===
-            chapData.name.toLowerCase().replace(/\s/g, ''),
+            chap.name.toLowerCase().replaceAll(/\s/g, '') ===
+            chapData.name.toLowerCase().replaceAll(/\s/g, ''),
         );
 
         if (isReplaced)

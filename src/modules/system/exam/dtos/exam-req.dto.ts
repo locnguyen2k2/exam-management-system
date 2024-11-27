@@ -19,7 +19,7 @@ import {
 } from '~/modules/system/exam/enums/label.enum';
 import { IsValidSku } from '~/common/decorators/sku.decorator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
-import { CategoryEnum } from '~/modules/system/category/category.enum';
+import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
 
 @InputType('ExamPaperPageOptions')
 export class ExamPaperPageOptions extends PageOptionDto {

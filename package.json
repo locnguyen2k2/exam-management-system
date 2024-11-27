@@ -42,7 +42,6 @@
     "google-auth-library": "^9.14.0",
     "graphql-upload": "14",
     "lodash": "^4.17.21",
-    "mammoth": "^1.8.0",
     "mongodb": "^6.10.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

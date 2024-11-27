@@ -11,10 +11,10 @@ import { BaseDto } from '~/common/dtos/base.dto';
 import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { CategoryEnum } from '~/modules/system/category/category.enum';
+import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
-import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
+import { AnswerBaseDto } from '~/modules/system/question/dtos/answer-req.dto';
 import {
   ArrayNotEmpty,
   IsNotEmpty,

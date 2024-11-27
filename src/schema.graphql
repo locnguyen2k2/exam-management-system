@@ -224,14 +224,10 @@ enum StatusShareEnum {
 
 """Loại câu hỏi"""
 enum CategoryEnum {
-  EASSAY
   SINGLE_CHOICE
   MULTIPLE_CHOICE
   TRUE_FALSE
   FILL_IN
-  MATCHING
-  ORDERING
-  IMAGE_BASED
 }
 
 type ExamQuestionModel {
