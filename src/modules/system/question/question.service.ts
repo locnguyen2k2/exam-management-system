@@ -99,6 +99,11 @@ export class QuestionService {
     if (isReplaced && isReplaced.id === data.chapterId)
       throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
 
+    if (correctAnswers.length === 0)
+      throw new BusinessException(
+        `400:row${index}|${content} phải có ít nhất 1 đáp án đúng!`,
+      );
+
     if (category !== CategoryEnum.MULTIPLE_CHOICE && correctAnswers.length > 1)
       throw new BusinessException(
         `400:row${index}|Ngoài trắc nghiệm nhiều lựa chọn, tất cả câu hỏi khác chỉ có 1 đáp án đúng!`,

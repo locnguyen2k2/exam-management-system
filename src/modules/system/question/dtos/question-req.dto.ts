@@ -16,6 +16,7 @@ import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
 import {
+  ArrayNotEmpty,
   IsNotEmpty,
   IsOptional,
   Validate,
@@ -110,17 +111,16 @@ export class QuestionBaseDto extends BaseDto {
   })
   quantityWrongAnswers: number;
 
-  @Field(() => [AnswerBaseDto!]!, {
+  @Field(() => [AnswerBaseDto], {
     description:
       'Với câu hỏi điền khuyết, ' +
       'đáp án đúng là đáp án chứa các giá trị bị khuyết ' +
       'và ngăn cách bởi tổ hợp các ký hiệu: [__]. ' +
       'Chỉ cần nhập đáp án đúng nếu có nhập số lượng đáp án',
   })
+  @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => AnswerBaseDto)
-  @IsNotEmpty()
-  @Expose()
   answers: AnswerBaseDto[];
 }
 

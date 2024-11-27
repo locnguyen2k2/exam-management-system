@@ -1,6 +1,6 @@
 import { Field, Float, InputType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
-import { IsOptional, Min } from 'class-validator';
+import { IsNotEmpty, IsOptional, Min } from 'class-validator';
 
 @InputType('CreateAnswerArgs')
 export class AnswerBaseDto extends BaseDto {
@@ -8,6 +8,7 @@ export class AnswerBaseDto extends BaseDto {
     description:
       'Đáp án câu hỏi điền khuyết sẽ phân cách bằng ký hiệu [__] (đóng ngoặc vuông, 2 gạch dưới, đóng ngoặc vuông)',
   })
+  @IsNotEmpty()
   value: string;
 
   @Field(() => Boolean, { nullable: true })
