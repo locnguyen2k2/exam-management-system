@@ -119,6 +119,8 @@ export class QuestionBaseDto extends BaseDto {
   })
   @ValidateNested({ each: true })
   @Type(() => AnswerBaseDto)
+  @IsNotEmpty()
+  @Expose()
   answers: AnswerBaseDto[];
 }
 
