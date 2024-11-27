@@ -15,9 +15,14 @@ import { CategoryEnum } from '~/modules/system/category/category.enum';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import { FileUpload } from '~/modules/system/image/image.interface';
 import { AnswerBaseDto } from '~/modules/system/answer/dtos/answer-req.dto';
-import { IsOptional, Validate, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 @InputType('QuestionPageOptions')
 export class QuestionPageOptions extends PageOptionDto {
@@ -76,6 +81,8 @@ export class QuestionBaseDto extends BaseDto {
   sku: string;
 
   @Field(() => String)
+  @IsNotEmpty()
+  @Expose()
   content: string;
 
   @Field(() => GraphQLUpload, { nullable: true })

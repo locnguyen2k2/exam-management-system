@@ -2,9 +2,9 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { Validate, ValidateNested } from 'class-validator';
+import { IsNotEmpty, Validate, ValidateNested } from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 @InputType('LessonPageOptions')
 export class LessonPageOptions extends PageOptionDto {
@@ -21,6 +21,8 @@ class LessonBaseDto extends BaseDto {
   label: string;
 
   @Field(() => String)
+  @IsNotEmpty()
+  @Expose()
   name: string;
 
   @Field(() => String, { nullable: true })
