@@ -62,16 +62,16 @@ const timeOut = envNumber('REDIS_TIME_OUT');
     //   inject: [ConfigService],
     // }),
   ],
-  // providers: [
-  //   CacheService,
-  //   {
-  //     provide: Symbol('REDIS_CLIENT'),
-  //     useFactory: (redisService: RedisService) => {
-  //       return redisService.getOrThrow();
-  //     },
-  //     inject: [RedisService],
-  //   },
-  // ],
+  providers: [
+    CacheService,
+    // {
+    //   provide: Symbol('REDIS_CLIENT'),
+    //   useFactory: (redisService: RedisService) => {
+    //     return redisService.getOrThrow();
+    //   },
+    //   inject: [RedisService],
+    // },
+  ],
   exports: [CacheService, CacheModule],
 })
 export class RedisModule {}
