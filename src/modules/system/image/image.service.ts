@@ -14,6 +14,9 @@ export class ImageService {
     const formData = new FormData();
     try {
       const { createReadStream, filename, mimetype } = await picture;
+      if (!mimetype.includes('image/'))
+        throw new BusinessException('400:Vui lòng nhập vào tệp hình ảnh!');
+
       formData.append(
         'operations',
         JSON.stringify({
@@ -37,7 +40,7 @@ export class ImageService {
       return data.data.uploadImage;
     } catch (error: any) {
       throw new BusinessException(
-        `400:Cập nhật hình ảnh thất bại ${error.message}!`,
+        `400:Cập nhật hình ảnh thất bại! ${error.message}!`,
       );
     }
   }
