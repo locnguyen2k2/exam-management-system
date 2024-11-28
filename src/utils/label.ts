@@ -2,6 +2,7 @@ import {
   AnswerLabelEnum,
   QuestionLabelEnum,
 } from '~/modules/system/exam/enums/label.enum';
+import { BusinessException } from '~/common/exceptions/biz.exception';
 
 export function handleLabel(label: string, index: string) {
   switch (label) {
@@ -33,7 +34,7 @@ export function handleLabel(label: string, index: string) {
       return `${index.toUpperCase()}:`;
     }
     default: {
-      return null;
+      throw new BusinessException('400:Mâu câu không hợp lệ!');
     }
   }
 }

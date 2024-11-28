@@ -1,7 +1,5 @@
 import * as process from 'node:process';
 
-export const isDev = process.env.NODE_ENV === 'development';
-
 export const cwd = process.cwd();
 
 export type BaseType = boolean | number | string | undefined | null;

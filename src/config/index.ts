@@ -20,11 +20,6 @@ import {
   redisConfigKey,
 } from '~/config/redis.config';
 import { IJwtConfig, JwtConfig, jwtConfigKey } from '~/config/jwt.config';
-// import {
-//   FirebaseConfig,
-//   firebaseKey,
-//   IFirebaseConfig,
-// } from '~/config/firebase/firebase.config';
 
 export * from '~/config/app.config';
 export * from '~/config/database.config';
@@ -33,8 +28,6 @@ export * from '~/config/mailer.config';
 export * from '~/config/jwt.config';
 export * from '~/config/redis.config';
 
-// export * from '~/config/firebase/firebase.config';
-
 export interface AllConfigType {
   [appConfigKey]: IAppConfig;
   [dbConfigKey]: IDatabaseConfig;
@@ -42,7 +35,6 @@ export interface AllConfigType {
   [mailerConfigKey]: IMailerConfig;
   [jwtConfigKey]: IJwtConfig;
   [redisConfigKey]: IRedisConfig;
-  // [firebaseKey]: IFirebaseConfig;
 }
 
 export type ConfigKeyPaths = RecordNamePaths<AllConfigType>;
@@ -54,5 +46,4 @@ export default {
   MailerConfig,
   JwtConfig,
   RedisConfig,
-  // FirebaseConfig,
 };
