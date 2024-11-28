@@ -7,7 +7,6 @@ import { env } from '~/utils/env';
 
 @Injectable()
 export class ImageService {
-  // @Inject('FIREBASE_ADMIN') private readonly firebaseAdmin: admin.app.App,
   constructor() {}
 
   async uploadImage(picture: Promise<FileUpload>): Promise<string> {
