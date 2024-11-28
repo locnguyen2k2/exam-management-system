@@ -5,12 +5,11 @@ import { ConfigKeyPaths } from '~/config';
 import { useContainer } from 'class-validator';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
-import { envNumber, envString } from '~/utils/env';
+import { envNumber } from '~/utils/env';
 
 declare const module: any;
 
 async function bootstrap() {
-  let hostIdx = 1;
   const app = await NestFactory.create<INestApplication>(AppModule);
   const configService = app.get(ConfigService<ConfigKeyPaths>);
   const { port } = configService.get('app', { infer: true });
@@ -36,26 +35,12 @@ async function bootstrap() {
     }),
   );
 
-  const appListen = async () => {
-    await app
-      .listen(port, envString(`NEST_APP_HOST${hostIdx}`), async () => {
-        const prefix = 'W';
-        const { pid } = process;
-        const url = await app.getUrl();
-        console.log(`[${prefix + pid}] Server running on ${url}`);
-        hostIdx = 1;
-      })
-      .catch(async (err) => {
-        hostIdx = hostIdx + 1;
-        if (hostIdx <= 3) {
-          await appListen();
-        } else {
-          throw Error(err);
-        }
-      });
-  };
-
-  await appListen();
+  await app.listen(port, '0.0.0.0', async () => {
+    const prefix = 'W';
+    const { pid } = process;
+    const url = await app.getUrl();
+    console.log(`[${prefix + pid}] Server running on ${url}`);
+  });
 
   if (module.hot) {
     module.hot.accept();
