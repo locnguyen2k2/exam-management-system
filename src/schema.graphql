@@ -793,6 +793,9 @@ type Mutation {
   """Tạo lớp"""
   createClass(createClassArgs: CreateClassArgs!): ClassModel!
 
+  """Chi tiết lớp học"""
+  classDetail(id: String!): ClassModel!
+
   """Cập nhật lớp"""
   updateClass(classId: String!, updateClassArgs: UpdateClassArgs!): ClassModel!
   deleteClasses(classIds: [String!]!): String!

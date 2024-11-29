@@ -49,7 +49,11 @@ export class ExamResolver {
     @Args('id') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
   ) {
-    return await this.examService.getExamDetail(id, user.id);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return await this.examService.getExamDetail(id, isAdmin ? null : user.id);
   }
 
   @Permissions(PermissionEnum.DETAIL_EXAM)

@@ -51,7 +51,11 @@ export class LessonResolver {
     @Args('lessonId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
   ) {
-    return await this.lessonService.detailLesson(id, user.id);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return await this.lessonService.detailLesson(id, isAdmin ? null : user.id);
   }
 
   @Permissions(PermissionEnum.ADD_LESSON)

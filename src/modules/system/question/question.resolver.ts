@@ -50,7 +50,10 @@ export class QuestionResolver {
     @Args('questionId') @IdParam() id: string,
     @CurrentUser() user: IAuthPayload,
   ) {
-    return this.questionService.detailQuestion(id, user.id);
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+    return this.questionService.detailQuestion(id, isAdmin ? null : user.id);
   }
 
   @Permissions(PermissionEnum.ADD_QUESTION)

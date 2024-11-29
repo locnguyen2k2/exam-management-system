@@ -64,7 +64,7 @@ export class QuestionService {
     };
   }
 
-  async detailQuestion(id: string, uid: string): Promise<QuestionEntity> {
+  async detailQuestion(id: string, uid?: string): Promise<QuestionEntity> {
     const isExisted = await this.findOne(id, uid);
 
     if (isExisted) {
@@ -77,7 +77,7 @@ export class QuestionService {
     return await this.chapService.getQuizzesByChapterId(chapterId);
   }
 
-  async findOne(id: string, uid: string): Promise<QuestionEntity> {
+  async findOne(id: string, uid?: string): Promise<QuestionEntity> {
     const { question } = await this.chapService.findAvailableQuiz(id, uid);
     if (question) return question;
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);

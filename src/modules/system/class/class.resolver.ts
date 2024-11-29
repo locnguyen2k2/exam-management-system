@@ -51,6 +51,22 @@ export class ClassResolver {
     return await this.classServicee.create(args);
   }
 
+  @Permissions(PermissionEnum.DETAIL_CLASS)
+  @Mutation(() => ClassEntity, {
+    name: 'classDetail',
+    description: 'Chi tiết lớp học',
+  })
+  async detail(
+    @Args('id') @IdParam() id: string,
+    @CurrentUser() user: IAuthPayload,
+  ): Promise<ClassEntity> {
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+
+    return await this.classServicee.findAvailable(id, isAdmin ? null : user.id);
+  }
+
   @Permissions(PermissionEnum.UPDATE_CLASS)
   @Mutation(() => ClassEntity, {
     name: 'updateClass',
