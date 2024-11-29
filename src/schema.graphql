@@ -1027,7 +1027,7 @@ input LessonBaseDto {
   name: String!
 
   """Số tín chỉ"""
-  credit: Float!
+  credit: Int!
   description: String
   classIds: [String!]!
   status: StatusShareEnum
@@ -1039,7 +1039,7 @@ input UpdateLessonArgs {
   name: String
 
   """Số tín chỉ"""
-  credit: Float
+  credit: Int
   description: String
   classIds: [String!]
   status: StatusShareEnum
@@ -1150,7 +1150,7 @@ input CreateExamPaperArgs {
   label: String!
 
   """Thời gian làm bài (phút)"""
-  time: Float!
+  time: Int!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!
@@ -1190,7 +1190,7 @@ input GenerateExamPaperArgs {
   label: String!
 
   """Thời gian làm bài (phút)"""
-  time: Float!
+  time: Int!
   questionLabel: QuestionLabelEnum!
   answerLabel: AnswerLabelEnum!
   lessonId: String!

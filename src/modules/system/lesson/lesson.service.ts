@@ -550,7 +550,7 @@ export class LessonService {
     return true;
   }
 
-  async deleteMany(ids: string[], uid: string) {
+  async deleteMany(ids: string[], uid?: string) {
     await Promise.all(
       ids.map(async (lessonId) => {
         const lesson = await this.findAvailable(lessonId, uid);

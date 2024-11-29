@@ -1,4 +1,4 @@
-import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
+import { Field, HideField, InputType, Int, PartialType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
@@ -31,7 +31,7 @@ class LessonBaseDto extends BaseDto {
   @Expose()
   name: string;
 
-  @Field(() => Number, { description: 'Số tín chỉ' })
+  @Field(() => Int, { description: 'Số tín chỉ' })
   @IsNotEmpty()
   @Max(20)
   @Min(1)

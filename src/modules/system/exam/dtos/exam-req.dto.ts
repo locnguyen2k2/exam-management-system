@@ -1,10 +1,11 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
-import { Field, Float, HideField, InputType } from '@nestjs/graphql';
+import { Field, Float, HideField, InputType, Int } from '@nestjs/graphql';
 import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { Transform, Type } from 'class-transformer';
 import { IsValidScale } from '~/common/decorators/scale.decorator';
 import {
+  IsInt,
   IsOptional,
   Max,
   Min,
@@ -68,10 +69,10 @@ class BaseExamDto extends BaseDto {
   @Field(() => String)
   label: string;
 
-  @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
+  @Field(() => Int, { description: 'Thời gian làm bài (phút)' })
+  @IsInt()
   @Min(30)
-  @Transform(({ value }) => `${value} phút`)
-  time: string;
+  time: number;
 
   @Field(() => QuestionLabelEnum)
   questionLabel: QuestionLabelEnum;

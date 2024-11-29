@@ -180,7 +180,7 @@ export class ExamService {
 
       const newExam = new ExamEntity({
         label: data.label,
-        time: data.time,
+        time: `${data.time} phút`,
         sku: data.sku + randomNumbs(3),
         status: data.status,
         enable: data.enable,
@@ -322,7 +322,7 @@ export class ExamService {
       data.createBy,
     );
 
-    if (lesson.credit <= 3 && parseInt(data.time.split(' ')[0]) > 90)
+    if (lesson.credit <= 3 && data.time > 90)
       throw new BusinessException(
         `400:Thời gian làm bài với ${lesson.credit} không được lớn hớn 90!`,
       );
@@ -378,7 +378,7 @@ export class ExamService {
       listExams.push(
         new ExamEntity({
           label: data.label,
-          time: data.time,
+          time: `${data.time} phút`,
           sku: data.sku + randomNumbs(3),
           status: data.status,
           enable: data.enable,

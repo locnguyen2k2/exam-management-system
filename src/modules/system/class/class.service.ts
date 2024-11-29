@@ -330,29 +330,29 @@ export class ClassService {
       if (isExisted.create_by !== uid)
         throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
 
-      if (isExisted.lessons.length > 0)
-        throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
+      if (isExisted.lessons.length > 0) {
+        isExisted.lessons.map((lesson) => {
+          if (lesson.exams.length > 0)
+            throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
+        });
+      }
 
       const isReplaced = classIds.some((classId) => classId === id);
 
       if (!isReplaced) classIds.push(id);
     }
 
-    // for (const id of classIds) {
-    //   const isExisted = await this.findOne(id);
-    //
-    //   if (isExisted.lessonIds.length > 0)
-    //     for (const lessonId of isExisted.lessonIds) {
-    //       const lesson = await this.lessonService.findOne(lessonId);
-    //       const newLessonClassIds: string[] = lesson.classIds.filter(
-    //         (classId) => classId !== id,
-    //       );
-    //
-    //       await this.lessonService.update(lessonId, {
-    //         classIds: newLessonClassIds,
-    //       });
-    //     }
-    // }
+    await Promise.all(
+      ids.map(async (classId) => {
+        const { lessons } = await this.findOne(classId);
+
+        if (lessons.length > 0) {
+          await this.lessonService.deleteMany(
+            lessons.map((lesson) => lesson.id),
+          );
+        }
+      }),
+    );
 
     await this.classRepo.deleteMany({ id: { $in: classIds } });
 

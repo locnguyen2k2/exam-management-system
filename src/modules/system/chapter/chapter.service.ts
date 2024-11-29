@@ -384,13 +384,13 @@ export class ChapterService {
     return 'Cập nhật thành công!';
   }
 
-  async deleteMany(ids: string[], uid: string): Promise<string> {
+  async deleteMany(ids: string[], uid?: string): Promise<string> {
     const listChapterIds: string[] = [];
     await Promise.all(
       ids.map(async (id) => {
         await this.findAvailable(id, uid);
-        if ((await this.questionService.findByChapter(id)).length !== 0)
-          throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
+        // if ((await this.questionService.findByChapter(id)).length !== 0)
+        //   throw new BusinessException(ErrorEnum.RECORD_IN_USED, id);
 
         const lesson = await this.lessonService.findByChapter(id);
         const newChapterIds = lesson.chapterIds.filter(
