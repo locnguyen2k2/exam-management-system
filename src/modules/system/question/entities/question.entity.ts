@@ -1,7 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
 import { AnswerEntity } from '~/modules/system/question/entities/answer.entity';

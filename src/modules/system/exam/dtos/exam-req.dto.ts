@@ -1,7 +1,7 @@
 import { BaseDto } from '~/common/dtos/base.dto';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { Field, Float, HideField, InputType } from '@nestjs/graphql';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { Transform, Type } from 'class-transformer';
 import { IsValidScale } from '~/common/decorators/scale.decorator';
 import {
@@ -69,6 +69,7 @@ class BaseExamDto extends BaseDto {
   label: string;
 
   @Field(() => Number, { description: 'Thời gian làm bài (phút)' })
+  @Min(30)
   @Transform(({ value }) => `${value} phút`)
   time: string;
 

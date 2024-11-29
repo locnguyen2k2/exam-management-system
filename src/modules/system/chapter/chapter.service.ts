@@ -22,7 +22,7 @@ import { QuestionService } from '~/modules/system/question/question.service';
 import { ChapterDetailDto } from '~/modules/system/chapter/dtos/chapter-res.dto';
 import { QuestionEntity } from '~/modules/system/question/entities/question.entity';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { paginate } from '~/helpers/paginate/paginate';
 import { QuestionPageOptions } from '~/modules/system/question/dtos/question-req.dto';
 import { searchAtlas, searchIndexes } from '~/utils/search';
@@ -105,28 +105,92 @@ export class ChapterService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  async findByName(name: string): Promise<ChapterEntity> {
+  async findByName(name: string, uid?: string): Promise<ChapterEntity[]> {
     const handleName = name
       .replace(regSpecialChars, '\\$&')
       .replace(regWhiteSpace, '\\s*');
-    const isExisted = await this.chapterRepo.findOneBy({
+
+    return await this.chapterRepo.find({
       name: { $regex: handleName, $options: 'i' },
+      ...(uid && {
+        $or: [{ create_by: uid }],
+      }),
     });
-    if (isExisted) return isExisted;
   }
 
-  async findByQuizContent(content: string): Promise<ChapterEntity> {
+  async isReplacedNameByUid(name: string, uid: string): Promise<ChapterEntity> {
+    const isReplaced = await this.findByName(name, uid);
+
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name }) => name.replaceAll(' ', '').toLowerCase() === replacedName,
+    );
+  }
+
+  async isReplacedNameById(
+    name: string,
+    uid: string,
+    chapterId: string,
+  ): Promise<ChapterEntity> {
+    const isReplaced = await this.findByName(name, uid);
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name, id }) =>
+        name.replaceAll(' ', '').toLowerCase() === replacedName &&
+        id !== chapterId,
+    );
+  }
+
+  async findByQuizContent(
+    content: string,
+    uid?: string,
+  ): Promise<ChapterEntity[]> {
     const handleContent = content
       .replace(regSpecialChars, '\\$&')
       .replace(regWhiteSpace, '\\s*');
 
-    const isExisted = await this.chapterRepo.findOne({
-      where: {
-        'questions.content': { $regex: handleContent, $options: 'i' },
-      },
+    return await this.chapterRepo.find({
+      'questions.content': { $regex: handleContent, $options: 'i' },
+      ...(uid && {
+        $or: [{ create_by: uid }],
+      }),
     });
+  }
 
-    if (isExisted) return isExisted;
+  async isReplacedContentByUid(
+    content: string,
+    uid: string,
+  ): Promise<ChapterEntity> {
+    const isReplaced = await this.findByQuizContent(content, uid);
+
+    const replacedContent = content.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(({ questions }) =>
+      questions.some(
+        (question) =>
+          question.content.replaceAll(' ', '').toLowerCase() ===
+          replacedContent,
+      ),
+    );
+  }
+
+  async isReplacedContentById(
+    content: string,
+    uid: string,
+    questionId: string,
+  ): Promise<ChapterEntity> {
+    const isReplaced = await this.findByQuizContent(content, uid);
+    const replacedContent = content.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(({ questions }) =>
+      questions.some(
+        (question) =>
+          question.content.replaceAll(' ', '').toLowerCase() ===
+            replacedContent && question.id !== questionId,
+      ),
+    );
   }
 
   async create(data: CreateChaptersDto): Promise<ChapterEntity[]> {
@@ -143,19 +207,13 @@ export class ChapterService {
           data.createBy,
         );
 
-        const isExisted = await this.findByName(chapData.name);
-
-        if (isExisted && isExisted.create_by === data.createBy)
-          throw new BusinessException(ErrorEnum.RECORD_EXISTED, chapData.name);
-
-        const isReplaced = newChapters.find(
-          (chap: ChapterEntity) =>
-            chap.name.toLowerCase().replaceAll(/\s/g, '') ===
-            chapData.name.toLowerCase().replaceAll(/\s/g, ''),
+        const isExisted = await this.isReplacedNameByUid(
+          chapData.name,
+          data.createBy,
         );
 
-        if (isReplaced)
-          throw new BusinessException(`400:Chương ${isReplaced.name} bị trùng`);
+        if (isExisted)
+          throw new BusinessException(ErrorEnum.RECORD_EXISTED, chapData.name);
 
         delete chapData.questionIds;
 
@@ -225,8 +283,13 @@ export class ChapterService {
       throw new BusinessException(ErrorEnum.NO_PERMISSON, id);
 
     if (!_.isEmpty(data.name)) {
-      const isReplaced = await this.findByName(data.name);
-      if (isReplaced && isReplaced.create_by !== data.updateBy)
+      const isReplaced = await this.isReplacedNameById(
+        data.name,
+        data.updateBy,
+        id,
+      );
+
+      if (isReplaced)
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
     }
 
@@ -342,6 +405,23 @@ export class ChapterService {
     await this.chapterRepo.deleteMany({ id: { $in: listChapterIds } });
 
     return 'Xóa thành công!';
+  }
+
+  async getQuizzesByChapterId(chapterId: string): Promise<QuestionEntity[]> {
+    const chapter = await this.findOne(chapterId);
+    return chapter.questions;
+  }
+
+  async getLessonByChapterId(chapterId: string): Promise<LessonEntity> {
+    await this.findOne(chapterId);
+    return await this.lessonService.findByChapter(chapterId);
+  }
+
+  async getQuizzesByLessonId(chapterId: string): Promise<QuestionEntity[]> {
+    const { id } = await this.lessonService.findByChapter(chapterId);
+    const { chapters } = await this.lessonService.detailLesson(id);
+
+    return chapters.flatMap(({ questions }) => questions);
   }
 
   async findQuizzes(

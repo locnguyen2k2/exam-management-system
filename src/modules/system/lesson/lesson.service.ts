@@ -98,17 +98,43 @@ export class LessonService {
     return { data: detailLessons, meta: paginated.meta };
   }
 
-  // async findByName(name: string): Promise<LessonEntity> {
-  //   const handleContent = name
-  //     .replace(regSpecialChars, '\\$&')
-  //     .replace(regWhiteSpace, '\\s*');
-  //
-  //   const isExisted = await this.lessonRepo.findOneBy({
-  //     name: { $regex: handleContent, $options: 'i' },
-  //   });
-  //
-  //   if (isExisted) return isExisted;
-  // }
+  async findByName(name: string, uid?: string): Promise<LessonEntity[]> {
+    const handleContent = name
+      .replace(regSpecialChars, '\\$&')
+      .replace(regWhiteSpace, '\\s*');
+
+    return await this.lessonRepo.find({
+      name: { $regex: handleContent, $options: 'i' },
+      ...(uid && {
+        $or: [{ create_by: uid }],
+      }),
+    });
+  }
+
+  async isReplacedNameByUid(name: string, uid: string): Promise<LessonEntity> {
+    const isReplaced = await this.findByName(name, uid);
+
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name }) => name.replaceAll(' ', '').toLowerCase() === replacedName,
+    );
+  }
+
+  async isReplacedNameById(
+    name: string,
+    uid: string,
+    lessonId: string,
+  ): Promise<LessonEntity> {
+    const isReplaced = await this.findByName(name, uid);
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name, id }) =>
+        name.replaceAll(' ', '').toLowerCase() === replacedName &&
+        id !== lessonId,
+    );
+  }
 
   async findAvailable(id: string, uid?: string): Promise<LessonEntity> {
     const isExisted = await this.findOne(id);
@@ -119,7 +145,7 @@ export class LessonService {
     throw new BusinessException(ErrorEnum.RECORD_UNAVAILABLE, id);
   }
 
-  async detailLesson(id: string, uid: string): Promise<LessonDetailDto> {
+  async detailLesson(id: string, uid?: string): Promise<LessonDetailDto> {
     await this.findAvailable(id, uid);
     const isExisted = (
       await this.lessonRepo
@@ -238,6 +264,16 @@ export class LessonService {
         if (_.isEmpty(lesson.classIds))
           throw new BusinessException('400:Vui lòng thêm mã lớp!');
 
+        const isReplaced = await this.isReplacedNameByUid(
+          lesson.name,
+          data.createBy,
+        );
+
+        if (isReplaced)
+          throw new BusinessException(
+            `400:Tên học phần ${lesson.name} đã tồn tại!`,
+          );
+
         const newLesson = new LessonEntity({
           ...lesson,
           create_by: data.createBy,
@@ -296,15 +332,13 @@ export class LessonService {
   }
 
   async findByExamSku(examSku: string): Promise<LessonEntity> {
-    const isLesson = await this.lessonRepo.findOne({
+    return await this.lessonRepo.findOne({
       where: {
         'exams.sku': {
           $regex: new RegExp(`^${examSku}\\d{3}$`, 'i'),
         },
       },
     });
-
-    return isLesson;
   }
 
   async findExamsByQuiz(quizId: string): Promise<LessonEntity[]> {
@@ -368,6 +402,19 @@ export class LessonService {
     const newClassIds: string[] = [];
     const oldClassIds: string[] = [];
     const chapters: ChapterEntity[] = [];
+
+    if (!_.isNil(data.name)) {
+      const isReplaced = await this.isReplacedNameById(
+        data.name,
+        data.updateBy,
+        id,
+      );
+
+      if (isReplaced)
+        throw new BusinessException(
+          `400:Tên học phần ${data.name} đã tồn tại!`,
+        );
+    }
 
     if (!_.isNil(data.examIds)) {
       await Promise.all(

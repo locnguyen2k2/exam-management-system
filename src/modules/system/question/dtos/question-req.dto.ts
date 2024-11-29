@@ -8,7 +8,7 @@ import {
   PickType,
 } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { CategoryEnum } from '~/modules/system/question/enum/category.enum';

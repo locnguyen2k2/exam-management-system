@@ -5,6 +5,7 @@ import { MongoRepository } from 'typeorm';
 import {
   IClassifyQuestion,
   QuestionService,
+  QuestionsPerLesson,
 } from '~/modules/system/question/question.service';
 import {
   CreateExamPaperDto,
@@ -321,6 +322,11 @@ export class ExamService {
       data.createBy,
     );
 
+    if (lesson.credit <= 3 && parseInt(data.time.split(' ')[0]) > 90)
+      throw new BusinessException(
+        `400:Thời gian làm bài với ${lesson.credit} không được lớn hớn 90!`,
+      );
+
     delete data.numberExams;
 
     const listScales: IScale[] = this.handleScale(scales);
@@ -341,6 +347,15 @@ export class ExamService {
           );
       }),
     );
+
+    const quizzesOfLesson = await this.chapterService.getQuizzesByLessonId(
+      listScales[0].chapterId,
+    );
+
+    if (quizzesOfLesson.length < lesson.credit * QuestionsPerLesson)
+      throw new BusinessException(
+        `400:Số lượng câu hỏi trong ngân hàng đề môn ${lesson.name}(${quizzesOfLesson.length}) không đủ! (>= ${lesson.credit * QuestionsPerLesson})`,
+      );
 
     const questsChapter: any[] = await this.questionService.randQuestsByScales(
       listScales,

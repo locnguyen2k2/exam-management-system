@@ -210,11 +210,12 @@ type QuestionModel {
 }
 
 enum LevelEnum {
-  VERY_EASY
-  EASY
-  STANDARD
-  HARD
-  VERY_HARD
+  REMEMBERING
+  UNDERSTANDING
+  APPLYING
+  ANALYZING
+  EVALUATING
+  CREATING
 }
 
 enum StatusShareEnum {
@@ -224,14 +225,10 @@ enum StatusShareEnum {
 
 """Loại câu hỏi"""
 enum CategoryEnum {
-  EASSAY
   SINGLE_CHOICE
   MULTIPLE_CHOICE
   TRUE_FALSE
   FILL_IN
-  MATCHING
-  ORDERING
-  IMAGE_BASED
 }
 
 type ExamQuestionModel {
@@ -345,6 +342,7 @@ type LessonDefaultFields {
   updateBy: String
   label: String!
   name: String!
+  credit: Float!
   description: String!
   status: StatusShareEnum!
   chapterIds: [String!]!
@@ -445,6 +443,7 @@ type LessonModel {
   updateBy: String
   label: String!
   name: String!
+  credit: Float!
   description: String!
   status: StatusShareEnum!
   chapters: [ChapterEntity!]!
@@ -1026,6 +1025,9 @@ input LessonBaseDto {
   enable: Boolean
   label: String
   name: String!
+
+  """Số tín chỉ"""
+  credit: Float!
   description: String
   classIds: [String!]!
   status: StatusShareEnum
@@ -1035,6 +1037,9 @@ input UpdateLessonArgs {
   enable: Boolean
   label: String
   name: String
+
+  """Số tín chỉ"""
+  credit: Float
   description: String
   classIds: [String!]
   status: StatusShareEnum

@@ -2,7 +2,13 @@ import { Field, HideField, InputType, PartialType } from '@nestjs/graphql';
 import { BaseDto } from '~/common/dtos/base.dto';
 import { PageOptionDto } from '~/common/dtos/pagination/page-option.dto';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { IsNotEmpty, Validate, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  Max,
+  Min,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
 import { IsValidStringId } from '~/common/decorators/id.decorator';
 import { Expose, Type } from 'class-transformer';
 
@@ -24,6 +30,13 @@ class LessonBaseDto extends BaseDto {
   @IsNotEmpty()
   @Expose()
   name: string;
+
+  @Field(() => Number, { description: 'Số tín chỉ' })
+  @IsNotEmpty()
+  @Max(20)
+  @Min(1)
+  @Expose()
+  credit: number;
 
   @Field(() => String, { nullable: true })
   description: string;

@@ -67,17 +67,43 @@ export class ClassService {
     throw new BusinessException(ErrorEnum.RECORD_NOT_FOUND, id);
   }
 
-  // async findByName(name: string): Promise<ClassEntity> {
-  //   const handleContent = name
-  //     .replace(regSpecialChars, '\\$&')
-  //     .replace(regWhiteSpace, '\\s*');
-  //
-  //   const isExisted = await this.classRepo.findOneBy({
-  //     name: { $regex: handleContent, $options: 'i' },
-  //   });
-  //
-  //   if (isExisted) return isExisted;
-  // }
+  async findByName(name: string, uid?: string): Promise<ClassEntity[]> {
+    const handleContent = name
+      .replace(regSpecialChars, '\\$&')
+      .replace(regWhiteSpace, '\\s*');
+
+    return await this.classRepo.find({
+      name: { $regex: handleContent, $options: 'i' },
+      ...(uid && {
+        $or: [{ create_by: uid }],
+      }),
+    });
+  }
+
+  async isReplacedNameByUid(name: string, uid: string): Promise<ClassEntity> {
+    const isReplaced = await this.findByName(name, uid);
+
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name }) => name.replaceAll(' ', '').toLowerCase() === replacedName,
+    );
+  }
+
+  async isReplacedNameById(
+    name: string,
+    uid: string,
+    classId: string,
+  ): Promise<ClassEntity> {
+    const isReplaced = await this.findByName(name, uid);
+    const replacedName = name.replaceAll(' ', '').toLowerCase();
+
+    return isReplaced.find(
+      ({ name, id }) =>
+        name.replaceAll(' ', '').toLowerCase() === replacedName &&
+        id !== classId,
+    );
+  }
 
   async findByLesson(lessonId: string): Promise<ClassEntity[]> {
     return await this.classRepo.find({ 'lessons.id': { $in: [lessonId] } });
@@ -105,10 +131,10 @@ export class ClassService {
 
   async create(data: CreateClassDto): Promise<ClassEntity> {
     const lessons: LessonEntity[] = [];
-    // const isExisted = await this.findByName(data.name);
-    //
-    // if (isExisted && isExisted.create_by === data.createBy)
-    //   throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
+    const isExisted = await this.isReplacedNameByUid(data.name, data.createBy);
+
+    if (isExisted)
+      throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
 
     const isReplaced = await this.findByCode(data.code);
 
@@ -173,16 +199,16 @@ export class ClassService {
     const isExisted = await this.findAvailable(id, data.updateBy);
     const lessons: LessonEntity[] = [];
 
-    // if (!_.isEmpty(data.name)) {
-    //   const isReplaced = await this.findByName(data.name);
-    //
-    //   if (
-    //     isReplaced &&
-    //     isExisted.id !== isReplaced.id &&
-    //     isExisted.create_by === data.updateBy
-    //   )
-    //     throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
-    // }
+    if (!_.isEmpty(data.name)) {
+      const isReplaced = await this.isReplacedNameById(
+        data.name,
+        data.updateBy,
+        id,
+      );
+
+      if (isReplaced)
+        throw new BusinessException(ErrorEnum.RECORD_EXISTED, data.name);
+    }
 
     if (!_.isEmpty(data.code)) {
       const isReplaced = await this.findByCode(data.code);

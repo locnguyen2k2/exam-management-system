@@ -3,7 +3,7 @@ import { Column, Entity } from 'typeorm';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { ExamQuestionDto } from '~/modules/system/question/dtos/question-res.dto';
 import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
 

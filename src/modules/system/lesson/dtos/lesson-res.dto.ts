@@ -14,6 +14,9 @@ export class LessonDetailDto extends ExtendedEntity {
   @Field(() => String)
   name: string;
 
+  @Field(() => Number)
+  credit: number;
+
   @Field(() => String)
   description: string;
 

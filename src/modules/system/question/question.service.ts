@@ -14,7 +14,7 @@ import {
 import { ChapterService } from '~/modules/system/chapter/chapter.service';
 import { BusinessException } from '~/common/exceptions/biz.exception';
 import { ErrorEnum } from '~/common/enums/error.enum';
-import { LevelEnum } from '~/modules/system/exam/enums/level.enum';
+import { LevelEnum } from '~/modules/system/question/enum/level.enum';
 import { IDetailChapter } from '~/modules/system/chapter/chapter.interface';
 import { IScale } from '~/modules/system/exam/interfaces/scale.interface';
 import { CategoryEnum } from '~/modules/system/question/enum/category.enum';
@@ -38,6 +38,8 @@ export interface IClassifyQuestion {
     questions: QuestionEntity[];
   }[];
 }
+
+export const QuestionsPerLesson: number = 100;
 
 @Injectable()
 export class QuestionService {
@@ -72,9 +74,7 @@ export class QuestionService {
   }
 
   async findByChapter(chapterId: string): Promise<QuestionEntity[]> {
-    return await this.questionRepo.find({
-      where: { 'chapter.id': chapterId },
-    });
+    return await this.chapService.getQuizzesByChapterId(chapterId);
   }
 
   async findOne(id: string, uid: string): Promise<QuestionEntity> {
@@ -94,9 +94,12 @@ export class QuestionService {
     const { category, content, quantityWrongAnswers, answers } = data;
     let { correctAnswers, wrongAnswers } = this.classifyAnswers(answers);
     await this.chapService.findAvailable(data.chapterId, data.createBy);
-    const isReplaced = await this.chapService.findByQuizContent(content);
+    const isReplaced = await this.chapService.isReplacedContentByUid(
+      content,
+      data.createBy,
+    );
 
-    if (isReplaced && isReplaced.id === data.chapterId)
+    if (isReplaced)
       throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
 
     if (correctAnswers.length === 0)
@@ -232,6 +235,16 @@ export class QuestionService {
     const isEnd = !correctAnswer.value.endsWith('[__]');
     const listCorrectValue = this.listFillInAnswerValue(correctAnswer.value);
 
+    listCorrectValue.map((value: string) => {
+      const isReplaced = listCorrectValue.filter(
+        (replaced) => replaced === value,
+      );
+      if (isReplaced.length > 1)
+        throw new BusinessException(
+          `400:Giá trị ${value} trong đáp án ${correctAnswer.value} bị trùng!`,
+        );
+    });
+
     if (isStart || isEnd)
       throw new BusinessException(
         `400:Đáp án ${correctAnswer.value} không bắt đầu bằng [__] hoặc kết thúc khác [__]`,
@@ -283,6 +296,46 @@ export class QuestionService {
     }
   }
 
+  async checkQuestionsOfLesson(questions: QuestionBaseDto[]) {
+    // numbers of new questions of each lesson
+    const countQuestionInLesson: { isLessonId: string; count: number }[] = [];
+
+    // Check numbers of questions per lessons: 100(*) x credit
+    await Promise.all(
+      questions.map(async (questionData) => {
+        const lesson = await this.chapService.getLessonByChapterId(
+          questionData.chapterId,
+        );
+        const listQuizzes = await this.chapService.getQuizzesByLessonId(
+          questionData.chapterId,
+        );
+        // Check lesson is counted
+        const idxCountLesson = countQuestionInLesson.findIndex(
+          (item) => item.isLessonId === lesson.id,
+        );
+
+        // Check the newest question quantity of lesson is <= credit * QuestionsPerLesson
+        const newNumberOfQuestions =
+          listQuizzes.length +
+          (idxCountLesson > -1
+            ? countQuestionInLesson[idxCountLesson].count
+            : 0);
+
+        if (newNumberOfQuestions < 5) {
+          if (idxCountLesson > -1) {
+            countQuestionInLesson[idxCountLesson].count += 1;
+          } else {
+            countQuestionInLesson.push({ isLessonId: lesson.id, count: 1 });
+          }
+        } else {
+          throw new BusinessException(
+            `400:Môn ${lesson.name} chỉ có thể có ${lesson.credit * QuestionsPerLesson}!`,
+          );
+        }
+      }),
+    );
+  }
+
   async create(data: CreateQuestionsDto): Promise<QuestionEntity[]> {
     const questionsInfo: { chapterId: string; question: QuestionEntity }[] = [];
     // Kiểm tra câu hỏi
@@ -304,6 +357,8 @@ export class QuestionService {
         ];
       }),
     );
+
+    // await this.checkQuestionsOfLesson(data.questions);
 
     await Promise.all(
       data.questions.map(async (questionData) => {
@@ -336,6 +391,7 @@ export class QuestionService {
         });
 
         const question = this.questionRepo.create(initial);
+
         questionsInfo.push({ chapterId, question });
       }),
     );
@@ -417,6 +473,8 @@ export class QuestionService {
           answers.push(newAnswer);
         }),
       );
+    } else {
+      answers = newQuestion.answers;
     }
 
     const { correctAnswers } = this.classifyAnswers(answers);
@@ -439,13 +497,13 @@ export class QuestionService {
 
     if (!_.isEmpty(data.content)) {
       content = data.content;
-      const isReplaced = await this.chapService.findByQuizContent(data.content);
+      const isReplaced = await this.chapService.isReplacedContentById(
+        data.content,
+        updateBy,
+        id,
+      );
 
-      if (
-        isReplaced &&
-        isReplaced.id !== chapterId &&
-        isReplaced.create_by === updateBy
-      )
+      if (isReplaced)
         throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
     }
 

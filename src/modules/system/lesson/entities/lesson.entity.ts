@@ -15,6 +15,10 @@ export class LessonEntity extends ExtendedEntity {
   @Column('string')
   name: string;
 
+  @Field(() => Number)
+  @Column('int')
+  credit: number;
+
   @Field(() => String)
   @Column('string')
   description: string = '';
