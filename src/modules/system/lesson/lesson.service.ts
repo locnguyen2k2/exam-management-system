@@ -468,6 +468,7 @@ export class LessonService {
       { id },
       {
         ...(!_.isNil(data.name) && { name: data.name }),
+        ...(!_.isNil(data.credit) && { credit: data.credit }),
         ...(!_.isNil(data.label) && { label: data.label }),
         ...(!_.isNil(data.description) && { description: data.description }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),

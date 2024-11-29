@@ -342,7 +342,7 @@ type LessonDefaultFields {
   updateBy: String
   label: String!
   name: String!
-  credit: Float!
+  credit: Int!
   description: String!
   status: StatusShareEnum!
   chapterIds: [String!]!
