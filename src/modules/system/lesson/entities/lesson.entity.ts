@@ -1,5 +1,5 @@
 import { Column, Entity } from 'typeorm';
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
@@ -15,7 +15,7 @@ export class LessonEntity extends ExtendedEntity {
   @Column('string')
   name: string;
 
-  @Field(() => Number)
+  @Field(() => Int)
   @Column('int')
   credit: number;
 
