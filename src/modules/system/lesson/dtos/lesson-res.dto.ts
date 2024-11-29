@@ -1,4 +1,4 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ExtendedEntity } from '~/common/entity/base.entity';
 import { StatusShareEnum } from '~/common/enums/status-share.enum';
 import { ChapterEntity } from '~/modules/system/chapter/entities/chapter.entity';
@@ -14,7 +14,7 @@ export class LessonDetailDto extends ExtendedEntity {
   @Field(() => String)
   name: string;
 
-  @Field(() => Number)
+  @Field(() => Int)
   credit: number;
 
   @Field(() => String)
