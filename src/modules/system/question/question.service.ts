@@ -99,8 +99,18 @@ export class QuestionService {
       data.createBy,
     );
 
-    if (isReplaced)
-      throw new BusinessException(ErrorEnum.RECORD_EXISTED, `${content}`);
+    if (isReplaced) {
+      const currentLessonOfChapter =
+        await this.chapService.getLessonByChapterId(data.chapterId);
+      const lessonReplacedOfChapter =
+        await this.chapService.getLessonByChapterId(isReplaced.id);
+
+      if (currentLessonOfChapter.id === lessonReplacedOfChapter.id)
+        throw new BusinessException(
+          ErrorEnum.RECORD_EXISTED,
+          `${content} trọng ${data.chapterId}`,
+        );
+    }
 
     if (correctAnswers.length === 0)
       throw new BusinessException(
