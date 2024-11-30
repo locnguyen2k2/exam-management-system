@@ -12,7 +12,7 @@ export class MailerService {
 
     return await this.mailService.sendMail({
       to: email,
-      subject: 'Email confirmation',
+      subject: 'Mail xác thực đăng ký tài khoản của bạn tại hệ thống EMS!',
       template: './confirmation',
       context: {
         content: text,
@@ -25,7 +25,7 @@ export class MailerService {
 
     return await this.mailService.sendMail({
       to: email,
-      subject: 'Confirmation reset password email',
+      subject: 'Mail xác thực đổi mật khẩu của bạn!',
       template: './reset-password',
       context: {
         content: text,
