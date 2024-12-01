@@ -846,12 +846,15 @@ export class QuestionService {
   async randQuestsByScales(
     scales: IScale[],
     totalQuestions: number,
+    maxScore: number,
     uid: string,
   ) {
-    return await Promise.all(
+    let totalScore = 0;
+    const result = await Promise.all(
       scales.map(async (scale) => {
         const { chapterId, percent, level, category, score } = scale;
         const questionQty = Math.ceil((percent * totalQuestions) / 100);
+        totalScore += questionQty * score;
         // Lấy ngẫu nhiên câu hỏi trong chương theo số lượng
         const { questions, chapter } = await this.randQuestsByChap(
           chapterId,
@@ -876,6 +879,13 @@ export class QuestionService {
         };
       }),
     );
+
+    if (totalScore !== maxScore)
+      throw new BusinessException(
+        `Tổng điểm của tỷ lệ(${totalScore}) phải bằng: ${maxScore}`,
+      );
+
+    return result;
   }
 
   async randQuestsByChap(

@@ -360,6 +360,7 @@ export class ExamService {
     const questsChapter: any[] = await this.questionService.randQuestsByScales(
       listScales,
       totalQuestions,
+      data.maxScore,
       data.createBy,
     );
 
