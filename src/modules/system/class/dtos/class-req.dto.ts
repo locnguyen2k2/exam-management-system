@@ -16,6 +16,17 @@ export class ClassPageOptions extends PageOptionDto {
   lessonIds: string[];
 }
 
+@InputType('AddUserSharedArgs')
+export class AddUserSharedDto extends BaseDto {
+  @Field(() => String)
+  @Validate(IsValidStringId)
+  classId: string;
+
+  @Field(() => [String])
+  @Validate(IsValidStringId)
+  userIds: string[];
+}
+
 @InputType()
 class ClassBaseDto extends BaseDto {
   @Field(() => String, { description: 'Tên lớp' })
@@ -54,5 +65,6 @@ export class CreateClassDto extends ClassBaseDto {
 @InputType('UpdateClassArgs')
 export class UpdateClassDto extends PartialType(ClassBaseDto) {
   @HideField()
+  shared?: string[];
   updateBy: string;
 }

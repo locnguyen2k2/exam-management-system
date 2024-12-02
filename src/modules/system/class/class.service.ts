@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { ClassEntity } from '~/modules/system/class/entities/class.entity';
 import {
+  AddUserSharedDto,
   ClassPageOptions,
   CreateClassDto,
   UpdateClassDto,
@@ -19,6 +20,7 @@ import { LessonService } from '~/modules/system/lesson/lesson.service';
 import { LessonEntity } from '~/modules/system/lesson/entities/lesson.entity';
 import { ExamEntity } from '~/modules/system/exam/entities/exam.entity';
 import { paginate } from '~/helpers/paginate/paginate';
+import { UserService } from '~/modules/system/user/user.service';
 
 @Injectable()
 export class ClassService {
@@ -27,6 +29,7 @@ export class ClassService {
     private readonly classRepo: MongoRepository<ClassEntity>,
     @Inject(forwardRef(() => LessonService))
     private readonly lessonService: LessonService,
+    private readonly userService: UserService,
   ) {}
 
   async findAll(
@@ -51,6 +54,8 @@ export class ClassService {
         },
       },
     ];
+
+    await this.classRepo.updateMany({}, { $set: { shared: [] } });
 
     return paginate(
       this.classRepo,
@@ -177,6 +182,38 @@ export class ClassService {
     );
   }
 
+  async addUserShared(
+    data: AddUserSharedDto,
+    uid?: string,
+  ): Promise<ClassEntity> {
+    let isExisted = await this.findAvailable(data.classId, uid);
+    const newShared: string[] = [];
+    if (data.userIds.length !== 0)
+      await Promise.all(
+        data.userIds.map(async (userId) => {
+          await this.userService.findOne(userId);
+          if (!isExisted.shared.includes(userId)) newShared.push(userId);
+        }),
+      );
+    if (_.isEmpty(data.userIds) && _.isEmpty(newShared)) {
+      isExisted = await this.update(data.classId, {
+        ...isExisted,
+        shared: [],
+        updateBy: uid ? uid : isExisted.create_by,
+      });
+    } else {
+      const currentShared = isExisted.shared.filter(
+        (userId: string) => !newShared.includes(userId),
+      );
+      isExisted = await this.update(data.classId, {
+        ...isExisted,
+        shared: [...currentShared, ...newShared],
+        updateBy: uid ? uid : isExisted.create_by,
+      });
+    }
+    return isExisted;
+  }
+
   // Cập nhật danh sách đề thi với mã học phần
   async updateExamsByLessonId(lessonId: string, exams: ExamEntity[]) {
     const listClass = await this.findByLesson(lessonId);
@@ -279,6 +316,7 @@ export class ClassService {
           status: data.status,
         }),
         ...(!_.isNil(data.enable) && { enable: data.enable }),
+        ...(data.shared && !_.isNil(data.shared) && { shared: data.shared }),
         update_by: data.updateBy,
         updated_at: data.updated_at,
       },

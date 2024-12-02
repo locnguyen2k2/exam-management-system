@@ -369,6 +369,7 @@ type ClassModel {
   endYear: String!
   status: StatusShareEnum!
   lessons: [LessonDefaultFields!]!
+  shared: [String!]!
 }
 
 type ExamPagination {
@@ -792,6 +793,9 @@ type Mutation {
 
   """Tạo lớp"""
   createClass(createClassArgs: CreateClassArgs!): ClassModel!
+
+  """Thêm người dùng được xem nội dung được chia sẻ của lớp học phần!"""
+  addUsersShared(addUserSharedArgs: AddUserSharedArgs!): ClassModel!
 
   """Chi tiết lớp học"""
   classDetail(id: String!): ClassModel!
@@ -1257,6 +1261,12 @@ input CreateClassArgs {
   endYear: String!
   status: StatusShareEnum
   lessonIds: [String!]
+}
+
+input AddUserSharedArgs {
+  enable: Boolean
+  classId: String!
+  userIds: [String!]!
 }
 
 input UpdateClassArgs {

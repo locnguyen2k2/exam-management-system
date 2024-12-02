@@ -161,19 +161,49 @@ export class ChapterService {
 
   async isReplacedContentByUid(
     content: string,
+    answers: any[],
     uid: string,
   ): Promise<ChapterEntity> {
     const isReplaced = await this.findByQuizContent(content, uid);
 
     const replacedContent = content.replaceAll(' ', '').toLowerCase();
 
-    return isReplaced.find(({ questions }) =>
+    const chapter = isReplaced.find(({ questions }) =>
       questions.some(
         (question) =>
           question.content.replaceAll(' ', '').toLowerCase() ===
           replacedContent,
       ),
     );
+
+    const questionsReplaced = chapter.questions.filter(
+      (question) =>
+        question.content.replaceAll(' ', '').toLowerCase() === replacedContent,
+    );
+
+    let isTrueReplaced = false;
+    for (const questionReplaced of questionsReplaced) {
+      let isValidQuestionReplaced = true;
+      for (const answer of questionReplaced.answers) {
+        const isAnswerReplaced = answers.some(
+          (answerData: any) =>
+            answerData.value.replaceAll(' ', '').toLowerCase() ===
+            answer.value.replaceAll(' ', '').toLowerCase(),
+        );
+
+        if (!isAnswerReplaced) {
+          isValidQuestionReplaced = false;
+          break;
+        }
+      }
+
+      if (isValidQuestionReplaced) {
+        isTrueReplaced = true;
+        break;
+      }
+    }
+
+    return isTrueReplaced ? chapter : null;
   }
 
   async isReplacedContentById(

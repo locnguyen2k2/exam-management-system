@@ -6,6 +6,7 @@ import { CurrentUser } from '~/common/decorators/current-user.decorator';
 import { IAuthPayload } from '~/modules/auth/interfaces/IAuthPayload.interface';
 import { RoleEnum } from '~/modules/system/role/role.constant';
 import {
+  AddUserSharedDto,
   ClassPageOptions,
   CreateClassDto,
   UpdateClassDto,
@@ -49,6 +50,25 @@ export class ClassResolver {
   ): Promise<ClassEntity> {
     args.createBy = user.id;
     return await this.classServicee.create(args);
+  }
+
+  @Permissions(PermissionEnum.UPDATE_CLASS)
+  @Mutation(() => ClassEntity, {
+    name: 'addUsersShared',
+    description:
+      'Thêm người dùng được xem nội dung được chia sẻ của lớp học phần!',
+  })
+  async addUserShared(
+    @CurrentUser() user: IAuthPayload,
+    @Args('addUserSharedArgs') args: AddUserSharedDto,
+  ): Promise<ClassEntity> {
+    const isAdmin = user.roles.some(
+      (role: any) => role.value === RoleEnum.ADMIN,
+    );
+    return await this.classServicee.addUserShared(
+      args,
+      isAdmin ? null : user.id,
+    );
   }
 
   @Permissions(PermissionEnum.DETAIL_CLASS)

@@ -96,6 +96,7 @@ export class QuestionService {
     await this.chapService.findAvailable(data.chapterId, data.createBy);
     const isReplaced = await this.chapService.isReplacedContentByUid(
       content,
+      [...correctAnswers, ...wrongAnswers],
       data.createBy,
     );
 
@@ -108,7 +109,7 @@ export class QuestionService {
       if (currentLessonOfChapter.id === lessonReplacedOfChapter.id)
         throw new BusinessException(
           ErrorEnum.RECORD_EXISTED,
-          `${content} trọng ${data.chapterId}`,
+          `${content} trong ${data.chapterId}`,
         );
     }
 

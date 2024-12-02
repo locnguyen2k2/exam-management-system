@@ -38,6 +38,10 @@ export class ClassEntity extends ExtendedEntity {
   @Column({ type: 'json', array: true })
   lessons: LessonEntity[] = [];
 
+  @Field(() => [String])
+  @Column('string', { array: true })
+  shared: string[] = [];
+
   constructor(classEntity: Partial<ClassEntity>) {
     super();
     Object.assign(this, classEntity);

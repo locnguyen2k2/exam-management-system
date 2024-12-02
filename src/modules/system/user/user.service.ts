@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { UserEntity } from '~/modules/system/user/entities/user.entity';
@@ -66,7 +66,7 @@ export class UserService {
   async findOne(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (user) return user;
-    throw new NotFoundException(ErrorEnum.USER_NOT_FOUND);
+    throw new BusinessException(ErrorEnum.USER_NOT_FOUND, id);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {

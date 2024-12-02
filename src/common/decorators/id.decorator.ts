@@ -29,7 +29,7 @@ class IsValidStringId implements ValidatorConstraintInterface {
     const ids = Array.isArray(args) ? args : [args];
     try {
       ids.map((id) => checkId(id));
-    } catch (e) {
+    } catch {
       return false;
     }
     return true;
