@@ -1,4 +1,4 @@
-<p>UX/UI link demo: [https://exam-management-sys.vercel.app (designed by https://github.com/viethoang09032001)</p>
+<p>UX/UI link demo: [https://exam-management-sys.vercel.app] (designed by https://github.com/viethoang09032001)</p>
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
